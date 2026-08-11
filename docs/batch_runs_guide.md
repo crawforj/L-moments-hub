@@ -151,6 +151,32 @@ facilities (since the ledger was never updated). This is exactly why it's
 safe to interrupt a run to pick up a code/config fix and restart — no
 git-level cleanup needed for the ledger itself.
 
+## Keeping the dam inventory current
+
+`config/facilities_BOR.csv` / `config/nid_manifest.csv` started as a ~2013
+third-party NID mirror (see `DATA_SOURCES.md` §2). The current NID is
+publicly queryable with no authentication from USACE's ESRI FeatureServer —
+confirmed reachable from a desktop machine (the original cloud sandbox this
+repo started in blocked `.gov` egress; that restriction doesn't apply
+everywhere). `refresh_nid_live.R` pulls it and refreshes coordinates,
+storage, and drainage area for every already-known `facility_id`:
+
+```bash
+Rscript refresh_nid_live.R                          # dry run: diff report only
+Rscript refresh_nid_live.R --apply --requeue-drift-km 5  # writes + requeues drifted facilities
+```
+
+It's additive/reporting-only for scope: facility_ids in the live NID but not
+in our manifest are counted, not auto-added (expanding fleet scope is a
+separate decision). With `--apply`, it also removes any already-completed
+`facility_id` from the ledger whose coordinates drifted more than the
+threshold, so it gets re-attempted at the corrected location — same
+"requeue only what's actually affected" pattern as the synthetic-data and
+elevation-band cleanups. See `DATA_SOURCES.md` §2b for what this caught the
+first time it ran (real ~700km coordinate errors in the old mirror, not
+noise). There's no schedule for re-running this — do it before a fleet-scale
+push if the manifest hasn't been refreshed recently.
+
 ## Reviewing and merging the results
 
 The ad-hoc loop commits directly to whatever branch you point it at — it does

@@ -51,9 +51,13 @@
   Reclamation, with valid latitude/longitude, de-duplicated by `NID_ID`, sorted by
   storage. 308 facilities across the 17 western states.
 - **Known limitations / review items:**
-  - **Coordinates and ownership are unverified** against the current NID
-    (`https://nid.sec.usace.army.mil`) or Reclamation RISE (`https://data.usbr.gov`).
-    Re-pull from an authoritative source and reconcile before operational use.
+  - **Coordinates, storage, and drainage area for MATCHED facility_ids were
+    refreshed from the current NID 2026-08-11** — see §2b. ~7-9.5% of
+    facility_ids (per manifest) were NOT found in the live service and remain
+    on the original ~2013 values, flagged but unchanged. Ownership is still
+    unverified either way (the live pull didn't re-derive the BOR subset
+    selection). ~25,000 facility_ids exist in the live NID that aren't in
+    either manifest — a fleet-scope-expansion decision, not yet acted on.
   - **No ground elevation.** The NID provides structure heights, not site MSL
     elevation, so `elevation_m` in the manifest is blank. Enrich from a DEM (e.g.
     the R `elevatr` package) or an authoritative source. Until then, set the fleet
@@ -73,17 +77,56 @@
   `NID_ID`, state taken from the `NID_ID` two-letter prefix (the mirror's
   `State_ID` column is unreliable), sorted by NID storage descending so the
   largest/highest-consequence dams are analysed first.
-- **Same limitations as §2 apply, and more strongly at this scale:** coordinates,
-  ownership, elevation (blank), and structure suitability are all **unverified**;
-  the storage field has known outliers (2 rows exceed 30M acre-ft, one clearly
-  erroneous). This manifest exists to drive a **research/triage** sweep, not to
-  certify any dam. Nothing here is an engineering result until an expert has
-  verified the inventory row and reviewed the region.
+- **Same limitations as §2 apply, and more strongly at this scale:** ownership,
+  elevation (blank), and structure suitability are still **unverified**; the
+  storage field has known outliers (2 rows exceed 30M acre-ft, one clearly
+  erroneous) even after the §2b refresh. This manifest exists to drive a
+  **research/triage** sweep, not to certify any dam. Nothing here is an
+  engineering result until an expert has verified the inventory row and
+  reviewed the region.
 - **Processing:** `run_nid_tranche.R` runs the fleet in resumable tranches and
   records progress in `data/nid_progress/` (a committed ledger of attempted
   facilities, cumulative DDF/diagnostics/tail-sensitivity, and `progress.md`).
 
-### 2b. GHCN download cache in Git (note on Git LFS)
+### 2b. Live NID refresh (`refresh_nid_live.R`) — 2026-08-11
+
+The current NID is publicly queryable, no authentication, via USACE's ESRI
+FeatureServer (`geospatial.sec.usace.army.mil/dls/rest/services/NID/
+National_Inventory_of_Dams_Public_Service`) — confirmed reachable from this
+machine (the original cloud sandbox this repo started in blocked `.gov`
+egress; a local desktop is not similarly restricted). `NIDID` in that service
+matches our `facility_id` key exactly.
+
+`refresh_nid_live.R` pulls the full live inventory (92,606 records, paginated
+2000/request) and, for every `facility_id` already in our manifests, refreshes
+`latitude`/`longitude`/`river`/`nid_storage_acreft`/`drainage_area_mi2` from
+the live record, adding `coord_drift_km`, `operational_status`, and
+`nid_data_updated` columns. Facility_ids not found live, and facility_ids that
+exist live but aren't in our manifests, are reported, not auto-changed —
+adding ~25,000 new dams would expand fleet scope beyond the current 73,303,
+a decision this script deliberately leaves to a human.
+
+**Confirmed this catches real errors, not just noise:** several Oregon dams
+(e.g. `OR00757`, `OR00728`) had an old longitude of -111.110 — actually in
+Idaho — a data error in the 2013 mirror, corrected in the live NID (now
+~-120, correctly within Oregon). Verified by re-running both at their
+corrected coordinates: homogeneous regions, sane depths, 0 flagged for review.
+
+**Run mode:** `Rscript refresh_nid_live.R` (dry run, prints a diff report,
+writes nothing) or `Rscript refresh_nid_live.R --apply --requeue-drift-km 5`
+(writes the refreshed manifests, and — since this repo also runs a resumable
+NID fleet batch — removes any already-completed `facility_id` from
+`data/nid_progress/completed_ids.csv` whose coordinates drifted more than the
+threshold, so it's re-attempted at the corrected location; drift below the
+threshold is left alone rather than re-running the whole fleet over sub-km
+GPS precision noise). 2026-08-11's run: 285/308 (BOR) and 66,350/73,303 (full)
+facility_ids matched live; 32 already-completed facilities requeued for >5km
+drift out of 682 attempted at the time.
+
+The live pull is cached at `data/raw/nid_live/nid_current.csv` (gitignored,
+like the rest of `data/raw/`) — delete it to force a fresh pull on a re-run.
+
+### 2c. GHCN download cache in Git (note on Git LFS)
 
 The committed station cache (`data/ghcn_prcp_cache/`, `data/ghcn_inventory/`)
 lets reruns serve the same weather offline. It is stored as **regular Git
@@ -96,8 +139,15 @@ force-push the branch.
 
 ## 3. Recommended verification before a fleet run
 
-1. Re-pull the dam inventory from the **current NID** and/or **Reclamation RISE**;
-   reconcile coordinates, ownership, and add ground elevations.
+1. ~~Re-pull the dam inventory from the current NID~~ **DONE 2026-08-11** for
+   matched facility_ids (`refresh_nid_live.R`, see §2b) — coordinates and
+   storage/drainage-area refreshed. Still open: ownership reconciliation,
+   ground elevations (no source has these — DEM enrichment via
+   `enrich_elevations()` remains the path), the ~7-9.5% unmatched
+   facility_ids, and the ~25,000 live NID dams not yet in our manifests.
+   Reclamation RISE (`data.usbr.gov`) is also live/public but is a
+   time-series/operational catalog, not a dam-attribute inventory — not a
+   substitute for the NID pull for this purpose.
 2. Confirm GHCN station availability and quality for each region; enable QFLAG
    screening if required.
 3. Validate Como on **real** data (`run_golden.R` + `run_analysis.R` with

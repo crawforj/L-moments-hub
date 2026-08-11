@@ -98,9 +98,23 @@ prefetch_all_stations <- function(config_paths, cores) {
   message(sprintf("Prefetching %d unique stations across %d facilities on %d core(s) ...",
                   length(ids), length(ghcn_cfgs), cores))
   dl <- function(sid) { !is.null(download_ghcn_daily(sid, base, cache_dir = cache)) }
-  got <- if (cores > 1 && .Platform$OS.type != "windows")
+  got <- if (cores > 1 && .Platform$OS.type != "windows") {
     unlist(parallel::mclapply(ids, dl, mc.cores = cores))
-  else vapply(ids, dl, logical(1))
+  } else {
+    # Serial path (always used on Windows -- mclapply needs fork()). This can
+    # run tens of minutes for a large tranche with a cold cache; a silent
+    # single message() at the start looks stalled. Heartbeat every 200
+    # stations (or every 5%, whichever is more frequent) so it's visible.
+    n <- length(ids)
+    step <- max(1L, min(200L, ceiling(n * 0.05)))
+    out <- logical(n)
+    for (i in seq_len(n)) {
+      out[i] <- dl(ids[i])
+      if (i %% step == 0 || i == n)
+        message(sprintf("  ... %d / %d stations prefetched (%d cached so far)", i, n, sum(out[seq_len(i)])))
+    }
+    out
+  }
   message(sprintf("Prefetch complete: %d/%d stations cached under %s.",
                   sum(got), length(ids), cache))
   invisible(sum(got))
