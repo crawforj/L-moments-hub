@@ -19,12 +19,17 @@ and every dam you intend to actually rely on, gets a completed form.
 - Facility / NID ID: `__________`   Name: `______________________`
 - Reviewer: `____________`   Date: `__________`
 - Run manifest reviewed (`run_manifest_<id>.json`, seed + code state): ☐
+- `data.use_local_fallback: false` confirmed for this run (else the result may
+  be silently synthetic with no visible flag — see `docs/batch_runs_guide.md`): ☐
 
 ## 1. Inventory & location  (largest risk — see Limitations §A)
 
 - ☐ **Coordinates verified** against an authoritative source (current NID
-  `nid.sec.usace.army.mil`, Reclamation RISE `data.usbr.gov`, or a map). The
-  region map (`figures/<id>_region_map.png`) places the dam where it actually is.
+  `nid.sec.usace.army.mil`, Reclamation RISE `data.usbr.gov`, or a map). Check
+  `coord_drift_km` in the manifest first (`refresh_nid_live.R`, most
+  facilities already refreshed 2026-08-11) — a large value flags this facility
+  specifically. The region map (`figures/<id>_region_map.png`) places the dam
+  where it actually is.
 - ☐ Dam is a real analysis target (not an off-stream / diversion / administrative
   structure that should be excluded).
 - ☐ Site elevation supplied if the elevation-regression index-flood transfer is

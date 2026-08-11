@@ -16,12 +16,17 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
 
 ## A. Input-data assumptions (the largest source of risk)
 
-1. **Dam inventory is unverified.** Coordinates, names, and ownership come from a
-   third-party ~2013 mirror of the NID (see `DATA_SOURCES.md`). A wrong
-   coordinate silently analyses the wrong location. **Verify each dam's
-   coordinates against an authoritative source before use.**
-2. **No ground elevation.** The NID gives structure heights, not site MSL
-   elevation, so `elevation_m` is blank fleet-wide. The fleet therefore uses
+1. **Dam inventory started unverified, now partially refreshed.** Coordinates,
+   names, and ownership originally came from a third-party ~2013 mirror of the
+   NID (see `DATA_SOURCES.md`). `refresh_nid_live.R` (2026-08-11) refreshed
+   coordinates/storage/drainage-area for ~90% of facilities from the live,
+   current NID — check `coord_drift_km` in the manifest for a given facility;
+   a wrong coordinate silently analyses the wrong location. Ownership is
+   still unverified either way. **Verify against an authoritative source
+   before use regardless — refreshed doesn't mean expert-confirmed.**
+2. **No ground elevation, from any source.** Neither the old mirror nor the
+   live NID gives site MSL elevation (only structure heights), so
+   `elevation_m` is blank fleet-wide. The fleet therefore uses
    `index_flood.method: "nearest"` (no elevation dependence). The
    elevation-regression transfer is only meaningful where a real site elevation
    is supplied (e.g. Como).
@@ -29,11 +34,24 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    removed, but station siting, gaps, undercatch (especially snow), and station
    moves are not individually reviewed. Gauge undercatch tends to bias depths
    **low**.
-4. **Some dams cannot be analysed.** Where fewer than 5 qualifying gauges fall in
-   the search radius/elevation band with sufficient record, the region cannot
-   form and the dam is reported **failed** (not forced). In the first NID tranche
-   this was ~15% of dams — expect a meaningful failed fraction in sparse-gauge
-   regions; those dams need a manually widened region or a different data source.
+4. **`data.use_local_fallback` must be `false`.** Left `true`, a GHCN download
+   failure silently substitutes a synthetic dataset and still reports the
+   facility as **successful** — no visible flag in the batch output or ledger.
+   This happened for real (~200 facilities across two incidents, 2026-08-11,
+   found and cleaned up) before the default was changed. See
+   `docs/batch_runs_guide.md`.
+5. **Some dams cannot be analysed — but check why before assuming it's data
+   scarcity.** Where fewer than 5 qualifying gauges fall in the search
+   radius/elevation band with sufficient record, the region cannot form and
+   the dam is reported **failed** (not forced). The first NID tranches showed
+   ~15-65% failure rates that turned out to be **mostly a config bug**
+   (`elevation_band_m` inherited unchanged from Como's Montana-specific
+   `[600,2600]` range, zeroing the candidate pool for low-elevation regions —
+   confirmed 87.5% of one round's failures) rather than genuine sparse-gauge
+   regions. Fixed by widening the band (`[-100,6200]`) fleet-wide; a residual
+   failed fraction is expected and legitimate in truly sparse-gauge regions,
+   but don't assume every failure is one without checking the actual reason
+   in `batch_status.csv`.
 
 ## B. Method assumptions (standard RFA / index-flood)
 

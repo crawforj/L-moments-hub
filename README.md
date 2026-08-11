@@ -32,11 +32,22 @@ What this project pulls together, end to end:
   **distribution tail-sensitivity** analysis, an **expert distribution-review**
   workflow, and a provenance manifest — plus a technical-basis doc, an
   assumptions register, an output data dictionary, a per-facility sign-off
-  checklist, and a NOAA Atlas 14 cross-check tool.
-- **Honest about its limits.** Every input is treated as **unverified**; the tool
-  is framed as a **research / triage screen** that flags where an expert should
-  look, explicitly **not** a source of engineering numbers. The rigor is in
-  saying so.
+  checklist, and a NOAA Atlas 14 cross-check tool. The structured detail behind
+  those numbers — station lists, regional L-moments, goodness-of-fit, growth
+  curves — is now **centrally committed fleet-wide**, not just sitting in a
+  local `outputs/` folder on whichever machine ran the batch.
+- **The dam inventory is refreshable from the live NID, not stuck at 2013.**
+  The bundled manifests started from a third-party ~2013 mirror; `refresh_nid_live.R`
+  now pulls the current, authoritative National Inventory of Dams (public, no
+  auth) and refreshes coordinates/storage/drainage area — already caught and
+  fixed real errors (e.g. several dams off by ~700km in the old mirror).
+- **Honest about its limits, and it finds its own bugs.** Every input is
+  treated as **unverified**; the tool is framed as a **research / triage
+  screen**, explicitly **not** a source of engineering numbers on its own.
+  That posture isn't just a disclaimer — running the fleet at scale surfaced
+  and fixed two real defects in the pipeline itself (a silent synthetic-data
+  fallback, and a geographic filter that was quietly excluding valid stations
+  for most of the country); see `docs/batch_runs_guide.md`.
 
 ## Scope &amp; progress
 
@@ -49,21 +60,27 @@ numbers on its own.
 | Stage | Scope | Status |
 |---|---|---|
 | **1. Como Dam** | 1 site (Montana), full audit trail | ✅ validated on real GHCN data |
-| **2. BOR fleet** | **308** Bureau of Reclamation dams (`run_batch.R`) | ✅ complete — **305 ok / 3 failed** (the 3 lack enough nearby gauges to form a region) |
-| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **453 done** so far, nightly sweep continuing (see batch plan below) |
+| **2. BOR fleet** | **308** Bureau of Reclamation dams (`run_batch.R`) | ✅ ran end-to-end; manifest since refreshed from the live NID and a region-filter bug fixed — due for a clean re-run |
+| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **650+ attempted** as of 2026-08-11 and climbing fast (resumable ledger, see live tally below) |
 
 **Batch plan for the full NID.** 73,303 dams is ~2 weeks of compute and many GB
 of weather data — too large for one run on an ephemeral machine. So
 `run_nid_tranche.R` processes the fleet in **resumable tranches**, largest-storage
 dams first, recording every attempted facility in a **committed ledger**
-(`data/nid_progress/`) so no dam is ever computed twice and each night's run
+(`data/nid_progress/`) so no dam is ever computed twice and each run
 continues exactly where the last stopped:
 
-- an initial small tranche is running now;
-- a **nightly job** then works down the fleet automatically, committing results
-  after every tranche;
+- a **nightly cloud job** works down the fleet automatically, committing
+  results after every tranche;
+- an **unattended desktop runner** (`run_ad_hoc_tranches.ps1`) does the same
+  from a networked machine for a few hours or overnight — see
+  [`docs/batch_runs_guide.md`](docs/batch_runs_guide.md) for how to run one
+  yourself, including a pre-flight checklist worth reading first;
 - live tally: [`data/nid_progress/progress.md`](data/nid_progress/progress.md);
-  cumulative results accumulate in `data/nid_progress/`.
+  cumulative results — including fleet-wide station lists, regional
+  L-moments, goodness-of-fit, and growth curves, not just headline depths —
+  accumulate in `data/nid_progress/` (see
+  [`docs/OUTPUT_DATA_DICTIONARY.md`](docs/OUTPUT_DATA_DICTIONARY.md)).
 
 Every input — the GHCN-Daily weather **and** the NID dam inventory — is
 **UNVERIFIED** and requires expert review before any engineering use. See
@@ -171,12 +188,16 @@ Rscript run_nid_tranche.R                            # next tranche of the full 
 
 > **⚠️ Data review required.** Both the **weather source** (GHCN-Daily) and the
 > **dam inventory** (`config/facilities_BOR.csv` — 308 BOR dams; `config/nid_manifest.csv`
-> — the full 73,303-dam NID; coordinates from a third-party ~2013 NID mirror, no
-> ground elevations) are **UNVERIFIED** and must be reviewed before any
-> engineering use — see **[`DATA_SOURCES.md`](DATA_SOURCES.md)**. Real weather is
-> pulled from the **AWS Open-Data GHCN mirror** (this environment blocks NOAA NCEI
-> and CRAN; packages are built from the public CRAN GitHub mirrors); on a fully
-> offline host, runs fall back to a clearly labelled **synthetic** demo set.
+> — the full 73,303-dam NID) are **UNVERIFIED** and must be reviewed before any
+> engineering use — see **[`DATA_SOURCES.md`](DATA_SOURCES.md)**. The dam
+> inventory started as a third-party ~2013 mirror; `refresh_nid_live.R` now
+> re-pulls the current, public NID and has refreshed coordinates/storage/
+> drainage area for most facilities (still no ground elevations — no NID
+> source has these, live or not). Real weather is pulled from the **AWS
+> Open-Data GHCN mirror**; **`data.use_local_fallback` must be `false`** for
+> any run whose results matter — left on, a download failure silently
+> substitutes a **synthetic** demo set and still reports success (a real
+> incident, since fixed — see `docs/batch_runs_guide.md`).
 > **Synthetic or unverified-inventory results are not valid for engineering decisions.**
 
 ## Documentation
@@ -188,6 +209,7 @@ Rscript run_nid_tranche.R                            # next tranche of the full 
 - **[`docs/OUTPUT_DATA_DICTIONARY.md`](docs/OUTPUT_DATA_DICTIONARY.md)** — column definitions for every output CSV
 - **[`docs/atlas14_comparison.md`](docs/atlas14_comparison.md)** — protocol for the external NOAA Atlas 14 cross-check (`compare_atlas14.R`)
 - **[`DATA_SOURCES.md`](DATA_SOURCES.md)** — data provenance and review requirements
+- **[`docs/batch_runs_guide.md`](docs/batch_runs_guide.md)** — how to run and analyze large batches, unattended or otherwise
 - **[`docs/PLAN.md`](docs/PLAN.md)** — full design · **[`docs/users_guide.md`](docs/users_guide.md)** — how to run · **[`docs/audit_guide.md`](docs/audit_guide.md)** — audit procedure
 
 ## License
@@ -205,7 +227,9 @@ those providers:
   NOAA/NCEI, a U.S. Government public-domain product, retrieved via the AWS
   Open-Data mirror.
 - **Dam inventory** (`config/facilities_BOR.csv`, `config/nid_manifest.csv`) —
-  derived from a third-party mirror of the USACE National Inventory of Dams.
+  derived from a third-party mirror of the USACE National Inventory of Dams,
+  with coordinates/storage/drainage-area refreshed from the live public NID
+  service where matched (`refresh_nid_live.R`).
 
 Attribute the original providers when reusing the data, and see
 [`DATA_SOURCES.md`](DATA_SOURCES.md) for provenance and the **unverified-data**

@@ -39,14 +39,22 @@ Candidate gauges are selected around the site and screened:
 | Control | Default | Meaning |
 |---|---|---|
 | `search_radius_km` | 175 | gauges within this great-circle radius of the dam |
-| `elevation_band_m` | [600, 2600] | keep gauges within this elevation range |
+| `elevation_band_m` | [-100, 6200] (fleet template); [600, 2600] for Como specifically | keep gauges within this elevation range |
 | `min_record_years` | 20 | drop gauges with fewer valid annual maxima |
 | `min_year_completeness` | 0.90 | fraction of in-season days a year must have to count |
 | `max_stations` | 60 | cap on nearest gauges pulled (bounds download / region size) |
 
 The radius/elevation/record filters implement H&W's guidance that a region be a
 group of sites plausibly sharing a frequency distribution. All add/drop
-decisions are logged to the provenance log.
+decisions are logged to the provenance log. **`elevation_band_m` is a
+site-specific tuning knob, not a universal constant** — Como's `[600,2600]`
+correctly excludes lowland stations from a different storm regime for that
+one high-mountain Montana site, but the same range copied unchanged into
+every fleet facility's config silently zeroed the candidate pool for any
+low-elevation region (confirmed 2026-08-11: 87.5% of one fleet round's
+failures). The fleet template default is now wide (`[-100,6200]`) and relies
+on the discordancy/heterogeneity statistics below — not the elevation
+prefilter — as the actual region-homogeneity safeguard.
 
 ## 4. Annual maximum series (AMS) and durations
 

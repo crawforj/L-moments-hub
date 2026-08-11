@@ -122,14 +122,20 @@ an official product. Before engineering use, an expert should still:
 1. **Cross-check against NOAA Atlas 14.** For any dam in an Atlas 14-covered
    state, compare the pipeline's 24-hour 100-year (and other) depths to the
    official NOAA Atlas 14 point estimate at the dam's coordinates
-   (`https://hdsc.nws.noaa.gov/pfds/`). Atlas 14 is the U.S. authoritative
-   precipitation-frequency standard and is itself an L-moments regional
-   analysis, so it is the natural external benchmark. *(This environment blocks
-   `.gov` hosts, so this step must be run where Atlas 14 is reachable; it is the
-   single most valuable external check to add.)*
-2. **Verify the dam inventory.** Coordinates, ownership, and (absent) ground
-   elevations in the NID-derived manifest are **unverified** (see
-   `DATA_SOURCES.md`). A wrong coordinate silently analyzes the wrong region.
+   (`https://hdsc.nws.noaa.gov/pfds/`, via `compare_atlas14.R`). Atlas 14 is
+   the U.S. authoritative precipitation-frequency standard and is itself an
+   L-moments regional analysis, so it is the natural external benchmark. *(The
+   original cloud sandbox this repo was built in blocked `.gov` hosts; a
+   networked desktop is not similarly restricted — confirmed reachable
+   2026-08-11. This is now actually runnable, not just planned; still worth
+   doing at fleet scale, not yet done.)*
+2. **Verify the dam inventory.** Coordinates, storage, and drainage area have
+   been refreshed from the live NID for most facilities (`refresh_nid_live.R`,
+   2026-08-11 — see `DATA_SOURCES.md` §2b); ownership and ground elevations
+   remain **unverified** (no NID source, live or mirrored, carries ground
+   elevation). A wrong coordinate silently analyzes the wrong region — the
+   live refresh already caught and fixed several ~700km errors in the old
+   mirror.
 3. **Confirm station regions.** Spot-check that each region's stations are
    climatologically appropriate (not across a divide / rain-shadow), and review
    the `needs_review` and distribution-review worklists the batch produces.

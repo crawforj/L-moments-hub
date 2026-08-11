@@ -10,10 +10,13 @@ official product does. Run this before relying on any facility.
 ## Why it isn't run automatically here
 
 Atlas 14 is served from `hdsc.nws.noaa.gov` (a `.gov` host). The environment this
-repo was built in blocks `.gov` egress, so the fetch fails here by design. Run
-`compare_atlas14.R` from a network that can reach `https://hdsc.nws.noaa.gov/pfds/`.
-The script degrades gracefully (reports "unavailable") when it cannot connect,
-and its CSV parser is verified offline via `--selftest`.
+repo was built in blocks `.gov` egress, so the fetch fails there by design. Run
+`compare_atlas14.R` from a network that can reach `https://hdsc.nws.noaa.gov/pfds/`
+— **confirmed reachable from a normal networked desktop 2026-08-11** (HTTP 200),
+so this is genuinely runnable there, not just a documented aspiration. Hasn't
+yet been run at fleet scale. The script degrades gracefully (reports
+"unavailable") when it cannot connect, and its CSV parser is verified offline
+via `--selftest`.
 
 ## How to run
 

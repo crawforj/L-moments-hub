@@ -59,13 +59,28 @@ For any run, the reviewer works from three things:
 - [ ] The 10,000-yr depths and their uncertainty band are reasonable; the band
       width is acknowledged in any downstream use.
 - [ ] **Data provenance is real** (GHCN, not the synthetic demo) for any result
-      used in an engineering decision.
+      used in an engineering decision. Confirm `data.use_local_fallback: false`
+      in the config that produced the result — with it `true`, a GHCN failure
+      silently substitutes synthetic data with **no visible flag** in
+      `batch_status.csv`/the ledger (a real incident, see
+      `docs/batch_runs_guide.md`); the only tell is a
+      `data/synthetic/<facility_id>/` directory, which is local and
+      git-ignored, not something a reviewer working from committed outputs
+      alone would ever see.
+- [ ] **Dam location is current.** Check `coord_drift_km` in
+      `config/facilities_BOR.csv`/`config/nid_manifest.csv` (added by
+      `refresh_nid_live.R`) for the facility under review — a large value
+      means the analysis may have run against a stale/incorrect coordinate
+      from the original ~2013 mirror.
 
 ## What would fail an audit
 
 - A run whose report shows a *heterogeneous* region (H1 ≥ 2) without documented
   manual region revision.
 - A chosen distribution with `|Z| > 1.64` and no justification.
-- Results produced from the synthetic demo data (the report and README label this;
-  never sign off synthetic results for engineering use).
+- Results produced from the synthetic demo data. **Caution:** unlike a run you
+  invoke interactively (where the console message is visible), a fleet batch
+  with `use_local_fallback: true` produces a synthetic result with no visible
+  flag in the committed outputs — never sign off a fleet result without
+  confirming that config was `false` for the run in question.
 - `run_golden.R` or `run_tests.R` failing on the review machine.

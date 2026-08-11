@@ -19,7 +19,12 @@ The pipeline needs R (>= 3.5) and these packages:
 install.packages(c("lmom","lmomRFA","yaml","jsonlite","ggplot2","sf","maps"))
 ```
 
-**Offline / restricted networks.** Where CRAN is blocked but GitHub is reachable,
+**Offline / restricted networks.** This applied to the original cloud sandbox
+this repo was built in (blocked CRAN, NOAA NCEI, and `.gov` hosts); a
+networked desktop machine may have none of these restrictions — confirmed
+2026-08-11 (CRAN, the GHCN S3 mirror, NOAA Atlas 14, and the live NID service
+are all directly reachable from a normal desktop). Don't assume a limitation
+below still applies before checking. Where CRAN *is* blocked but GitHub is reachable,
 `lmom` and `lmomRFA` can be built from their public CRAN mirrors:
 ```bash
 git clone --depth 1 https://github.com/cran/lmom     && R CMD INSTALL lmom
@@ -55,7 +60,11 @@ Everything basin-specific lives in one YAML file (`config/como.yml`). Key blocks
 - **`index_flood.method`** — `"regression"` (mean AMS ~ elevation) or `"nearest"`.
 - **`uncertainty`** — `n_sim`, `conf` (bound level).
 - **`data`** — `source` (`"ghcn"` auto-download or `"local"`),
-  `use_local_fallback`, `local_format` (`"daily"` or `"ams"`), `local_dir`.
+  `use_local_fallback` (⚠️ **must be `false`** for any run whose results
+  might be trusted — left `true`, a GHCN download failure silently
+  substitutes synthetic data and still reports the facility as successful;
+  see §7 and `docs/batch_runs_guide.md`), `local_format` (`"daily"` or
+  `"ams"`), `local_dir`.
 - **`seed`** — RNG seed for reproducible screening/simulation.
 
 Keep configs ASCII to be safe on minimal hosts.
@@ -118,13 +127,26 @@ maxima (`ams.csv` with `station_id,year,value`) into `local_dir` and set
 
 ---
 
-## 6. Another basin / the BOR fleet
+## 6. Another basin, the BOR fleet, or the full NID
 
 Copy `config/como.yml`, edit the `site` block, run `run_analysis.R config/yours.yml`.
-For many facilities, list them in `config/facilities.csv` (`facility_id, name,
-latitude, longitude, elevation_m[, search_radius_km]`) and run
-`Rscript run_batch.R --manifest config/facilities.csv`. Results are collected in
-`outputs/batch/` (`all_facilities_DDF.csv` + `batch_status.csv`).
+For a specific list of facilities, list them in a manifest CSV (`facility_id,
+name, latitude, longitude, elevation_m[, search_radius_km]`) and run
+`Rscript run_batch.R --manifest config/yourlist.csv`. Results are collected in
+`outputs/batch/` (`all_facilities_DDF.csv`, `batch_status.csv`,
+`batch_diagnostics.csv`, `tail_sensitivity.csv`, and — as of 2026-08-11 —
+`stations_used.csv`, `stations_removed.csv`, `regional_lmoments.csv`,
+`gof.csv`, `growth_curve.csv`).
+
+For the **full 73,303-dam NID fleet**, use `run_nid_tranche.R` instead of
+`run_batch.R` directly — it's resumable (never recomputes a facility) and
+folds every one of the files above into cumulative, centrally-committed
+versions under `data/nid_progress/`. **Read
+[`docs/batch_runs_guide.md`](batch_runs_guide.md) before running this at
+scale** — it covers the resumable ledger in depth, running unattended
+overnight, a pre-flight checklist, and a real incident (silent synthetic-data
+fallback) worth knowing about before you repeat it. `refresh_nid_live.R`
+(same doc) refreshes the dam manifests from the current, live NID.
 
 **Parallelism.** `run_batch.R` fans out across cores with `parallel::mclapply`
 (Unix/macOS; Windows runs serially). Control the core count with the `LMC_CORES`
@@ -150,4 +172,10 @@ reuse the cache across runs.
 - GHCN daily totals are fixed calendar-day; the fixed-interval factors only
   approximate true 24/72-hr clock depths.
 - The dam is ungauged; the index flood is transferred from regional gauges.
+- **`data.use_local_fallback: true` silently fakes results on a GHCN
+  failure** — the facility still reports `ok` in the batch/ledger, with no
+  visible difference from a real result unless you check
+  `data/synthetic/<id>/` for that facility. Set it `false` for anything that
+  might be reviewed; this already caused a real incident at fleet scale (see
+  `docs/batch_runs_guide.md`).
 - Always run `run_golden.R` after changing the environment or packages.
