@@ -25,6 +25,12 @@ One row per facility × duration × return period.
 | `depth_lo_mm` | lower Monte-Carlo bound (at `conf`, default 90%) |
 | `depth_hi_mm` | upper Monte-Carlo bound |
 | `rel_rmse` | relative RMSE of the quantile (Monte-Carlo) — a per-point precision measure |
+| `index_flood_asm_mm` | **ASM** — at-site mean annual maximum (the H&W index flood), transferred to this ungauged site from the regional gauges. Constant within a `site`×`duration` group, repeated per row. See `estimate_index_flood()` in `R/functions.R`. |
+| `index_flood_method` | how `index_flood_asm_mm` was transferred: `regression` (on elevation, default), `nearest` (nearest station's mean), or a fallback to the plain regional mean when elevation is unavailable |
+| `depth_areal_mm` | `depth_mm` after applying an Areal Reduction Factor (ARF) — **additive, never replaces** `depth_mm`. `NA` when the facility has no configured drainage area. See `R/arf.R`. |
+| `arf_factor` | the dimensionless ARF applied (`depth_areal_mm = depth_mm * arf_factor`); `NA` alongside `depth_areal_mm` when not applicable |
+| `arf_area_km2` | drainage area used for the ARF (converted from `drainage_area_mi2`, see `enrich_drainage_area.R`) |
+| `arf_method` | which ARF curve was used — `leclerc_schaake` (the only method implemented; a general national-average curve, not region-specific — see `R/arf.R`) |
 
 The per-facility file `quantiles_DDF_<id>.csv` has the **same columns** for one dam.
 

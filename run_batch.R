@@ -54,8 +54,24 @@ gen_configs_from_manifest <- function(manifest_csv,
     cfg$site$latitude  <- m$latitude[i]
     cfg$site$longitude <- m$longitude[i]
     cfg$site$elevation_m <- m$elevation_m[i]
+    # Drainage area (see enrich_drainage_area.R) drives the optional ARF step
+    # in R/arf.R; absent for ~13-23% of facilities depending on manifest (the
+    # NID mirror's own coverage) -- NA is a valid, handled value (no ARF
+    # applied). ALWAYS overwritten (never left at the template's value) --
+    # otherwise a manifest with no drainage_area_mi2 column at all (e.g.
+    # config/pilot.csv) would silently inherit the TEMPLATE facility's area
+    # (Como's, in como.yml) for every generated facility. Caught via the
+    # 8-dam pilot batch: Owyhee was reporting Como's 56.4 mi2.
+    cfg$site$drainage_area_mi2 <-
+      if (!is.null(m$drainage_area_mi2)) m$drainage_area_mi2[i] else NA_real_
     if (!is.null(m$search_radius_km) && !is.na(m$search_radius_km[i]))
       cfg$region$search_radius_km <- m$search_radius_km[i]
+    # Optional per-facility region-method override (circular | cluster), so a
+    # single manifest can run mixed methods across the fleet (e.g. cluster for
+    # CONUS dams, circular fallback for AK/HI/territories) — see
+    # R/region_methods.R. Absent column/blank cell -> template default.
+    if (!is.null(m$region_method) && !is.na(m$region_method[i]) && nzchar(m$region_method[i]))
+      cfg$region$method <- m$region_method[i]
     p <- file.path(out_dir, paste0(m$facility_id[i], ".yml"))
     yaml::write_yaml(cfg, p)
     paths <- c(paths, p)

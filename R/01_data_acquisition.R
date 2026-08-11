@@ -16,8 +16,9 @@ step01_acquire <- function(cfg) {
   raw <- acquire_station_data(cfg)                 # GHCN or local fallback
   meta <- raw$meta
 
-  # Region + elevation filter (records the geographic removals).
-  filt <- filter_candidates(meta, cfg)
+  # Region + elevation filter (records the geographic removals). Dispatches on
+  # cfg$region$method — see R/region_methods.R.
+  filt <- filter_region_candidates(meta, cfg)
   kept_ids <- filt$kept$station_id
   removed_geo <- filt$removed
 

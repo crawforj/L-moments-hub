@@ -37,6 +37,16 @@ What this project pulls together, end to end:
   is framed as a **research / triage screen** that flags where an expert should
   look, explicitly **not** a source of engineering numbers. The rigor is in
   saying so.
+- **Region construction is a choice, not a given.** Alongside the default
+  circular-radius region, `region.method: cluster` builds the homogeneous
+  region by H&amp;W (1997) sec. 9.2.3 Ward's-method clustering — and
+  `compare_regions.R` shows exactly how much the choice moves the DDF curve
+  for a facility.
+- **ASM and ARF, exposed and applied.** The at-site mean (index flood,
+  already computed) is now reported on every deliverable, and an Areal
+  Reduction Factor (Leclerc &amp; Schaake 1972, swappable) is applied wherever
+  a drainage area is on file — additive alongside, never replacing, the point
+  depth.
 
 ## Scope &amp; progress
 

@@ -47,9 +47,17 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity
    table.
-7. **Point frequencies, not areal.** Outputs are **point** precipitation depths
-   at a gauge/site. They include **no areal reduction factor (ARF)**; converting
-   to basin-average design rainfall requires an ARF the pipeline does not apply.
+7. **Point frequencies remain the primary output; an ARF is applied only where
+   a drainage area is known.** `depth_mm` is always the **point** precipitation
+   depth. Where a facility has a configured `site.drainage_area_mi2` (see
+   `enrich_drainage_area.R` — covers ~86% of `facilities_BOR.csv`, ~77% of the
+   full `nid_manifest.csv`), an **additional** `depth_areal_mm` column is
+   computed via a general national-average Areal Reduction Factor curve
+   (Leclerc & Schaake 1972 — see `R/arf.R`), never replacing the point depth.
+   This is a documented DEFAULT, not a region-specific or Reclamation-reviewed
+   curve — treat `depth_areal_mm` as provisional until an expert confirms the
+   method is appropriate for the region (see `docs/PLAN.md`). Facilities with
+   no drainage area on file report `depth_areal_mm = NA` (point-only, as before).
 8. **Fixed-interval adjustment is a constant factor.** Calendar-day maxima are
    scaled to true-duration depths by fixed factors (1.13 at 24 h, 1.03 at 72 h;
    Hershfield/WMO). This is a standard approximation, not a site-specific

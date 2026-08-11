@@ -14,13 +14,29 @@ site:
   latitude: 46.0583             # decimal degrees N  (Lake Como outlet, approx.)
   longitude: -114.2306          # decimal degrees E (negative = W)
   elevation_m: 1240             # site elevation, metres (approx. dam crest area)
+  drainage_area_mi2: 56.4       # catchment area (Rock Creek + Little Rock Creek above
+                                 # the dam), per https://en.wikipedia.org/wiki/Como_Dam;
+                                 # drives the optional ARF step (R/arf.R) -- confirm
+                                 # against a primary Reclamation source before relying on it
 
 region:
+  method: "circular"            # circular (default) | cluster -- see R/region_methods.R
   search_radius_km: 175         # candidate stations within this radius of the site
+                                 # (circular: the selection rule; other methods: outer
+                                 # sanity bound only, drawn faint on the region map)
   elevation_band_m: [600, 2600] # keep stations within this elevation range
   min_record_years: 20          # drop stations with fewer valid annual maxima
   min_year_completeness: 0.90   # fraction of in-season days required per year
   max_stations: 60              # cap nearest GHCN stations pulled (bounds download)
+  # cluster:                    # only consulted when method: "cluster" -- H&W (1997)
+  #   attributes: ["lat", "lon", "elev_m"]  # sec. 9.2.3, via lmomRFA::cluagg/cluinf
+  #   weights: {lat: 1, lon: 1, elev_m: 1}  # per-attribute weight after standardizing
+  #   algorithm: "ward"         # "ward" | "ward_kmeans" (Ward's + a k-means refine pass)
+  #   n_clusters: null          # null = derive from target_size
+  #   target_size: [15, 60]     # aim for this many stations per cluster
+  #   assignment: "nearest_cluster"  # "nearest_cluster" | "roi" (region-of-influence)
+  #   prefilter_radius_km: 600  # bounds the clustering compute + cache granularity
+  #   min_pool_stations: 15     # below this, fall back to circular
 
 # Precipitation durations to analyse.
 # GHCN-Daily gives calendar-day totals, so a d-day running total approximates
@@ -56,13 +72,27 @@ return_periods: [2, 5, 10, 25, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
 index_flood:
   method: "regression"          # "regression" | "nearest"
 
+arf:
+  method: "leclerc_schaake"     # only method implemented so far; see R/arf.R.
+                                 # Only used when site.drainage_area_mi2 is set.
+
 uncertainty:
   n_sim: 500                    # Monte-Carlo repetitions for regsimq / regtst
   conf: 0.90                    # error-bound confidence level
 
 data:
   source: "ghcn"                # "ghcn" (auto-download) | "local"
-  use_local_fallback: true      # if download fails, read local demo/user data
+  use_local_fallback: false     # TEMPORARILY DISABLED (2026-08-11): the NID fleet
+                                 # batch was silently substituting SYNTHETIC data for
+                                 # any facility whose GHCN download failed, and still
+                                 # recording it as a successful ("ok") result in the
+                                 # ledger -- ~110/753 facilities attempted so far
+                                 # (~15%) did this undetected. With this off, a GHCN
+                                 # failure now correctly fails the facility (visible in
+                                 # batch_status.csv / needs re-attempt) instead of
+                                 # silently faking a result. Re-enable only for a
+                                 # deliberate offline demo/test run, never for a fleet
+                                 # batch whose results might be reviewed.
   local_format: "daily"         # "daily" (date,prcp per station) | "ams"
   local_dir: "data/external"    # where local station files live
   ghcn_base: "https://noaa-ghcn-pds.s3.amazonaws.com"  # AWS Open-Data GHCN-Daily mirror (reachable where www.ncei.noaa.gov is blocked); NCEI base also supported

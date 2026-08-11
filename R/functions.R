@@ -375,7 +375,7 @@ acquire_station_data <- function(cfg) {
   if (identical(cfg$data$source, "ghcn")) {
     inv <- tryCatch(ghcn_load_inventory(cfg), error = function(e) NULL)
     if (!is.null(inv)) {
-      meta <- ghcn_candidates(inv, cfg)          # nearby PRCP stations from inventory
+      meta <- select_region_candidates(inv, cfg) # nearby PRCP stations (region.method-dependent)
       cache <- file.path(ghcn_cache_dir(cfg), "by_station")
       got <- list(meta = NULL, daily = list())
       for (sid in meta$station_id) {
