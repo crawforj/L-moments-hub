@@ -1,0 +1,67 @@
+{
+  "site": "Como Dam",
+  "run_id": "2026-08-11T01:20:00",
+  "generated_at": "2026-08-11T01:20:00",
+  "git_commit": null,
+  "config_file": "config/como.yml",
+  "config": {
+    "site": {
+      "name": "Como Dam",
+      "id": "COMO_DAM",
+      "latitude": 46.0583,
+      "longitude": -114.2306,
+      "elevation_m": 1240
+    },
+    "region": {
+      "search_radius_km": 175,
+      "elevation_band_m": [600, 2600],
+      "min_record_years": 20,
+      "min_year_completeness": 0.9
+    },
+    "durations": [
+      {
+        "label": "24h",
+        "days": 1,
+        "fixed_interval_factor": 1.13
+      },
+      {
+        "label": "72h",
+        "days": 3,
+        "fixed_interval_factor": 1.03
+      }
+    ],
+    "season": {
+      "start_month": 4,
+      "end_month": 7
+    },
+    "distributions": ["glo", "gev", "gno", "pe3", "gpa"],
+    "distribution_override": {},
+    "return_periods": [2, 5, 10, 25, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
+    "index_flood": {
+      "method": "regression"
+    },
+    "uncertainty": {
+      "n_sim": 500,
+      "conf": 0.9
+    },
+    "data": {
+      "source": "ghcn",
+      "use_local_fallback": true,
+      "local_format": "daily",
+      "local_dir": "data/external",
+      "ghcn_base": "https://www.ncei.noaa.gov/pub/data/ghcn/daily"
+    },
+    "seed": 20260811
+  },
+  "r_version": "R version 4.3.3 (2024-02-29)",
+  "package_versions": {
+    "lmom": "3.3",
+    "lmomRFA": "3.8",
+    "yaml": "2.3.8",
+    "ggplot2": "3.4.4",
+    "sf": "1.0.15"
+  },
+  "seed": 20260811,
+  "n_stations_used": 13,
+  "station_record_lengths": [40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40]
+}

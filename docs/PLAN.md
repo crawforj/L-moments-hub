@@ -295,3 +295,42 @@ it. `docs/audit_guide.md` gives a reviewer sign-off checklist.
 - [x] **Golden dataset** (published benchmark + synthetic known-truth) run
       side-by-side with Como and regression-tested to prove output is
       error-free and defensible
+
+---
+
+## 12. Scaling to the Bureau of Reclamation fleet
+
+Como Dam is the **primary validated test site**. Once its results are reviewed
+and signed off (see `docs/audit_guide.md`), the SAME code runs unchanged across
+the fleet — only the per-facility config differs. This is enabled by:
+
+- **`config/facilities.csv`** — a manifest of facilities
+  (`facility_id, name, latitude, longitude, elevation_m[, search_radius_km]`).
+- **`run_batch.R`** — generates one YAML per facility from the manifest
+  (inheriting the Como template's durations, season, distributions, seeds, etc.),
+  runs `run_analysis()` for each in isolation, and collects the headline DDF
+  tables into `outputs/batch/all_facilities_DDF.csv` plus a per-facility
+  `batch_status.csv` (success/failure) for audit.
+
+```bash
+Rscript run_batch.R --manifest config/facilities.csv
+```
+
+**Runtime.** Compute per facility is ~15–30 s (measured ~17.5 s for Como: two
+durations, 500-rep bootstrap, ~15 stations; the region-definition step scales
+gently, ~0.3–0.6 s for 15–50 stations). For ~500 facilities that is roughly
+2–4 hours of serial compute, or ~20–40 min across 8 cores. **Wall-clock is
+dominated by GHCN-Daily download, not compute** — cache the shared station
+inventory once and reuse station files across nearby facilities; parallelise the
+batch (e.g. `parallel::mclapply` over configs) for real gains.
+
+**Prerequisites for a real fleet run** (not possible in the current sandbox,
+which blocks NOAA NCEI and CRAN): network access to NOAA NCEI, a facilities
+manifest with authoritative coordinates/elevations, and per-facility review of
+region homogeneity (dense vs sparse gauge networks differ across the West).
+
+**Recommended rollout:** (1) validate Como on real data and sign off;
+(2) run a small pilot batch (5–10 facilities spanning climate/elevation regimes)
+and review each region map + homogeneity log; (3) tune defaults (search radius,
+elevation band, season) if needed; (4) run the full fleet, then triage any
+facility flagged *heterogeneous* or with `|Z| > 1.64` for manual region revision.

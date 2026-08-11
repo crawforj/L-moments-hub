@@ -1,39 +1,22 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# R session / build artifacts
+.Rhistory
+.RData
+.Rproj.user/
+*.Rout
+src/*.o
+src/*.so
 
-# Distribution / packaging
-.Python
-build/
-dist/
-*.egg-info/
-.eggs/
-wheels/
+# Generated run outputs (reproducible from code + config; not tracked).
+# Curated examples are kept separately under docs/example_outputs/.
+outputs/
 
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
+# Generated / downloaded station data (reproducible; synthetic demo or GHCN cache)
+data/external/
+data/raw/
+data/processed/
 
-# Environment / secrets
-.env
-.env.*
+# Per-facility configs generated from the manifest by run_batch.R
+config/facilities/
 
-# Testing / coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.mypy_cache/
-.ruff_cache/
-
-# Notebooks
-.ipynb_checkpoints/
-
-# Editors / OS
-.vscode/
-.idea/
-.DS_Store
+# NOTE: golden/ IS tracked on purpose — it is the frozen known-answer dataset
+# and reference used by run_golden.R and the regression test.

@@ -1,0 +1,4 @@
+"station_id","name","reason"
+"DEMO17","Distant gauge (out of region)","outside 175 km radius"
+"DEMO16","Short-record gauge","record < 20 yr for 72h duration"
+"DEMO03","DEMO03","dropped to achieve homogeneity (greedy H1 reduction)"

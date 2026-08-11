@@ -1,0 +1,63 @@
+# =============================================================================
+# Configuration -- Regional Precipitation Frequency Analysis
+# Site: Como Dam / Lake Como, Bitterroot Valley, Ravalli County, Montana
+#
+# This file is the ONLY thing you must edit to run the analysis for a different
+# basin. Copy it (e.g. config/mybasin.yml), change the values, and run:
+#   Rscript run_analysis.R config/mybasin.yml
+# Every value below is documented; nothing basin-specific is hard-coded in R.
+# =============================================================================
+
+site:
+  name: "Como Dam"              # label used in outputs / figure titles
+  id: "COMO_DAM"               # short slug used in output filenames
+  latitude: 46.0583             # decimal degrees N  (Lake Como outlet, approx.)
+  longitude: -114.2306          # decimal degrees E (negative = W)
+  elevation_m: 1240             # site elevation, metres (approx. dam crest area)
+
+region:
+  search_radius_km: 175         # candidate stations within this radius of the site
+  elevation_band_m: [600, 2600] # keep stations within this elevation range
+  min_record_years: 20          # drop stations with fewer valid annual maxima
+  min_year_completeness: 0.90   # fraction of in-season days required per year
+
+# Precipitation durations to analyse.
+# GHCN-Daily gives calendar-day totals, so a d-day running total approximates
+# the (24*d)-hour depth; the fixed-interval factor corrects toward true
+# clock-hour depths (WMO-No.1045 / Hershfield): ~1.13 for 1-day, ~1.03 for 3-day.
+durations:
+  - { label: "24h", days: 1, fixed_interval_factor: 1.13 }
+  - { label: "72h", days: 3, fixed_interval_factor: 1.03 }
+
+# Seasonal window for extracting annual maxima. Default April-July captures the
+# Bitterroot spring snowmelt / rain-on-snow flood season. Use 1..12 for the
+# full calendar year.
+season:
+  start_month: 4
+  end_month: 7
+
+# Candidate distributions tested at the distribution-selection step (H&W ch. 5).
+# The one with the smallest |Z| (<= 1.64) is chosen unless overridden below.
+distributions: ["glo", "gev", "gno", "pe3", "gpa"]
+distribution_override: null     # e.g. "gev" to force a choice; null = automatic
+
+# Return periods (years) for the depth-duration-frequency output. 10000 -> AEP 1e-4.
+return_periods: [2, 5, 10, 25, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+
+# Index-flood transfer to the (ungauged) dam site. "regression" fits site-mean
+# ~ elevation across regional gauges; "nearest" uses the closest gauge's mean.
+index_flood:
+  method: "regression"          # "regression" | "nearest"
+
+uncertainty:
+  n_sim: 500                    # Monte-Carlo repetitions for regsimq / regtst
+  conf: 0.90                    # error-bound confidence level
+
+data:
+  source: "ghcn"                # "ghcn" (auto-download) | "local"
+  use_local_fallback: true      # if download fails, read local demo/user data
+  local_format: "daily"         # "daily" (date,prcp per station) | "ams"
+  local_dir: "data/external"    # where local station files live
+  ghcn_base: "https://www.ncei.noaa.gov/pub/data/ghcn/daily"
+
+seed: 20260811                  # RNG seed -> reproducible screening/simulation

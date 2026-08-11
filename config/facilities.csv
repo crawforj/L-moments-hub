@@ -1,0 +1,4 @@
+facility_id,name,latitude,longitude,elevation_m,search_radius_km
+COMO_DAM,Como Dam,46.0583,-114.2306,1240,175
+CANYON_FERRY,Canyon Ferry Dam,46.6516,-111.7269,152,175
+GIBSON_DAM,Gibson Dam,47.6011,-112.7622,1391,175
