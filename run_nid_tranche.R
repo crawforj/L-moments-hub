@@ -81,6 +81,16 @@ append_cum <- function(src_name, key_cols) {
 append_cum("all_facilities_DDF.csv", c("site", "duration", "return_period_yr"))
 append_cum("batch_diagnostics.csv",  c("site_id", "duration"))
 append_cum("tail_sensitivity.csv",   c("site", "duration", "dist"))
+# Fleet-wide "tables" data (see collect_fleet_tables() in R/functions.R) --
+# the small structured per-facility detail (station lists, regional
+# L-moments, GOF, growth curve) that used to only exist in the local
+# outputs/tables/ dir. Folded into data/nid_progress/ the same resumable,
+# de-duplicated way as the three lines above.
+append_cum("stations_used.csv",      c("site_id", "duration", "station_id"))
+append_cum("stations_removed.csv",   c("site_id", "duration", "station_id"))
+append_cum("regional_lmoments.csv",  c("site_id", "duration", "station"))
+append_cum("gof.csv",                c("site_id", "duration", "dist"))
+append_cum("growth_curve.csv",       c("site_id", "duration", "T"))
 
 # Record EVERY attempted facility (ok or failed) so it is never retried.
 attempted <- data.frame(

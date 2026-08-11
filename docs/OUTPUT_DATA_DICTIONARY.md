@@ -82,6 +82,16 @@ One row per facility × duration × candidate distribution.
 
 Use this to see how much the rare-event depth hinges on the distribution choice.
 
+## Fleet-wide "tables" — `stations_used.csv`, `stations_removed.csv`, `regional_lmoments.csv`, `gof.csv`, `growth_curve.csv`
+
+Cumulative, fleet-wide versions of the per-facility tables below (same `site,
+site_id, duration` tagging as `all_facilities_DDF.csv`), folded in by
+`run_nid_tranche.R` the same resumable way. Added so this structured detail is
+centrally committed instead of only existing in the local (gitignored)
+`outputs/tables/` on whichever machine ran the batch. Columns match the
+per-facility files documented below, with `site`/`site_id`/`duration` columns
+prepended. See `collect_fleet_tables()` in `R/functions.R`.
+
 ## `data/nid_progress/completed_ids.csv` — resumable ledger (NID run)
 
 One row per facility **attempted** across all tranches (so it is never retried).

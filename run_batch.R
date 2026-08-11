@@ -134,7 +134,8 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
     else
       list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok",
            ddf = res$ddf, diag = tryCatch(facility_diagnostics(res), error = function(e) NULL),
-           tail = tryCatch(collect_tail_sensitivity(res), error = function(e) NULL))
+           tail = tryCatch(collect_tail_sensitivity(res), error = function(e) NULL),
+           fleet = tryCatch(collect_fleet_tables(res), error = function(e) NULL))
   }
 
   results <- if (cores > 1 && .Platform$OS.type != "windows")
@@ -190,6 +191,21 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
                           rec$site[i], rec$duration[i], rec$chosen_dist[i], rec$chosen_absZ[i],
                           rec$runner_up[i], rec$runner_up_absZ[i], rec$z_margin[i]))
     }
+  }
+
+  # Fleet-wide "tables" data (station lists, regional L-moments, GOF, growth
+  # curve): the small structured detail that previously only existed in the
+  # local (gitignored) outputs/tables/<id>_*.csv per facility. Aggregated the
+  # same way as all_ddf/all_tail/all_diag above, so a resumable fleet run
+  # (run_nid_tranche.R) can fold them into cumulative, centrally-committed
+  # CSVs instead of losing them to a single machine's local disk.
+  fleet_names <- c("stations_used", "stations_removed", "regional_lmoments",
+                   "gof", "growth_curve")
+  for (nm in fleet_names) {
+    parts <- Filter(Negate(is.null), lapply(results, function(r) r$fleet[[nm]]))
+    if (length(parts))
+      utils::write.csv(do.call(rbind, parts),
+                       file.path(outb, paste0(nm, ".csv")), row.names = FALSE)
   }
 
   message(sprintf("\nBatch complete: %d ok, %d failed. See %s.",

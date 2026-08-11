@@ -566,6 +566,55 @@ collect_tail_sensitivity <- function(res) {
 }
 
 # ---------------------------------------------------------------------------
+# collect_fleet_tables(res): flatten a run_analysis() result's per-facility
+# "tables" (station lists, regional L-moments, goodness-of-fit, growth curve)
+# into site/site_id/duration-tagged data.frames, the SAME shape run_batch()
+# already uses for DDF/diagnostics/tail-sensitivity -- so a fleet run can fold
+# these into cumulative, centrally-committed CSVs instead of the rich
+# per-facility versions only existing in the local (gitignored) outputs/ dir.
+#   -> list(stations_used, stations_removed, regional_lmoments, gof,
+#           growth_curve), each a data.frame or NULL if empty.
+# ---------------------------------------------------------------------------
+collect_fleet_tables <- function(res) {
+  site <- res$cfg$site$name %||% NA_character_
+  site_id <- res$cfg$site$id %||% NA_character_
+  labs <- names(res$per_duration)
+  tag <- function(df) if (is.null(df) || !nrow(df)) NULL else
+    data.frame(site = site, site_id = site_id, df, stringsAsFactors = FALSE)
+
+  bind_or_null <- function(parts) {
+    parts <- Filter(Negate(is.null), parts)
+    if (!length(parts)) NULL else do.call(rbind, parts)
+  }
+
+  list(
+    stations_used = bind_or_null(lapply(labs, function(lab)
+      tag(data.frame(duration = lab, res$per_duration[[lab]]$used_table,
+                     stringsAsFactors = FALSE)))),
+    stations_removed = bind_or_null(lapply(labs, function(lab)
+      tag(data.frame(duration = lab, res$per_duration[[lab]]$removed_table,
+                     stringsAsFactors = FALSE)))),
+    regional_lmoments = bind_or_null(lapply(labs, function(lab) {
+      rd <- res$per_duration[[lab]]$regdata_final
+      if (is.null(rd) || !nrow(rd)) return(NULL)
+      tag(data.frame(duration = lab, station = rd$name, n = rd$n,
+                     mean = round(rd$l_1, 3), Lcv = round(rd$t, 4),
+                     Lskew = round(rd$t_3, 4), Lkurt = round(rd$t_4, 4),
+                     stringsAsFactors = FALSE))
+    })),
+    gof = bind_or_null(lapply(labs, function(lab) {
+      tbl <- res$per_duration[[lab]]$dist_sel$table
+      if (is.null(tbl) || !nrow(tbl)) return(NULL)
+      tag(data.frame(duration = lab, tbl, stringsAsFactors = FALSE))
+    })),
+    growth_curve = bind_or_null(lapply(labs, function(lab) {
+      g <- res$per_duration[[lab]]$est$growth
+      if (is.null(g) || !nrow(g)) return(NULL)
+      tag(data.frame(duration = lab, g, stringsAsFactors = FALSE))
+    })))
+}
+
+# ---------------------------------------------------------------------------
 # load_distribution_review(): read the optional EXPERT distribution-review
 # registry (config/distribution_review.csv). Each row records a reviewer's
 # chosen distribution for a facility (optionally a specific duration),
