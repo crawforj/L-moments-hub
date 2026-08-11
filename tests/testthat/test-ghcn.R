@@ -91,6 +91,24 @@ test_that("download_ghcn_daily reads the AWS S3 mirror format (header row, uncom
   expect_equal(d$prcp, c(40.1, NA))               # tenths->mm; G-flagged screened
 })
 
+test_that("export_prcp_cache builds a PRCP-only cache that serves with no network", {
+  raw <- tempfile(); dir.create(raw)
+  writeLines(c("ID,DATE,ELEMENT,DATA_VALUE,M_FLAG,Q_FLAG,S_FLAG,OBS_TIME",
+               "UST1,20000515,PRCP,401,,,6,",     # -> 40.1 mm
+               "UST1,20010610,PRCP,999,,G,6,",    # failed QA -> NA on read
+               "UST1,20000516,TMAX,150,,,6,"),    # dropped (not PRCP)
+             file.path(raw, "UST1.csv"))
+  root <- tempfile(); dir.create(root)
+  out <- file.path(root, "data", "ghcn_prcp_cache")
+  expect_equal(export_prcp_cache(raw, out), 1L)
+  expect_true(file.exists(file.path(out, "UST1.csv.gz")))
+  # download_ghcn_daily reads data/ghcn_prcp_cache under lmc.root -> serve offline
+  old <- getOption("lmc.root"); options(lmc.root = root); on.exit(options(lmc.root = old))
+  d <- download_ghcn_daily("UST1", "https://bogus.invalid")   # would fail if it hit the network
+  expect_equal(nrow(d), 2)
+  expect_equal(d$prcp, c(40.1, NA))               # QFLAG screening applied on read
+})
+
 test_that("make_demo_data centers on the requested site (offline batch works anywhere)", {
   # A non-Como facility (Grand Coulee, WA) must still get an in-region set.
   d <- tempfile(); site <- list(latitude = 47.96, longitude = -118.98)

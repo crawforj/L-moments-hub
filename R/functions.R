@@ -192,9 +192,16 @@ read_local_ams <- function(dir) {
 ghcn_cache_dir <- function(cfg)
   cfg$data$ghcn_cache_dir %||% file.path(getOption("lmc.root", "."), "data", "raw", "ghcn")
 
-# parse_ghcn_stations(): fixed-width ghcnd-stations.txt -> data.frame.
+# .read_lines_maybe_gz(): readLines that transparently handles a .gz path.
+.read_lines_maybe_gz <- function(path) {
+  con <- if (grepl("\\.gz$", path)) gzfile(path) else file(path)
+  on.exit(close(con))
+  readLines(con, warn = FALSE)
+}
+
+# parse_ghcn_stations(): fixed-width ghcnd-stations.txt(.gz) -> data.frame.
 parse_ghcn_stations <- function(path) {
-  ln <- readLines(path, warn = FALSE)
+  ln <- .read_lines_maybe_gz(path)
   data.frame(
     station_id = trimws(substr(ln, 1, 11)),
     lat        = as.numeric(substr(ln, 13, 20)),
@@ -204,9 +211,9 @@ parse_ghcn_stations <- function(path) {
     stringsAsFactors = FALSE)
 }
 
-# parse_ghcn_inventory(): fixed-width ghcnd-inventory.txt -> data.frame.
+# parse_ghcn_inventory(): fixed-width ghcnd-inventory.txt(.gz) -> data.frame.
 parse_ghcn_inventory <- function(path) {
-  ln <- readLines(path, warn = FALSE)
+  ln <- .read_lines_maybe_gz(path)
   data.frame(
     station_id = trimws(substr(ln, 1, 11)),
     element    = trimws(substr(ln, 32, 35)),
@@ -224,15 +231,26 @@ ghcn_load_inventory <- function(cfg, refresh = FALSE) {
   rds <- file.path(cache, "inventory_prcp.rds")
   if (!refresh && file.exists(rds)) return(readRDS(rds))
   base <- cfg$data$ghcn_base
-  if (getOption("timeout") < 600L) options(timeout = 600L)  # inventory is ~35 MB
-  sp <- file.path(cache, "ghcnd-stations.txt")
-  iv <- file.path(cache, "ghcnd-inventory.txt")
-  ok <- tryCatch({
-    if (!file.exists(sp)) utils::download.file(paste0(base, "/ghcnd-stations.txt"),  sp, quiet = TRUE)
-    if (!file.exists(iv)) utils::download.file(paste0(base, "/ghcnd-inventory.txt"), iv, quiet = TRUE)
-    file.exists(sp) && file.exists(iv) && file.size(sp) > 0 && file.size(iv) > 0
-  }, error = function(e) FALSE, warning = function(w) FALSE)
-  if (!ok) return(NULL)
+
+  # Prefer the COMMITTED, gzipped inventory (data/ghcn_inventory/*.txt.gz, ~7 MB)
+  # so a fresh clone skips the ~47 MB inventory download entirely. Fall back to
+  # downloading when it isn't present.
+  static <- file.path(getOption("lmc.root", "."), "data", "ghcn_inventory")
+  sp_gz <- file.path(static, "ghcnd-stations.txt.gz")
+  iv_gz <- file.path(static, "ghcnd-inventory.txt.gz")
+  if (!refresh && file.exists(sp_gz) && file.exists(iv_gz)) {
+    sp <- sp_gz; iv <- iv_gz
+  } else {
+    if (getOption("timeout") < 600L) options(timeout = 600L)  # inventory is ~47 MB
+    sp <- file.path(cache, "ghcnd-stations.txt")
+    iv <- file.path(cache, "ghcnd-inventory.txt")
+    ok <- tryCatch({
+      if (!file.exists(sp)) utils::download.file(paste0(base, "/ghcnd-stations.txt"),  sp, quiet = TRUE)
+      if (!file.exists(iv)) utils::download.file(paste0(base, "/ghcnd-inventory.txt"), iv, quiet = TRUE)
+      file.exists(sp) && file.exists(iv) && file.size(sp) > 0 && file.size(iv) > 0
+    }, error = function(e) FALSE, warning = function(w) FALSE)
+    if (!ok) return(NULL)
+  }
   stations <- parse_ghcn_stations(sp)
   inv <- parse_ghcn_inventory(iv)
   prcp <- inv[inv$element == "PRCP", c("station_id", "first_year", "last_year")]
@@ -273,6 +291,20 @@ ghcn_is_s3 <- function(ghcn_base) grepl("noaa-ghcn-pds|s3\\.amazonaws\\.com", gh
 #   SFLAG(, OBS_TIME). Column 6 (QFLAG) non-blank = failed QA.
 download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL,
                                 qflag_screen = TRUE, qflag_keep = character(0)) {
+  # Committed PRCP-only cache (data/ghcn_prcp_cache/<id>.csv.gz) — skip the
+  # network entirely on a fresh clone. Stores date,prcp(mm),qflag so quality
+  # screening still honours the config on read (see export_prcp_cache()).
+  cache_gz <- file.path(getOption("lmc.root", "."), "data", "ghcn_prcp_cache",
+                        paste0(station_id, ".csv.gz"))
+  if (file.exists(cache_gz)) {
+    cc <- tryCatch(utils::read.csv(gzfile(cache_gz), stringsAsFactors = FALSE),
+                   error = function(e) NULL)
+    if (!is.null(cc) && nrow(cc) && all(c("date", "prcp") %in% names(cc))) {
+      q <- if ("qflag" %in% names(cc)) cc$qflag else NULL
+      p <- screen_qflag(as.numeric(cc$prcp), q, screen = qflag_screen, keep = qflag_keep)
+      return(data.frame(date = as.Date(cc$date), prcp = as.numeric(p)))
+    }
+  }
   if (getOption("timeout") < 600L) options(timeout = 600L)  # large files over a proxy
   s3  <- ghcn_is_s3(ghcn_base)
   ext <- if (s3) ".csv" else ".csv.gz"
@@ -299,6 +331,37 @@ download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL,
   prcp <- screen_qflag(prcp, qflag, screen = qflag_screen, keep = qflag_keep)
   data.frame(date = as.Date(as.character(d[[2]]), "%Y%m%d"),
              prcp = as.numeric(prcp))     # as.numeric drops the n_flagged attr
+}
+
+# ---------------------------------------------------------------------------
+# export_prcp_cache(): build the committed, PRCP-only station cache from the
+# raw downloaded GHCN by_station files. Extracts just the PRCP rows (dropping
+# TMAX/TMIN/SNOW/... and shrinking each file ~10x) as date,prcp(mm),qflag and
+# writes <id>.csv.gz. This is what makes future reruns skip the station
+# downloads; download_ghcn_daily() reads it first. Returns the number written.
+# ---------------------------------------------------------------------------
+export_prcp_cache <- function(raw_dir, out_dir, overwrite = FALSE) {
+  dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+  files <- list.files(raw_dir, pattern = "\\.csv(\\.gz)?$", full.names = TRUE)
+  n <- 0L
+  for (f in files) {
+    sid <- sub("\\.csv(\\.gz)?$", "", basename(f))
+    outf <- file.path(out_dir, paste0(sid, ".csv.gz"))
+    if (!overwrite && file.exists(outf)) { n <- n + 1L; next }
+    gz <- grepl("\\.gz$", f)
+    d <- tryCatch(utils::read.csv(if (gz) gzfile(f) else f, header = !gz,
+                                  stringsAsFactors = FALSE), error = function(e) NULL)
+    if (is.null(d) || !nrow(d)) next
+    d <- d[d[[3]] == "PRCP", , drop = FALSE]
+    if (!nrow(d)) next
+    out <- data.frame(date = as.Date(as.character(d[[2]]), "%Y%m%d"),
+                      prcp = suppressWarnings(as.numeric(d[[4]])) / 10,
+                      qflag = if (ncol(d) >= 6) as.character(d[[6]]) else "",
+                      stringsAsFactors = FALSE)
+    con <- gzfile(outf, "w"); utils::write.csv(out, con, row.names = FALSE); close(con)
+    n <- n + 1L
+  }
+  n
 }
 
 # ---------------------------------------------------------------------------
