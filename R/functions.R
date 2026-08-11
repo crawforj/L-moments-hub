@@ -420,6 +420,41 @@ estimate_index_flood <- function(used_meta, means, cfg) {
 }
 
 # ---------------------------------------------------------------------------
+# facility_diagnostics(): one-row-per-duration triage summary from a
+# run_analysis() result. Surfaces the two things a fleet reviewer must check
+# per facility (H&W): region heterogeneity (H1) and goodness-of-fit of the
+# chosen distribution (|Z|). `needs_review` flags a facility whose region is
+# heterogeneous (H1 >= 2) or whose chosen distribution fits poorly (|Z| > 1.64)
+# — exactly the fleet triage rule in docs/PLAN.md sec. 12 / CLAUDE.md step 5.
+#   res : the list returned by run_analysis()
+#   -> data.frame(site, site_id, duration, n_stations, H1, homog_status,
+#                 chosen_dist, chosen_absZ, Z_acceptable, needs_review)
+# ---------------------------------------------------------------------------
+facility_diagnostics <- function(res) {
+  labs <- names(res$per_duration)
+  rows <- lapply(labs, function(lab) {
+    pd <- res$per_duration[[lab]]
+    chosen <- pd$dist_sel$chosen
+    absZ <- tryCatch(abs(as.numeric(pd$dist_sel$Z[[chosen]])), error = function(e) NA_real_)
+    H1 <- suppressWarnings(as.numeric(pd$H[1]))
+    acceptable <- isTRUE(pd$dist_sel$acceptable)
+    data.frame(
+      site        = res$cfg$site$name %||% NA_character_,
+      site_id     = res$cfg$site$id %||% NA_character_,
+      duration    = lab,
+      n_stations  = if (!is.null(pd$regdata_final)) nrow(pd$regdata_final) else NA_integer_,
+      H1          = round(H1, 3),
+      homog_status = pd$homog_status %||% NA_character_,
+      chosen_dist = toupper(chosen),
+      chosen_absZ = round(absZ, 3),
+      Z_acceptable = acceptable,
+      needs_review = (isTRUE(H1 >= 2) || !acceptable),
+      stringsAsFactors = FALSE)
+  })
+  do.call(rbind, rows)
+}
+
+# ---------------------------------------------------------------------------
 # write_manifest(): record run provenance for audit/reproducibility.
 #   Writes outputs/provenance/run_manifest_<id>.json capturing config, package
 #   versions, sessionInfo, seed, git commit (if available), and station spans.

@@ -124,9 +124,11 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
   run_one <- function(cp) {
     res <- tryCatch(run_analysis(cp), error = function(e) e)
     if (inherits(res, "error"))
-      list(ok = FALSE, config = cp, site = NA, message = conditionMessage(res), ddf = NULL)
+      list(ok = FALSE, config = cp, site = NA, message = conditionMessage(res),
+           ddf = NULL, diag = NULL)
     else
-      list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok", ddf = res$ddf)
+      list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok",
+           ddf = res$ddf, diag = tryCatch(facility_diagnostics(res), error = function(e) NULL))
   }
 
   results <- if (cores > 1 && .Platform$OS.type != "windows")
@@ -143,10 +145,32 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
     utils::write.csv(do.call(rbind, all_ddf),
                      file.path(outb, "all_facilities_DDF.csv"), row.names = FALSE)
   utils::write.csv(status, file.path(outb, "batch_status.csv"), row.names = FALSE)
+
+  # Per-facility triage diagnostics: heterogeneity (H1) + chosen-distribution
+  # fit (|Z|), with a needs_review flag (H1 >= 2 or |Z| > 1.64). This is the
+  # fleet triage list (docs/PLAN.md sec. 12): review these before trusting a
+  # facility's numbers.
+  all_diag <- Filter(Negate(is.null), lapply(results, function(r) r$diag))
+  if (length(all_diag)) {
+    diag_df <- do.call(rbind, all_diag)
+    utils::write.csv(diag_df, file.path(outb, "batch_diagnostics.csv"), row.names = FALSE)
+    review <- diag_df[isTRUE_vec(diag_df$needs_review), , drop = FALSE]
+    message(sprintf("Diagnostics: %d/%d facility-durations flagged for review (H1>=2 or |Z|>1.64).",
+                    nrow(review), nrow(diag_df)))
+    if (nrow(review))
+      for (i in seq_len(nrow(review)))
+        message(sprintf("  REVIEW: %-16s %-4s  H1=%.2f  %s |Z|=%.2f",
+                        review$site[i], review$duration[i], review$H1[i],
+                        review$chosen_dist[i], review$chosen_absZ[i]))
+  }
+
   message(sprintf("\nBatch complete: %d ok, %d failed. See %s.",
                   sum(status$ok), sum(!status$ok), outb))
   invisible(status)
 }
+
+# isTRUE_vec(): vectorised isTRUE (NA/logical-safe) for row filtering.
+isTRUE_vec <- function(x) !is.na(x) & x
 
 # ---- CLI -------------------------------------------------------------------
 .invoked_as_main <- function(fname) {

@@ -71,8 +71,11 @@ If CRAN is restricted, see `docs/users_guide.md` §1 (GitHub CRAN mirrors +
    pipeline before wiring real GHCN data. (Offline results are SYNTHETIC — for
    machinery validation only, never engineering use.)
 5. **Full fleet:** `LMC_CORES=8 Rscript run_batch.R --manifest config/facilities_BOR.csv`.
-   Results collect in `outputs/batch/`. Triage any facility flagged
-   *heterogeneous* (H1 ≥ 2) or with chosen `|Z| > 1.64` for manual region revision.
+   Results collect in `outputs/batch/`. **The batch now auto-writes
+   `outputs/batch/batch_diagnostics.csv`** (one row per facility-duration with
+   H1, chosen distribution, `|Z|`, and a `needs_review` flag) and prints the
+   flagged list — triage the facilities flagged *heterogeneous* (H1 ≥ 2) or with
+   chosen `|Z| > 1.64` for manual region revision.
    Expected runtime: compute ~15–30 s/facility; wall-clock dominated by first-time
    GHCN downloads (cached + prefetched, so re-runs are fast).
 
