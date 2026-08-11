@@ -167,6 +167,23 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
         message(sprintf("  REVIEW: %-16s %-4s  H1=%.2f  %s |Z|=%.2f",
                         review$site[i], review$duration[i], review$H1[i],
                         review$chosen_dist[i], review$chosen_absZ[i]))
+
+    # Expert distribution-review worklist: automated runs AUTO-SELECT, but flag
+    # the distribution choices an expert should confirm (poor fit, or a close
+    # call vs the runner-up). Record decisions in config/distribution_review.csv
+    # to override on future runs. Facilities already carrying a recorded
+    # expert decision are shown as such.
+    if ("review_recommended" %in% names(diag_df)) {
+      rec <- diag_df[isTRUE_vec(diag_df$review_recommended), , drop = FALSE]
+      n_expert <- sum(diag_df$selection_source == "expert_review", na.rm = TRUE)
+      message(sprintf("Distribution selection: %d auto, %d expert-reviewed; %d recommended for expert review.",
+                      sum(diag_df$selection_source == "auto", na.rm = TRUE), n_expert, nrow(rec)))
+      if (nrow(rec))
+        for (i in seq_len(nrow(rec)))
+          message(sprintf("  DIST-REVIEW: %-16s %-4s  chose %s |Z|=%.2f (runner-up %s |Z|=%.2f, margin %.2f)",
+                          rec$site[i], rec$duration[i], rec$chosen_dist[i], rec$chosen_absZ[i],
+                          rec$runner_up[i], rec$runner_up_absZ[i], rec$z_margin[i]))
+    }
   }
 
   message(sprintf("\nBatch complete: %d ok, %d failed. See %s.",

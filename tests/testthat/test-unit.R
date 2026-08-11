@@ -78,3 +78,42 @@ test_that("enrich_elevations fills only missing elevations and no-ops offline", 
   man2 <- data.frame(latitude = 46, longitude = -114)
   expect_true("elevation_m" %in% names(enrich_elevations(man2, lookup = function(a, b) 1500)))
 })
+
+test_that("resolve_distribution: expert review > config override > auto", {
+  zt <- data.frame(dist = c("gev", "gno", "glo"), absZ = c(0.3, 0.9, 1.5),
+                   stringsAsFactors = FALSE)
+  # automatic: smallest |Z|
+  a <- resolve_distribution(zt, cfg = list(), site_id = "X01", duration = "72h", review = NULL)
+  expect_equal(a$chosen, "gev"); expect_equal(a$source, "auto")
+  # config override
+  c1 <- resolve_distribution(zt, cfg = list(distribution_override = "pe3"),
+                             site_id = "X01", duration = "72h", review = NULL)
+  expect_equal(c1$chosen, "pe3"); expect_equal(c1$source, "config_override")
+  # expert review wins for the matching facility+duration, over the config override
+  rev <- data.frame(facility_id = "X01", duration = "72h", distribution = "glo",
+                    reviewer = "R", stringsAsFactors = FALSE)
+  e <- resolve_distribution(zt, cfg = list(distribution_override = "pe3"),
+                            site_id = "X01", duration = "72h", review = rev)
+  expect_equal(e$chosen, "glo"); expect_equal(e$source, "expert_review")
+  # blank duration applies to all durations
+  revall <- data.frame(facility_id = "X01", duration = "", distribution = "gno",
+                       reviewer = "R", stringsAsFactors = FALSE)
+  expect_equal(resolve_distribution(zt, list(), "X01", "24h", revall)$chosen, "gno")
+  # non-matching facility falls back to auto
+  expect_equal(resolve_distribution(zt, list(), "OTHER", "72h", rev)$source, "auto")
+})
+
+test_that("load_distribution_review reads rows, skips comments, NULL when empty/absent", {
+  f <- tempfile(fileext = ".csv")
+  writeLines(c("# a comment", "facility_id,duration,distribution,reviewer,date,notes",
+               "COMO_DAM,72h,GLO,R,2026-01-01,note"), f)
+  rv <- load_distribution_review(f)
+  expect_equal(nrow(rv), 1)
+  expect_equal(rv$distribution, "glo")            # lower-cased
+  expect_equal(rv$facility_id, "COMO_DAM")
+  # header + comments only -> NULL (auto-select everywhere)
+  g <- tempfile(fileext = ".csv")
+  writeLines(c("# only comments", "facility_id,duration,distribution,reviewer,date,notes"), g)
+  expect_null(load_distribution_review(g))
+  expect_null(load_distribution_review(tempfile()))   # absent file
+})

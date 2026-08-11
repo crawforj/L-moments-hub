@@ -53,7 +53,8 @@ run_analysis <- function(config_path = "config/como.yml") {
     rd_final <- hom$regdata
     last_regdata <- rd_final
 
-    dsel <- step05_distribution(hom$tst, cfg)
+    dsel <- step05_distribution(hom$tst, cfg, duration_label = lab,
+                                review = cfg$distribution_review)
 
     used_ids  <- rd_final$name
     used_meta <- meta_all[match(used_ids, meta_all$station_id), ]

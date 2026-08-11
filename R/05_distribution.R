@@ -14,7 +14,7 @@
 #             (distribution_override) forces a specific choice.
 # =============================================================================
 
-step05_distribution <- function(tst, cfg) {
+step05_distribution <- function(tst, cfg, duration_label = NULL, review = NULL) {
   cand <- cfg$distributions
   Z <- tst$Z
   check_gof_reported(Z, cand)
@@ -28,15 +28,16 @@ step05_distribution <- function(tst, cfg) {
     stringsAsFactors = FALSE)
   table <- table[order(table$absZ), ]
 
-  if (!is.null(cfg$distribution_override)) {
-    chosen <- cfg$distribution_override
-    audit_log(sprintf("Distribution overridden by config: %s.", toupper(chosen)))
-  } else {
-    chosen <- table$dist[1]
-    audit_log(sprintf("Distribution selected: %s (|Z|=%.3f%s).",
-                      toupper(chosen), table$absZ[1],
-                      ifelse(table$acceptable[1], "", " — NOTE |Z|>1.64")))
-  }
+  # Precedence: expert review > config override > automatic (smallest |Z|).
+  # Automated runs (no review registry, no override) auto-select as before.
+  res <- resolve_distribution(table, cfg, cfg$site$id %||% "",
+                              duration_label %||% "", review)
+  chosen <- res$chosen
+  audit_log(sprintf("Distribution [%s]: %s via %s (|Z|=%.3f%s).",
+                    duration_label %||% "-", toupper(chosen), res$source,
+                    abs(Z[chosen]),
+                    ifelse(abs(Z[chosen]) <= 1.64, "", " - NOTE |Z|>1.64")))
   list(chosen = chosen, Z = Z, table = table,
-       acceptable = isTRUE(abs(Z[chosen]) <= 1.64))
+       acceptable = isTRUE(abs(Z[chosen]) <= 1.64),
+       source = res$source, reviewer = res$reviewer)
 }

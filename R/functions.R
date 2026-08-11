@@ -483,6 +483,57 @@ enrich_elevations <- function(manifest, lookup = elevatr_lookup) {
 }
 
 # ---------------------------------------------------------------------------
+# load_distribution_review(): read the optional EXPERT distribution-review
+# registry (config/distribution_review.csv). Each row records a reviewer's
+# chosen distribution for a facility (optionally a specific duration),
+# OVERRIDING the automatic |Z|-minimising selection. Returns NULL when the
+# file is absent (=> auto-select everywhere, the default for automated runs).
+#   Columns: facility_id, duration ("24h"/"72h"/blank=all), distribution,
+#            reviewer, date, notes.
+# ---------------------------------------------------------------------------
+load_distribution_review <- function(path) {
+  if (is.null(path) || !file.exists(path)) return(NULL)
+  df <- tryCatch(utils::read.csv(path, stringsAsFactors = FALSE, comment.char = "#"),
+                 error = function(e) NULL)
+  if (is.null(df) || !"facility_id" %in% names(df) || !nrow(df)) return(NULL)
+  if (!"duration" %in% names(df)) df$duration <- ""
+  if (!"distribution" %in% names(df)) df$distribution <- ""
+  if (!"reviewer" %in% names(df)) df$reviewer <- NA_character_
+  df$facility_id  <- trimws(as.character(df$facility_id))
+  df$duration     <- trimws(as.character(df$duration))
+  df$distribution <- tolower(trimws(as.character(df$distribution)))
+  df[nzchar(df$facility_id) & nzchar(df$distribution), , drop = FALSE]
+}
+
+# ---------------------------------------------------------------------------
+# resolve_distribution(): decide the regional distribution for one facility &
+# duration by PRECEDENCE — expert review > config override > automatic
+# (smallest |Z|). This is the single decision point behind the expert-review
+# step: automated runs (empty review registry, no config override) auto-select
+# exactly as before; a recorded expert decision wins when present.
+#   z_table : data.frame(dist, absZ, ...) sorted by absZ ascending (from step05)
+#   cfg     : configuration (may carry distribution_override)
+#   site_id, duration : keys to look up in `review`
+#   review  : the registry from load_distribution_review() (or NULL)
+#   -> list(chosen, source in {expert_review, config_override, auto}, reviewer)
+# ---------------------------------------------------------------------------
+resolve_distribution <- function(z_table, cfg, site_id, duration, review = NULL) {
+  auto <- z_table$dist[1]                       # smallest |Z|
+  if (!is.null(review) && nrow(review)) {
+    hit <- review[review$facility_id == site_id &
+                  (is.na(review$duration) | review$duration == "" |
+                   review$duration == duration), , drop = FALSE]
+    if (nrow(hit))
+      return(list(chosen = hit$distribution[1], source = "expert_review",
+                  reviewer = hit$reviewer[1] %||% NA_character_))
+  }
+  if (!is.null(cfg$distribution_override))
+    return(list(chosen = cfg$distribution_override, source = "config_override",
+                reviewer = NA_character_))
+  list(chosen = auto, source = "auto", reviewer = NA_character_)
+}
+
+# ---------------------------------------------------------------------------
 # facility_diagnostics(): one-row-per-duration triage summary from a
 # run_analysis() result. Surfaces the two things a fleet reviewer must check
 # per facility (H&W): region heterogeneity (H1) and goodness-of-fit of the
@@ -501,6 +552,17 @@ facility_diagnostics <- function(res) {
     absZ <- tryCatch(abs(as.numeric(pd$dist_sel$Z[[chosen]])), error = function(e) NA_real_)
     H1 <- suppressWarnings(as.numeric(pd$H[1]))
     acceptable <- isTRUE(pd$dist_sel$acceptable)
+    source <- pd$dist_sel$source %||% "auto"
+    # Runner-up = best-fitting candidate other than the chosen one; the |Z|
+    # margin to it says how "close" the automatic call was (a small margin means
+    # the choice is not clearly best and an expert should weigh the tail).
+    tbl <- pd$dist_sel$table
+    alt <- if (!is.null(tbl)) tbl[toupper(tbl$dist) != toupper(chosen), , drop = FALSE] else NULL
+    runner_up <- if (!is.null(alt) && nrow(alt)) toupper(alt$dist[1]) else NA_character_
+    runner_up_absZ <- if (!is.null(alt) && nrow(alt)) alt$absZ[1] else NA_real_
+    z_margin <- runner_up_absZ - absZ
+    review_recommended <- identical(source, "auto") &&
+      (!acceptable || (is.finite(z_margin) && z_margin < 0.5))
     data.frame(
       site        = res$cfg$site$name %||% NA_character_,
       site_id     = res$cfg$site$id %||% NA_character_,
@@ -511,6 +573,12 @@ facility_diagnostics <- function(res) {
       chosen_dist = toupper(chosen),
       chosen_absZ = round(absZ, 3),
       Z_acceptable = acceptable,
+      selection_source = source,
+      reviewer    = pd$dist_sel$reviewer %||% NA_character_,
+      runner_up   = runner_up,
+      runner_up_absZ = round(runner_up_absZ, 3),
+      z_margin    = round(z_margin, 3),
+      review_recommended = review_recommended,
       needs_review = (isTRUE(H1 >= 2) || !acceptable),
       stringsAsFactors = FALSE)
   })
