@@ -3,8 +3,19 @@
 Regional precipitation-frequency analysis by **L-moments** (Hosking &amp; Wallis,
 1997), implemented in R. Primary test site: **Como Dam**, Bitterroot Valley,
 Montana. The pipeline is **portable** — point it at a different config to analyse
-any other basin, and it is designed to scale to the full Bureau of Reclamation
-fleet (`run_batch.R`).
+any other basin.
+
+**Project scope.** Validated first on Como, then run across the **308-dam Bureau
+of Reclamation fleet** (`run_batch.R`), and now scaling to the **full National
+Inventory of Dams — 73,303 dams** (`run_nid_tranche.R`, a resumable driver that
+processes the fleet in nightly tranches, largest dams first, recording progress
+in a committed ledger under `data/nid_progress/` so runs continue where the last
+stopped). Intended for hand-off to Reclamation flood-hydrology experts as a
+**research/triage** tool: every input (GHCN weather, the NID inventory) is
+**UNVERIFIED** and requires expert review before engineering use — see
+[`DATA_SOURCES.md`](DATA_SOURCES.md). How the method is verified against the
+Hosking &amp; Wallis textbook and an independent hand-calculation is documented in
+[`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 ## What it produces
 

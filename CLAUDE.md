@@ -8,8 +8,25 @@ provenance and the **data-review requirements**.
 
 Regional precipitation-frequency analysis by **L-moments** (Hosking & Wallis
 1997), in R. Primary test site **Como Dam, Montana**; portable to any basin via
-one YAML config, and built to scale to the **Bureau of Reclamation fleet**
-(`run_batch.R`, `config/facilities_BOR.csv` — 308 BOR dams).
+one YAML config. Scaled from Como → the **308-dam Bureau of Reclamation fleet**
+(`run_batch.R`, `config/facilities_BOR.csv`) → the **full National Inventory of
+Dams, 73,303 dams** (`run_nid_tranche.R`, `config/nid_manifest.csv`). Being
+handed off to Reclamation flood-hydrology experts as a research/triage tool.
+
+### NID full-fleet run (resumable, nightly)
+
+`run_nid_tranche.R` processes the NID in tranches (largest dams first), skipping
+any facility already in the committed ledger `data/nid_progress/completed_ids.csv`
+and folding results into cumulative CSVs there + extending the committed GHCN
+cache. It is **resumable across ephemeral sessions**: a nightly cron
+(`create_trigger`, fires ~07:00 UTC) spins up a fresh session, rebuilds R per the
+env note below, loops tranches committing after each, and pushes to
+`claude/autonomous-dev-qflag-elevation`. Env knobs: `LMC_TRANCHE` (default 400),
+`LMC_CORES`. Do a small batch with `LMC_TRANCHE=150 Rscript run_nid_tranche.R`.
+
+**Git LFS note:** the growing GHCN cache is committed as **regular** Git objects,
+not LFS — this environment blocks `lfs.github.com`. Convert later from an
+unrestricted env (see `DATA_SOURCES.md` §2b). Do not attempt LFS here.
 
 ## Current state (working & pushed)
 
@@ -22,7 +39,11 @@ one YAML config, and built to scale to the **Bureau of Reclamation fleet**
   an HTML audit report, and a provenance manifest.
 - **Validated:** `Rscript run_golden.R` → ALL PASS (recovers a known GEV growth
   curve; auto-selects GEV; Cascades benchmark anchor). `Rscript run_tests.R` →
-  58/58. `Rscript run_analysis.R config/como.yml` produces all deliverables.
+  ALL PASS. `Rscript validate_reference.R` → ALL PASS (reproduces the Hosking &
+  Wallis Appalach/Cascades textbook findings, and confirms the index-flood
+  scaling equals an independent base-`lmom` hand-calc to 0.000%). See
+  `docs/VALIDATION.md`. `Rscript run_analysis.R config/como.yml` produces all
+  deliverables.
 - GHCN inventory caching + candidate discovery, parallel batch (`LMC_CORES`), and
   a cross-facility prefetch are implemented.
 - **Como has been run on REAL GHCN data** (not just synthetic): the default
