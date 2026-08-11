@@ -56,6 +56,12 @@ gen_configs_from_manifest <- function(manifest_csv,
     cfg$site$elevation_m <- m$elevation_m[i]
     if (!is.null(m$search_radius_km) && !is.na(m$search_radius_km[i]))
       cfg$region$search_radius_km <- m$search_radius_km[i]
+    # Optional per-facility region-method override (circular | cluster), so a
+    # single manifest can run mixed methods across the fleet (e.g. cluster for
+    # CONUS dams, circular fallback for AK/HI/territories) — see
+    # R/region_methods.R. Absent column/blank cell -> template default.
+    if (!is.null(m$region_method) && !is.na(m$region_method[i]) && nzchar(m$region_method[i]))
+      cfg$region$method <- m$region_method[i]
     p <- file.path(out_dir, paste0(m$facility_id[i], ".yml"))
     yaml::write_yaml(cfg, p)
     paths <- c(paths, p)

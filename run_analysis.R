@@ -21,7 +21,7 @@ suppressWarnings(suppressMessages({
   if (is.na(root) || root == "") root <- "."
 }))
 options(lmc.root = root)
-for (f in c("functions.R", "checks.R", "00_setup.R",
+for (f in c("functions.R", "region_methods.R", "checks.R", "00_setup.R",
             "01_data_acquisition.R", "02_lmoments.R", "03_screening.R",
             "04_homogeneity.R", "05_distribution.R", "06_estimation.R",
             "07_uncertainty.R", "08_mapping.R", "09_plots.R",

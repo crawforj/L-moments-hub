@@ -23,6 +23,11 @@ radius_circle <- function(lat0, lon0, radius_km, npts = 180) {
 
 step08_map <- function(used_meta, removed_meta, cfg, out_dir) {
   site <- cfg$site
+  method <- cfg$region$method %||% "circular"
+  # search_radius_km is retained as a universal outer bound for every method
+  # (see config schema in docs/PLAN.md), so the circle is always drawable —
+  # but it only means "the candidate boundary" for the circular method itself;
+  # for other methods it's shown as context, not the actual selection rule.
   circ <- radius_circle(site$latitude, site$longitude, cfg$region$search_radius_km)
 
   pts <- rbind(
@@ -49,7 +54,8 @@ step08_map <- function(used_meta, removed_meta, cfg, out_dir) {
         ggplot2::aes(long, lat, group = group),
         fill = NA, colour = "grey55", linewidth = 0.4) +
       ggplot2::geom_path(data = circ, ggplot2::aes(lon, lat),
-        colour = "steelblue", linetype = "dashed", linewidth = 0.6) +
+        colour = "steelblue", linetype = "dashed", linewidth = 0.6,
+        alpha = if (method == "circular") 1 else 0.35) +
       ggplot2::geom_point(data = pts,
         ggplot2::aes(lon, lat, colour = status, shape = status),
         size = 2.2, stroke = 0.8) +
@@ -62,9 +68,13 @@ step08_map <- function(used_meta, removed_meta, cfg, out_dir) {
       ggplot2::coord_quickmap(xlim = xr + c(-pad_x, pad_x),
                               ylim = yr + c(-pad_y, pad_y)) +
       ggplot2::labs(
-        title = paste0("Analysis region — ", site$name),
-        subtitle = sprintf("%d stations used, %d removed; dashed = %g km search radius",
-                           nrow(used_meta), nrow(removed_meta), cfg$region$search_radius_km),
+        title = paste0("Analysis region — ", site$name, " (region.method: ", method, ")"),
+        subtitle = if (method == "circular")
+          sprintf("%d stations used, %d removed; dashed = %g km search radius",
+                  nrow(used_meta), nrow(removed_meta), cfg$region$search_radius_km)
+        else
+          sprintf("%d stations used, %d removed; faint dashed = %g km outer bound (not the selection rule for '%s')",
+                  nrow(used_meta), nrow(removed_meta), cfg$region$search_radius_km, method),
         x = "Longitude", y = "Latitude", colour = "Station", shape = "Station") +
       ggplot2::theme_minimal(base_size = 11)
     ggplot2::ggsave(png_path, g, width = 8, height = 7, dpi = 150)
@@ -72,8 +82,8 @@ step08_map <- function(used_meta, removed_meta, cfg, out_dir) {
   } else {
     grDevices::png(png_path, width = 1200, height = 1050, res = 150)
     plot(pts$lon, pts$lat, type = "n", xlab = "Longitude", ylab = "Latitude",
-         main = paste0("Analysis region — ", site$name), asp = 1)
-    lines(circ$lon, circ$lat, col = "steelblue", lty = 2)
+         main = paste0("Analysis region — ", site$name, " (", method, ")"), asp = 1)
+    lines(circ$lon, circ$lat, col = if (method == "circular") "steelblue" else "grey75", lty = 2)
     used_i <- pts$status == "used"
     points(pts$lon[used_i], pts$lat[used_i], pch = 16, col = "#1b7837")
     points(pts$lon[!used_i], pts$lat[!used_i], pch = 4, col = "#b2182b")
