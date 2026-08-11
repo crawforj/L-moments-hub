@@ -47,6 +47,15 @@ For any run, the reviewer works from three things:
       candidate count (checked automatically; confirm the reasons are sensible).
 - [ ] The chosen distribution has `|Z| ≤ 1.64`; the growth-curve plot shows the
       data are consistent with it and you accept the tail behaviour at 10,000 yr.
+- [ ] **Distribution selection reviewed.** Automated runs auto-select the
+      smallest-`|Z|` distribution; `outputs/batch/batch_diagnostics.csv` lists,
+      per facility-duration, the `selection_source` (auto / expert_review /
+      config_override), the runner-up and the `z_margin`, and flags
+      `review_recommended` (poor fit or a close call). For any flagged facility,
+      an expert should weigh the candidates' 10,000-yr tail behaviour and, if
+      overriding the automatic pick, record the decision in
+      `config/distribution_review.csv` (`facility_id, duration, distribution,
+      reviewer, date, notes`) so it is applied and audit-logged on future runs.
 - [ ] The 10,000-yr depths and their uncertainty band are reasonable; the band
       width is acknowledged in any downstream use.
 - [ ] **Data provenance is real** (GHCN, not the synthetic demo) for any result

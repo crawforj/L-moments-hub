@@ -102,6 +102,17 @@ maxima (`ams.csv` with `station_id,year,value`) into `local_dir` and set
   refinement step.
 - **Distribution choice** — smallest `|Z|` (≤ 1.64 acceptable). The growth-curve
   plot shows how the candidates diverge in the tail — important at 10,000 yr.
+- **Expert distribution review (optional override).** Automated runs
+  **auto-select** the smallest-`|Z|` distribution. To override that with a
+  reviewer's judgement for a facility, add a row to
+  `config/distribution_review.csv` (`facility_id, duration, distribution,
+  reviewer, date, notes`; blank `duration` = all durations). Precedence is
+  **expert review > `distribution_override` in the config > automatic**. The
+  batch worklist (`outputs/batch/batch_diagnostics.csv` and the run log) shows
+  `selection_source`, the runner-up, the `z_margin`, and a `review_recommended`
+  flag for auto picks that fit poorly or are a close call — the shortlist an
+  expert should look at first. Leave the registry empty (header only) to
+  auto-select everywhere.
 - **Quantiles** — `depth_mm` with `depth_lo/hi` (Monte-Carlo band) and `rel_rmse`.
   The band widens at long return periods; treat the 10,000-yr value as uncertain.
 
