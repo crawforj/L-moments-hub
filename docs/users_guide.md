@@ -110,7 +110,21 @@ Copy `config/como.yml`, edit the `site` block, run `run_analysis.R config/yours.
 For many facilities, list them in `config/facilities.csv` (`facility_id, name,
 latitude, longitude, elevation_m[, search_radius_km]`) and run
 `Rscript run_batch.R --manifest config/facilities.csv`. Results are collected in
-`outputs/batch/`.
+`outputs/batch/` (`all_facilities_DDF.csv` + `batch_status.csv`).
+
+**Parallelism.** `run_batch.R` fans out across cores with `parallel::mclapply`
+(Unix/macOS; Windows runs serially). Control the core count with the `LMC_CORES`
+environment variable, e.g. `LMC_CORES=8 Rscript run_batch.R --manifest ...`.
+Per-facility errors are captured in `batch_status.csv` without aborting the batch.
+
+**GHCN caching.** In `data.source: "ghcn"` mode the global station inventory
+(`ghcnd-stations.txt` + `ghcnd-inventory.txt`) is downloaded once and cached
+(parsed to `data/raw/ghcn/inventory_prcp.rds`); candidate stations are then chosen
+from it by radius + elevation band + record length (capped at `region.max_stations`,
+default 60). Per-station daily files are cached under `data/raw/ghcn/by_station/`,
+so nearby facilities reuse downloads. The batch pre-warms the shared inventory
+cache once before fanning out. Point `data.ghcn_cache_dir` at a shared location to
+reuse the cache across runs.
 
 ---
 

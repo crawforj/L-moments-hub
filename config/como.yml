@@ -20,6 +20,7 @@ region:
   elevation_band_m: [600, 2600] # keep stations within this elevation range
   min_record_years: 20          # drop stations with fewer valid annual maxima
   min_year_completeness: 0.90   # fraction of in-season days required per year
+  max_stations: 60              # cap nearest GHCN stations pulled (bounds download)
 
 # Precipitation durations to analyse.
 # GHCN-Daily gives calendar-day totals, so a d-day running total approximates
@@ -59,5 +60,6 @@ data:
   local_format: "daily"         # "daily" (date,prcp per station) | "ams"
   local_dir: "data/external"    # where local station files live
   ghcn_base: "https://www.ncei.noaa.gov/pub/data/ghcn/daily"
+  ghcn_cache_dir: "data/raw/ghcn"  # cached inventory + per-station files (shared across facilities)
 
 seed: 20260811                  # RNG seed -> reproducible screening/simulation

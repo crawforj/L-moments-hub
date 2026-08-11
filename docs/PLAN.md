@@ -334,3 +334,10 @@ region homogeneity (dense vs sparse gauge networks differ across the West).
 and review each region map + homogeneity log; (3) tune defaults (search radius,
 elevation band, season) if needed; (4) run the full fleet, then triage any
 facility flagged *heterogeneous* or with `|Z| > 1.64` for manual region revision.
+
+> **Status update:** the two runtime mitigations above are now **implemented** —
+> `run_batch.R` parallelises across cores via `parallel::mclapply` (set
+> `LMC_CORES`), and GHCN mode caches the global inventory once (pre-warmed before
+> fan-out) plus per-station daily files under `data/raw/ghcn/`, reused across
+> nearby facilities. Candidate stations are discovered directly from the GHCN
+> inventory by radius/elevation/record-length (capped at `region.max_stations`).

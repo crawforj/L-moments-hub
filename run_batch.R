@@ -25,6 +25,7 @@ root <- tryCatch(dirname(sub("--file=", "",
   grep("--file=", commandArgs(FALSE), value = TRUE)[1])), error = function(e) ".")
 if (is.na(root) || root == "") root <- "."
 source(file.path(root, "run_analysis.R"))
+suppressMessages(library(parallel))                 # base R; mclapply fan-out
 
 # gen_configs_from_manifest(): write one YAML per facility from a manifest CSV,
 # inheriting all non-site defaults from a template config (config/como.yml).
@@ -52,25 +53,60 @@ gen_configs_from_manifest <- function(manifest_csv,
   paths
 }
 
-run_batch <- function(config_paths) {
-  outb <- file.path(root, "outputs", "batch")
-  dir.create(outb, showWarnings = FALSE, recursive = TRUE)
-  status <- data.frame(config = character(0), site = character(0),
-                       ok = logical(0), message = character(0),
-                       stringsAsFactors = FALSE)
-  all_ddf <- list()
+# prewarm_ghcn_cache(): download the global GHCN inventory ONCE (cached) before
+# fanning out, so parallel workers reuse it instead of each downloading it.
+prewarm_ghcn_cache <- function(config_paths) {
   for (cp in config_paths) {
-    res <- tryCatch(run_analysis(cp), error = function(e) e)
-    if (inherits(res, "error")) {
-      status <- rbind(status, data.frame(config = cp, site = NA,
-        ok = FALSE, message = conditionMessage(res)))
-      message("FACILITY FAILED: ", cp, " — ", conditionMessage(res))
-    } else {
-      all_ddf[[cp]] <- res$ddf
-      status <- rbind(status, data.frame(config = cp, site = res$cfg$site$name,
-        ok = TRUE, message = "ok"))
+    cfg <- tryCatch(load_config(cp), error = function(e) NULL)
+    if (!is.null(cfg) && identical(cfg$data$source, "ghcn")) {
+      message("Pre-warming shared GHCN inventory cache from ", basename(cp), " ...")
+      inv <- tryCatch(ghcn_load_inventory(cfg), error = function(e) NULL)
+      if (is.null(inv))
+        message("  (inventory download unavailable; facilities will fall back per config)")
+      else message(sprintf("  inventory ready: %d PRCP stations cached.", nrow(inv)))
+      return(invisible(TRUE))
     }
   }
+  invisible(FALSE)
+}
+
+# run_batch(): run many facilities, in parallel where possible. Each facility
+# writes site-id-keyed outputs (no collisions). Results and a per-facility
+# success/failure status are collected for audit.
+run_batch <- function(config_paths, cores = NULL) {
+  outb <- file.path(root, "outputs", "batch")
+  dir.create(outb, showWarnings = FALSE, recursive = TRUE)
+  prewarm_ghcn_cache(config_paths)                 # shared cache before fan-out
+
+  if (is.null(cores)) {
+    env <- Sys.getenv("LMC_CORES", "")
+    cores <- if (nzchar(env)) as.integer(env)
+             else max(1L, min(parallel::detectCores() - 1L, length(config_paths)))
+  }
+  cores <- max(1L, cores)
+  message(sprintf("Running %d facilities on %d core(s)%s.",
+                  length(config_paths), cores,
+                  if (.Platform$OS.type == "windows" && cores > 1)
+                    " (Windows: serial fallback)" else ""))
+
+  run_one <- function(cp) {
+    res <- tryCatch(run_analysis(cp), error = function(e) e)
+    if (inherits(res, "error"))
+      list(ok = FALSE, config = cp, site = NA, message = conditionMessage(res), ddf = NULL)
+    else
+      list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok", ddf = res$ddf)
+  }
+
+  results <- if (cores > 1 && .Platform$OS.type != "windows")
+    parallel::mclapply(config_paths, run_one, mc.cores = cores, mc.preschedule = FALSE)
+  else lapply(config_paths, run_one)
+
+  status <- do.call(rbind, lapply(results, function(r)
+    data.frame(config = r$config, site = r$site %||% NA, ok = r$ok,
+               message = r$message, stringsAsFactors = FALSE)))
+  all_ddf <- Filter(Negate(is.null), lapply(results, function(r) r$ddf))
+  for (r in results) if (!r$ok) message("FACILITY FAILED: ", r$config, " -- ", r$message)
+
   if (length(all_ddf))
     utils::write.csv(do.call(rbind, all_ddf),
                      file.path(outb, "all_facilities_DDF.csv"), row.names = FALSE)

@@ -148,22 +148,99 @@ read_local_ams <- function(dir) {
 }
 
 # ---------------------------------------------------------------------------
-# download_ghcn_daily(): attempt to pull GHCN-Daily for one station.
-#   Returns data.frame(date,prcp) on success or NULL on any failure, so the
-#   caller can fall back to local data. Kept dependency-free (base download).
-#   NOTE: requires network access to NOAA NCEI; blocked in some sandboxes.
+# GHCN-Daily inventory + caching helpers
+#
+# The global station metadata (ghcnd-stations.txt) and per-element period of
+# record (ghcnd-inventory.txt) are downloaded ONCE and cached (parsed to an RDS)
+# so that many facilities reuse them. Per-station daily files are also cached on
+# disk so nearby facilities share downloads. All requires network to NOAA NCEI.
 # ---------------------------------------------------------------------------
-download_ghcn_daily <- function(station_id, ghcn_base) {
-  url <- sprintf("%s/by_station/%s.csv.gz", ghcn_base, station_id)
-  tmp <- tempfile(fileext = ".csv.gz")
+
+ghcn_cache_dir <- function(cfg)
+  cfg$data$ghcn_cache_dir %||% file.path(getOption("lmc.root", "."), "data", "raw", "ghcn")
+
+# parse_ghcn_stations(): fixed-width ghcnd-stations.txt -> data.frame.
+parse_ghcn_stations <- function(path) {
+  ln <- readLines(path, warn = FALSE)
+  data.frame(
+    station_id = trimws(substr(ln, 1, 11)),
+    lat        = as.numeric(substr(ln, 13, 20)),
+    lon        = as.numeric(substr(ln, 22, 30)),
+    elev_m     = suppressWarnings(as.numeric(substr(ln, 32, 37))),
+    name       = trimws(substr(ln, 42, 71)),
+    stringsAsFactors = FALSE)
+}
+
+# parse_ghcn_inventory(): fixed-width ghcnd-inventory.txt -> data.frame.
+parse_ghcn_inventory <- function(path) {
+  ln <- readLines(path, warn = FALSE)
+  data.frame(
+    station_id = trimws(substr(ln, 1, 11)),
+    element    = trimws(substr(ln, 32, 35)),
+    first_year = suppressWarnings(as.integer(substr(ln, 37, 40))),
+    last_year  = suppressWarnings(as.integer(substr(ln, 42, 45))),
+    stringsAsFactors = FALSE)
+}
+
+# ghcn_load_inventory(): download (once, cached) and return the merged PRCP
+# station inventory: station_id, name, lat, lon, elev_m, first_year, last_year,
+# n_years_avail. Returns NULL if the download fails (caller falls back).
+ghcn_load_inventory <- function(cfg, refresh = FALSE) {
+  cache <- ghcn_cache_dir(cfg)
+  dir.create(cache, showWarnings = FALSE, recursive = TRUE)
+  rds <- file.path(cache, "inventory_prcp.rds")
+  if (!refresh && file.exists(rds)) return(readRDS(rds))
+  base <- cfg$data$ghcn_base
+  sp <- file.path(cache, "ghcnd-stations.txt")
+  iv <- file.path(cache, "ghcnd-inventory.txt")
   ok <- tryCatch({
-    utils::download.file(url, tmp, quiet = TRUE, mode = "wb"); TRUE
+    if (!file.exists(sp)) utils::download.file(paste0(base, "/ghcnd-stations.txt"),  sp, quiet = TRUE)
+    if (!file.exists(iv)) utils::download.file(paste0(base, "/ghcnd-inventory.txt"), iv, quiet = TRUE)
+    file.exists(sp) && file.exists(iv) && file.size(sp) > 0 && file.size(iv) > 0
   }, error = function(e) FALSE, warning = function(w) FALSE)
-  if (!ok || !file.exists(tmp) || file.size(tmp) == 0) return(NULL)
-  d <- tryCatch(utils::read.csv(gzfile(tmp), header = FALSE,
-                                stringsAsFactors = FALSE),
+  if (!ok) return(NULL)
+  stations <- parse_ghcn_stations(sp)
+  inv <- parse_ghcn_inventory(iv)
+  prcp <- inv[inv$element == "PRCP", c("station_id", "first_year", "last_year")]
+  merged <- merge(stations, prcp, by = "station_id")
+  merged$n_years_avail <- merged$last_year - merged$first_year + 1
+  saveRDS(merged, rds)
+  merged
+}
+
+# ghcn_candidates(): select candidate PRCP stations near the site from the
+# inventory (radius + elevation band + minimum years of record), capped at the
+# nearest region$max_stations to bound the download volume.
+ghcn_candidates <- function(inv, cfg) {
+  inv$distance_km <- haversine_km(cfg$site$latitude, cfg$site$longitude,
+                                  inv$lat, inv$lon)
+  band <- cfg$region$elevation_band_m
+  keep <- inv$distance_km <= cfg$region$search_radius_km &
+          !is.na(inv$elev_m) & inv$elev_m >= band[1] & inv$elev_m <= band[2] &
+          (inv$n_years_avail >= cfg$region$min_record_years)
+  cand <- inv[keep, ]
+  cand <- cand[order(cand$distance_km), ]
+  max_st <- cfg$region$max_stations %||% 60L
+  if (nrow(cand) > max_st) cand <- cand[seq_len(max_st), ]
+  cand[, c("station_id", "name", "lat", "lon", "elev_m")]
+}
+
+# download_ghcn_daily(): pull GHCN-Daily for one station, cached on disk.
+#   Returns data.frame(date,prcp) or NULL on failure. Cached .csv.gz is reused.
+download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL) {
+  gz <- if (!is.null(cache_dir)) {
+    dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
+    file.path(cache_dir, paste0(station_id, ".csv.gz"))
+  } else tempfile(fileext = ".csv.gz")
+  if (is.null(cache_dir) || !file.exists(gz) || file.size(gz) == 0) {
+    url <- sprintf("%s/by_station/%s.csv.gz", ghcn_base, station_id)
+    ok <- tryCatch({ utils::download.file(url, gz, quiet = TRUE, mode = "wb"); TRUE },
+                   error = function(e) FALSE, warning = function(w) FALSE)
+    if (!ok || !file.exists(gz) || file.size(gz) == 0) return(NULL)
+  }
+  d <- tryCatch(utils::read.csv(gzfile(gz), header = FALSE, stringsAsFactors = FALSE),
                 error = function(e) NULL)
-  if (is.null(d)) return(NULL)
+  if (is.null(d) || !nrow(d)) return(NULL)
   # GHCN by_station schema: ID, YYYYMMDD, ELEMENT, VALUE(tenths mm), ...
   d <- d[d[[3]] == "PRCP", , drop = FALSE]
   if (!nrow(d)) return(NULL)
@@ -178,17 +255,18 @@ download_ghcn_daily <- function(station_id, ghcn_base) {
 # ---------------------------------------------------------------------------
 acquire_station_data <- function(cfg) {
   if (identical(cfg$data$source, "ghcn")) {
-    inv <- tryCatch(read_local_daily(cfg$data$local_dir)$meta,
-                    error = function(e) NULL)
-    got <- list(meta = NULL, daily = list())
+    inv <- tryCatch(ghcn_load_inventory(cfg), error = function(e) NULL)
     if (!is.null(inv)) {
-      for (sid in inv$station_id) {
-        dd <- download_ghcn_daily(sid, cfg$data$ghcn_base)
+      meta <- ghcn_candidates(inv, cfg)          # nearby PRCP stations from inventory
+      cache <- file.path(ghcn_cache_dir(cfg), "by_station")
+      got <- list(meta = NULL, daily = list())
+      for (sid in meta$station_id) {
+        dd <- download_ghcn_daily(sid, cfg$data$ghcn_base, cache_dir = cache)
         if (!is.null(dd)) got$daily[[sid]] <- dd
       }
       if (length(got$daily)) {
-        got$meta <- inv[inv$station_id %in% names(got$daily), ]
-        message("GHCN download succeeded for ", length(got$daily), " stations.")
+        got$meta <- meta[meta$station_id %in% names(got$daily), ]
+        message("GHCN: ", length(got$daily), " stations acquired (cache ", cache, ").")
         return(got)
       }
     }
