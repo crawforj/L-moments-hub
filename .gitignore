@@ -21,3 +21,6 @@ config/facilities/
 
 # NOTE: golden/ IS tracked on purpose — it is the frozen known-answer dataset
 # and reference used by run_golden.R and the regression test.
+
+# testthat failure artifact (regenerated; not tracked)
+tests/testthat/testthat-problems.rds
