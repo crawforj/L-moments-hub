@@ -62,11 +62,14 @@ Rscript run_analysis.R config/mybasin.yml           # one basin
 Rscript run_batch.R --manifest config/facilities.csv # many facilities
 ```
 
-> **Data note.** This environment cannot reach NOAA NCEI or CRAN, so the bundled
-> demo run uses **synthetic** data (clearly labelled) and packages are built from
-> the public CRAN GitHub mirrors. On a networked machine, set `data.source: "ghcn"`
-> for real observations. **Synthetic demo results are not valid for engineering
-> decisions.**
+> **⚠️ Data review required.** Both the **weather source** (GHCN-Daily) and the
+> **dam inventory** (`config/facilities_BOR.csv` — 308 BOR dams, coordinates from
+> a third-party ~2013 NID mirror, no ground elevations) are **UNVERIFIED** and
+> must be reviewed before any engineering use — see **`DATA_SOURCES.md`**.
+> This sandbox also cannot reach NOAA NCEI or CRAN, so demo runs use **synthetic**
+> data (clearly labelled) and packages are built from the public CRAN GitHub
+> mirrors. On a networked machine set `data.source: "ghcn"` for real observations.
+> **Synthetic or unverified-inventory results are not valid for engineering decisions.**
 
 See **`docs/PLAN.md`** for the full design, **`docs/users_guide.md`** to run it,
 and **`docs/audit_guide.md`** for the reviewer sign-off checklist.

@@ -33,6 +33,12 @@ gen_configs_from_manifest <- function(manifest_csv,
                                       template = file.path(root, "config", "como.yml"),
                                       out_dir = file.path(root, "config", "facilities")) {
   dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+  message("\n=========================== DATA REVIEW REQUIRED ===========================\n",
+          " Weather source (GHCN-Daily) AND the dam inventory (facility coordinates,\n",
+          " ownership, elevations) are UNVERIFIED and must be reviewed before any\n",
+          " engineering use. The bundled BOR manifest derives from a third-party NID\n",
+          " mirror (vintage ~2013) and carries NO ground elevations. See DATA_SOURCES.md.\n",
+          "============================================================================\n")
   m <- utils::read.csv(manifest_csv, stringsAsFactors = FALSE)
   tmpl <- yaml::read_yaml(template)
   paths <- character(0)
@@ -70,13 +76,38 @@ prewarm_ghcn_cache <- function(config_paths) {
   invisible(FALSE)
 }
 
+# prefetch_all_stations(): download the UNION of candidate stations across all
+# facilities up front (in parallel), so the per-facility workers do zero network
+# I/O. No-op when GHCN is unreachable (workers then fall back per config).
+prefetch_all_stations <- function(config_paths, cores) {
+  cfgs <- Filter(Negate(is.null), lapply(config_paths, function(cp)
+    tryCatch(load_config(cp), error = function(e) NULL)))
+  ghcn_cfgs <- Filter(function(c) identical(c$data$source, "ghcn"), cfgs)
+  if (!length(ghcn_cfgs)) return(invisible(0L))
+  inv <- tryCatch(ghcn_load_inventory(ghcn_cfgs[[1]]), error = function(e) NULL)
+  if (is.null(inv)) { message("Prefetch skipped (inventory unavailable)."); return(invisible(0L)) }
+  ids <- unique(unlist(lapply(ghcn_cfgs, function(c)
+    ghcn_candidates(inv, c)$station_id)))
+  cache <- file.path(ghcn_cache_dir(ghcn_cfgs[[1]]), "by_station")
+  base  <- ghcn_cfgs[[1]]$data$ghcn_base
+  message(sprintf("Prefetching %d unique stations across %d facilities on %d core(s) ...",
+                  length(ids), length(ghcn_cfgs), cores))
+  dl <- function(sid) { !is.null(download_ghcn_daily(sid, base, cache_dir = cache)) }
+  got <- if (cores > 1 && .Platform$OS.type != "windows")
+    unlist(parallel::mclapply(ids, dl, mc.cores = cores))
+  else vapply(ids, dl, logical(1))
+  message(sprintf("Prefetch complete: %d/%d stations cached under %s.",
+                  sum(got), length(ids), cache))
+  invisible(sum(got))
+}
+
 # run_batch(): run many facilities, in parallel where possible. Each facility
 # writes site-id-keyed outputs (no collisions). Results and a per-facility
 # success/failure status are collected for audit.
-run_batch <- function(config_paths, cores = NULL) {
+run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
   outb <- file.path(root, "outputs", "batch")
   dir.create(outb, showWarnings = FALSE, recursive = TRUE)
-  prewarm_ghcn_cache(config_paths)                 # shared cache before fan-out
+  prewarm_ghcn_cache(config_paths)                 # shared inventory cache
 
   if (is.null(cores)) {
     env <- Sys.getenv("LMC_CORES", "")
@@ -84,6 +115,7 @@ run_batch <- function(config_paths, cores = NULL) {
              else max(1L, min(parallel::detectCores() - 1L, length(config_paths)))
   }
   cores <- max(1L, cores)
+  if (isTRUE(prefetch)) prefetch_all_stations(config_paths, cores)   # workers do zero network I/O
   message(sprintf("Running %d facilities on %d core(s)%s.",
                   length(config_paths), cores,
                   if (.Platform$OS.type == "windows" && cores > 1)
