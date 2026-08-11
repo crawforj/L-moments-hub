@@ -55,10 +55,14 @@ If CRAN is restricted, see `docs/users_guide.md` §1 (GitHub CRAN mirrors +
      `index_flood.method: "nearest"` so results don't depend on site elevation.
    - Consider enabling GHCN quality-flag (QFLAG) screening in
      `R/01_data_acquisition.R` / `build_ams_from_daily`.
-4. **Pilot batch** (5–10 diverse facilities): create a small manifest subset and
-   run `LMC_CORES=8 Rscript run_batch.R --manifest config/pilot.csv`. Review each
+4. **Pilot batch** — a ready-made 8-dam manifest is provided in
+   **`config/pilot.csv`** (Grand Coulee, Hungry Horse, Shasta, Hoover, Glen Canyon,
+   Flaming Gorge, Elephant Butte, Owyhee — spanning Pacific NW, California, desert
+   Southwest, and Rocky Mountain regimes). Run
+   `LMC_CORES=8 Rscript run_batch.R --manifest config/pilot.csv`, then review each
    region map and homogeneity history; tune `search_radius_km`, `elevation_band_m`,
-   and `season` as needed.
+   and `season` as needed. (Elevations are blank pending DEM enrichment; index-flood
+   falls back to the regional mean until then, or set `index_flood.method: "nearest"`.)
 5. **Full fleet:** `LMC_CORES=8 Rscript run_batch.R --manifest config/facilities_BOR.csv`.
    Results collect in `outputs/batch/`. Triage any facility flagged
    *heterogeneous* (H1 ≥ 2) or with chosen `|Z| > 1.64` for manual region revision.
