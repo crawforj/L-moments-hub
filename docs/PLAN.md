@@ -69,9 +69,13 @@ follows the reference method rather than re-deriving it.
 - **Durations:** 24-hr → annual-maximum **1-day** total; 72-hr →
   annual-maximum running **3-day** total.
 - **Seasonal constraint (configurable):** annual maxima can be restricted to a
-  month window via `config$season = {start_month, end_month}`, **default
-  April–July** (spring snowmelt / rain-on-snow flood season for the Bitterroot).
-  Set the window to Jan–Dec to use the full calendar year. Seasonal maxima are
+  month window via `config$season = {start_month, end_month}`. **The default is
+  the full calendar year (1–12)** — the true annual maximum, which is what a
+  precipitation-frequency analysis for spillway design needs (the controlling
+  extreme storm in western Montana is often a late-summer cloudburst or fall
+  rain-on-snow event, outside spring). Restrict to a season (e.g. April–July for
+  the Bitterroot snowmelt season) ONLY for a season-specific study; it biases the
+  precipitation-frequency estimates low. Seasonal maxima are
   extracted per water/calendar year within the window before L-moment
   computation; the completeness gate is applied to the in-season days only.
 - **Fixed-interval correction (WMO/Hershfield):** multiply single-obs-per-day
@@ -137,7 +141,7 @@ L-moments-como-/
 `PRCP` within the site bounding box + min years; `download_station()` parses
 `.dly`/CSV to a daily series; `build_ams(daily, duration_days, corr_factor,
 season)` computes annual maxima of running d-day sums **within the configured
-seasonal window (default April–July)** with a per-year completeness gate and
+seasonal window (default full calendar year)** with a per-year completeness gate and
 applies the correction factor. Fallback path reads `data/external/`.
 
 **02 — L-moments.** `samlmu()` per station → `n, mean (l1), t (L-CV),
@@ -190,7 +194,7 @@ period) for both durations with the uncertainty band.
 
 Every basin-specific value lives in `config/como.yml`: site name, lat/lon,
 search radius, elevation band, min years, completeness threshold, durations
-(days) + correction factors, **seasonal window (default April–July)**,
+(days) + correction factors, **seasonal window (default full calendar year)**,
 candidate distributions, return periods, simulation counts, RNG seeds, and
 index-flood transfer method. **To run another basin:** copy the YAML, edit
 coordinates/parameters, run `run_analysis.R`. All functions in `functions.R`

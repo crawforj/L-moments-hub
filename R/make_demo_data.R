@@ -16,16 +16,24 @@
 # =============================================================================
 
 make_demo_data <- function(dir = "data/external",
-                           years = 1981:2020, seed = 4321) {
+                           years = 1981:2020, seed = 4321,
+                           center_lat = 46.06, center_lon = -114.23,
+                           radius_km = 200) {
   set.seed(seed)
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
 
-  # Station network around Como Dam (~46.06 N, -114.23 W). elev in metres.
+  # Station network centered on the requested site (defaults to Como Dam). The
+  # network is placed relative to (center_lat, center_lon) and the search radius
+  # so that ANY facility's config produces an in-region synthetic set offline
+  # (km offsets -> degrees; longitude scaled by latitude). elev in metres.
+  km2dlat <- 1 / 111.0
+  km2dlon <- 1 / (111.320 * cos(center_lat * pi / 180))
+  r <- radius_km
   core <- data.frame(
     station_id = sprintf("DEMO%02d", 1:14),
-    name = paste("Bitterroot core gauge", 1:14),
-    lat = 46.06 + stats::runif(14, -1.1, 1.1),
-    lon = -114.23 + stats::runif(14, -1.2, 1.2),
+    name = paste("core gauge", 1:14),
+    lat = center_lat + stats::runif(14, -0.55 * r, 0.55 * r) * km2dlat,
+    lon = center_lon + stats::runif(14, -0.55 * r, 0.55 * r) * km2dlon,
     elev_m = round(stats::runif(14, 950, 2100)),
     scale = stats::runif(14, 0.85, 1.30),   # sets each site's index flood
     kind = "core", stringsAsFactors = FALSE)
@@ -33,8 +41,8 @@ make_demo_data <- function(dir = "data/external",
   special <- data.frame(
     station_id = c("DEMO15", "DEMO16", "DEMO17"),
     name = c("Heavy-tail outlier gauge", "Short-record gauge", "Distant gauge (out of region)"),
-    lat = c(46.20, 45.80, 48.90),
-    lon = c(-114.00, -114.40, -113.50),
+    lat = center_lat + c(0.25 * r, -0.30 * r, 1.40 * r) * km2dlat,   # 'far' beyond radius
+    lon = center_lon + c(0.20 * r, -0.15 * r, 0.20 * r) * km2dlon,
     elev_m = c(1500, 1300, 1100),
     scale = c(1.15, 1.0, 1.2),
     kind = c("discordant", "short", "far"), stringsAsFactors = FALSE)

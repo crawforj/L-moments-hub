@@ -52,3 +52,35 @@ test_that("pipeline recovers the true GEV 10,000-yr growth factor within 12%", {
   g10k <- est$growth$growth_factor[est$growth$T == 10000]
   expect_lt(abs(g10k / g_true_10k - 1), 0.12)
 })
+
+test_that("facility_diagnostics summarises H1/|Z| and flags facilities needing review", {
+  mk <- function(H1, chosen, Z, acceptable, nstat) list(
+    cfg = list(site = list(name = "X", id = "X01")),
+    per_duration = list("24h" = list(
+      regdata_final = data.frame(n = rep(30, nstat)),
+      H = c(H1, 0, 0), homog_status = "ok",
+      dist_sel = list(chosen = chosen, Z = Z, acceptable = acceptable))))
+  # homogeneous + good fit -> no review
+  d1 <- facility_diagnostics(mk(0.4, "gev", c(gev = 0.9, gno = 1.2), TRUE, 18))
+  expect_equal(d1$n_stations, 18)
+  expect_equal(d1$chosen_dist, "GEV")
+  expect_equal(d1$chosen_absZ, 0.9)
+  expect_false(d1$needs_review)
+  # heterogeneous region (H1 >= 2) -> review
+  expect_true(facility_diagnostics(mk(2.4, "gev", c(gev = 0.5), TRUE, 20))$needs_review)
+  # poor fit (|Z| > 1.64 / not acceptable) -> review
+  expect_true(facility_diagnostics(mk(0.3, "pe3", c(pe3 = 2.10), FALSE, 15))$needs_review)
+})
+
+test_that("tail_sensitivity reports the 10,000-yr depth under every candidate", {
+  rd <- step02_lmoments(synth_region(nS = 25, nY = 200, para = c(50, 15, -0.10), seed = 7))
+  cands <- c("glo", "gev", "gno", "pe3", "gpa")
+  ts <- tail_sensitivity(rd, cands, index_flood = 50, T = 10000)
+  expect_setequal(toupper(ts$dist), toupper(cands))     # one row per candidate
+  expect_true(all(ts$depth_mm > 0))                      # positive depths
+  expect_true(all(ts$T == 10000))
+  # candidates genuinely disagree at the extreme tail (that's the point)
+  expect_gt(max(ts$depth_mm) - min(ts$depth_mm), 0)
+  # depth = index_flood * growth_factor holds
+  expect_equal(ts$depth_mm, round(50 * ts$growth_factor, 2), tolerance = 0.01)
+})

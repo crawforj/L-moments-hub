@@ -12,9 +12,10 @@ if (is.na(root) || root == "") root <- "."
 options(lmc.root = root)
 
 suppressMessages({library(lmom); library(lmomRFA); library(testthat)})
-for (f in c("functions.R", "checks.R", "00_setup.R", "01_data_acquisition.R",
-            "02_lmoments.R", "03_screening.R", "04_homogeneity.R",
-            "05_distribution.R", "06_estimation.R", "07_uncertainty.R"))
+for (f in c("functions.R", "make_demo_data.R", "checks.R", "00_setup.R",
+            "01_data_acquisition.R", "02_lmoments.R", "03_screening.R",
+            "04_homogeneity.R", "05_distribution.R", "06_estimation.R",
+            "07_uncertainty.R"))
   source(file.path(root, "R", f))
 
 rep <- test_dir(file.path(root, "tests", "testthat"), reporter = "summary",

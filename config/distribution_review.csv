@@ -1,0 +1,18 @@
+# Expert distribution-review registry for the distribution-SELECTION step.
+#
+# Automated runs AUTO-SELECT the distribution with the smallest |Z| (H&W sec.
+# 5.2.3). To OVERRIDE that with a reviewer's decision for a facility, add a row
+# below (uncomment / append). Leave this file with only the header + comments to
+# auto-select everywhere (the default).
+#
+# Columns:
+#   facility_id  - the site id (e.g. COMO_DAM, WA00262); must match the config/manifest
+#   duration     - "24h" or "72h" for one duration, or blank to apply to ALL durations
+#   distribution - one of: glo, gev, gno, pe3, gpa (lower-case)
+#   reviewer     - name/initials of the reviewer (for the audit trail)
+#   date         - YYYY-MM-DD
+#   notes        - rationale (e.g. tail behavior at the 10,000-yr extrapolation)
+#
+# Example (remove the leading '# ' to activate):
+# COMO_DAM,72h,gev,J. Reviewer,2026-08-11,"GLO over-extrapolates the 10,000-yr tail; GEV preferred"
+facility_id,duration,distribution,reviewer,date,notes

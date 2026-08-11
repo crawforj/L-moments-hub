@@ -12,6 +12,7 @@ outputs/
 
 # Generated / downloaded station data (reproducible; synthetic demo or GHCN cache)
 data/external/
+data/synthetic/
 data/raw/
 data/processed/
 
@@ -20,3 +21,10 @@ config/facilities/
 
 # NOTE: golden/ IS tracked on purpose — it is the frozen known-answer dataset
 # and reference used by run_golden.R and the regression test.
+
+# testthat failure artifact (regenerated; not tracked)
+tests/testthat/testthat-problems.rds
+
+# NID tranche temp manifest (regenerated each run)
+data/nid_progress/_tranche_current.csv
+data/nid_progress/*.log

@@ -51,3 +51,69 @@ test_that("estimate_index_flood regression predicts at the site elevation", {
               index_flood = list(method = "regression"))
   expect_equal(estimate_index_flood(meta, means, cfg), 35, tolerance = 1e-6)
 })
+
+test_that("estimate_index_flood falls back to the regional mean when site elevation is missing", {
+  meta <- data.frame(elev_m = c(1000, 1500, 2000), distance_km = c(5, 10, 15))
+  means <- c(30, 40, 50)
+  # Blank site elevation (the common dam-inventory case) must NOT crash the
+  # regression path; it falls back to the regional mean (= 40).
+  for (e in list(NA, NA_real_, NULL, "")) {
+    cfg <- list(site = list(elevation_m = e), index_flood = list(method = "regression"))
+    expect_equal(estimate_index_flood(meta, means, cfg), 40, tolerance = 1e-6)
+  }
+})
+
+test_that("enrich_elevations fills only missing elevations and no-ops offline", {
+  man <- data.frame(name = c("a", "b", "c"),
+                    latitude = c(46, 47, 48), longitude = c(-114, -115, -116),
+                    elevation_m = c(1200, NA, NA))
+  # mock DEM: returns 900 + 100*index for the requested (missing) points
+  mock <- function(lat, lon) 900 + 100 * seq_along(lat)
+  out <- enrich_elevations(man, lookup = mock)
+  expect_equal(out$elevation_m, c(1200, 1000, 1100))   # existing kept, missing filled
+  # offline / unavailable lookup -> missing stay NA (safe; index-flood uses mean)
+  off <- enrich_elevations(man, lookup = function(lat, lon) rep(NA_real_, length(lat)))
+  expect_equal(off$elevation_m, c(1200, NA, NA))
+  # a manifest with no elevation_m column gains one
+  man2 <- data.frame(latitude = 46, longitude = -114)
+  expect_true("elevation_m" %in% names(enrich_elevations(man2, lookup = function(a, b) 1500)))
+})
+
+test_that("resolve_distribution: expert review > config override > auto", {
+  zt <- data.frame(dist = c("gev", "gno", "glo"), absZ = c(0.3, 0.9, 1.5),
+                   stringsAsFactors = FALSE)
+  # automatic: smallest |Z|
+  a <- resolve_distribution(zt, cfg = list(), site_id = "X01", duration = "72h", review = NULL)
+  expect_equal(a$chosen, "gev"); expect_equal(a$source, "auto")
+  # config override
+  c1 <- resolve_distribution(zt, cfg = list(distribution_override = "pe3"),
+                             site_id = "X01", duration = "72h", review = NULL)
+  expect_equal(c1$chosen, "pe3"); expect_equal(c1$source, "config_override")
+  # expert review wins for the matching facility+duration, over the config override
+  rev <- data.frame(facility_id = "X01", duration = "72h", distribution = "glo",
+                    reviewer = "R", stringsAsFactors = FALSE)
+  e <- resolve_distribution(zt, cfg = list(distribution_override = "pe3"),
+                            site_id = "X01", duration = "72h", review = rev)
+  expect_equal(e$chosen, "glo"); expect_equal(e$source, "expert_review")
+  # blank duration applies to all durations
+  revall <- data.frame(facility_id = "X01", duration = "", distribution = "gno",
+                       reviewer = "R", stringsAsFactors = FALSE)
+  expect_equal(resolve_distribution(zt, list(), "X01", "24h", revall)$chosen, "gno")
+  # non-matching facility falls back to auto
+  expect_equal(resolve_distribution(zt, list(), "OTHER", "72h", rev)$source, "auto")
+})
+
+test_that("load_distribution_review reads rows, skips comments, NULL when empty/absent", {
+  f <- tempfile(fileext = ".csv")
+  writeLines(c("# a comment", "facility_id,duration,distribution,reviewer,date,notes",
+               "COMO_DAM,72h,GLO,R,2026-01-01,note"), f)
+  rv <- load_distribution_review(f)
+  expect_equal(nrow(rv), 1)
+  expect_equal(rv$distribution, "glo")            # lower-cased
+  expect_equal(rv$facility_id, "COMO_DAM")
+  # header + comments only -> NULL (auto-select everywhere)
+  g <- tempfile(fileext = ".csv")
+  writeLines(c("# only comments", "facility_id,duration,distribution,reviewer,date,notes"), g)
+  expect_null(load_distribution_review(g))
+  expect_null(load_distribution_review(tempfile()))   # absent file
+})

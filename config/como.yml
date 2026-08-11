@@ -30,12 +30,18 @@ durations:
   - { label: "24h", days: 1, fixed_interval_factor: 1.13 }
   - { label: "72h", days: 3, fixed_interval_factor: 1.03 }
 
-# Seasonal window for extracting annual maxima. Default April-July captures the
-# Bitterroot spring snowmelt / rain-on-snow flood season. Use 1..12 for the
-# full calendar year.
+# Seasonal window for extracting annual maxima. DEFAULT IS THE FULL CALENDAR
+# YEAR (1..12) - the true annual-maximum precipitation, which is what a
+# dam-safety precipitation-frequency analysis needs: the controlling extreme
+# daily/multi-day storm in western Montana is often a late-summer convective
+# cloudburst or a fall rain-on-snow event, OUTSIDE the spring window. Restrict
+# to a season (e.g. start_month 4, end_month 7 for the Bitterroot spring
+# snowmelt / rain-on-snow season) ONLY for a season-specific study; note that
+# doing so biases the precipitation-frequency estimates LOW (measured: ~12-14%
+# lower at 24h and up to ~54% lower at 72h for Como).
 season:
-  start_month: 4
-  end_month: 7
+  start_month: 1
+  end_month: 12
 
 # Candidate distributions tested at the distribution-selection step (H&W ch. 5).
 # The one with the smallest |Z| (<= 1.64) is chosen unless overridden below.
@@ -59,7 +65,9 @@ data:
   use_local_fallback: true      # if download fails, read local demo/user data
   local_format: "daily"         # "daily" (date,prcp per station) | "ams"
   local_dir: "data/external"    # where local station files live
-  ghcn_base: "https://www.ncei.noaa.gov/pub/data/ghcn/daily"
+  ghcn_base: "https://noaa-ghcn-pds.s3.amazonaws.com"  # AWS Open-Data GHCN-Daily mirror (reachable where www.ncei.noaa.gov is blocked); NCEI base also supported
   ghcn_cache_dir: "data/raw/ghcn"  # cached inventory + per-station files (shared across facilities)
+  qflag_screen: true            # drop GHCN observations with a non-blank quality flag (failed QA)
+  qflag_keep: []                # QFLAG codes to retain despite being non-blank (default: none)
 
 seed: 20260811                  # RNG seed -> reproducible screening/simulation

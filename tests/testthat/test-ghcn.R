@@ -45,3 +45,81 @@ test_that("download_ghcn_daily reads a cached .csv.gz without network", {
   expect_equal(nrow(d), 2)                     # only PRCP rows
   expect_equal(d$prcp, c(40.1, 25.2))          # tenths mm -> mm
 })
+
+test_that("screen_qflag NAs failed-QA values, keeps blanks and retained codes", {
+  v <- c(10, 20, 30, 40)
+  q <- c("", " ", "G", "X")                    # blank/space pass; G,X are failed-QA
+  out <- screen_qflag(v, q)                    # default: drop every non-blank flag
+  expect_equal(as.numeric(out), c(10, 20, NA, NA))
+  expect_equal(attr(out, "n_flagged"), 2L)
+  # keep = "G" retains that code but still drops X
+  expect_equal(as.numeric(screen_qflag(v, q, keep = "G")), c(10, 20, 30, NA))
+  # screen = FALSE or NULL qflag is a no-op
+  expect_equal(screen_qflag(v, q, screen = FALSE), v)
+  expect_equal(screen_qflag(v, NULL), v)
+})
+
+test_that("download_ghcn_daily screens QFLAG'd observations (col 6)", {
+  cache <- tempfile(); dir.create(cache)
+  gz <- file.path(cache, "S002.csv.gz")
+  con <- gzfile(gz, "w")
+  writeLines(c("S002,20000515,PRCP,401,,,",    # clean -> 40.1 mm
+               "S002,20010610,PRCP,999,,G,",   # failed QA (QFLAG=G) -> screened to NA
+               "S002,20020712,PRCP,252,,,"),   # clean -> 25.2 mm
+             con); close(con)
+  d <- download_ghcn_daily("S002", ghcn_base = "unused", cache_dir = cache)
+  expect_equal(nrow(d), 3)                      # all PRCP rows returned
+  expect_equal(d$prcp, c(40.1, NA, 25.2))       # the G-flagged value is NA
+  # with screening disabled the flagged value passes through (999 tenths -> 99.9)
+  d2 <- download_ghcn_daily("S002", ghcn_base = "unused", cache_dir = cache,
+                            qflag_screen = FALSE)
+  expect_equal(d2$prcp, c(40.1, 99.9, 25.2))
+})
+
+test_that("download_ghcn_daily reads the AWS S3 mirror format (header row, uncompressed)", {
+  expect_true(ghcn_is_s3("https://noaa-ghcn-pds.s3.amazonaws.com"))
+  expect_false(ghcn_is_s3("https://www.ncei.noaa.gov/pub/data/ghcn/daily"))
+  cache <- tempfile(); dir.create(cache)
+  # S3 by_station schema HAS a header and an OBS_TIME column; QFLAG is still col 6.
+  writeLines(c("ID,DATE,ELEMENT,DATA_VALUE,M_FLAG,Q_FLAG,S_FLAG,OBS_TIME",
+               "USX,20000515,PRCP,401,,,6,",     # clean -> 40.1 mm
+               "USX,20010610,PRCP,999,,G,6,",    # failed QA -> NA
+               "USX,20000516,TMAX,150,,,6,"),    # ignored element
+             file.path(cache, "USX.csv"))
+  d <- download_ghcn_daily("USX", "https://noaa-ghcn-pds.s3.amazonaws.com", cache_dir = cache)
+  expect_equal(nrow(d), 2)                        # PRCP rows only, header consumed
+  expect_equal(d$prcp, c(40.1, NA))               # tenths->mm; G-flagged screened
+})
+
+test_that("export_prcp_cache builds a PRCP-only cache that serves with no network", {
+  raw <- tempfile(); dir.create(raw)
+  writeLines(c("ID,DATE,ELEMENT,DATA_VALUE,M_FLAG,Q_FLAG,S_FLAG,OBS_TIME",
+               "UST1,20000515,PRCP,401,,,6,",     # -> 40.1 mm
+               "UST1,20010610,PRCP,999,,G,6,",    # failed QA -> NA on read
+               "UST1,20000516,TMAX,150,,,6,"),    # dropped (not PRCP)
+             file.path(raw, "UST1.csv"))
+  root <- tempfile(); dir.create(root)
+  out <- file.path(root, "data", "ghcn_prcp_cache")
+  expect_equal(export_prcp_cache(raw, out), 1L)
+  expect_true(file.exists(file.path(out, "UST1.csv.gz")))
+  # download_ghcn_daily reads data/ghcn_prcp_cache under lmc.root -> serve offline
+  old <- getOption("lmc.root"); options(lmc.root = root); on.exit(options(lmc.root = old))
+  d <- download_ghcn_daily("UST1", "https://bogus.invalid")   # would fail if it hit the network
+  expect_equal(nrow(d), 2)
+  expect_equal(d$prcp, c(40.1, NA))               # QFLAG screening applied on read
+})
+
+test_that("make_demo_data centers on the requested site (offline batch works anywhere)", {
+  # A non-Como facility (Grand Coulee, WA) must still get an in-region set.
+  d <- tempfile(); site <- list(latitude = 47.96, longitude = -118.98)
+  meta <- make_demo_data(d, center_lat = site$latitude, center_lon = site$longitude,
+                         radius_km = 200)
+  st <- utils::read.csv(file.path(d, "stations.csv"), stringsAsFactors = FALSE)
+  cfg <- list(site = site,
+              region = list(search_radius_km = 200, elevation_band_m = c(600, 2600)))
+  filt <- filter_candidates(st, cfg)
+  expect_gte(nrow(filt$kept), 12)                       # a usable region forms
+  expect_true("DEMO17" %in% filt$removed$station_id)    # the 'far' gauge is excluded
+  # stations are actually near the requested site, not Como
+  expect_lt(max(filt$kept$distance_km), 200)
+})

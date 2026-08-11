@@ -33,3 +33,28 @@ step06_estimation <- function(regdata, dist, cfg, index_flood) {
   list(rfd = rfd, growth = growth, quantiles = quantiles,
        index_flood = index_flood, para = rfd$para, dist = dist)
 }
+
+# ---------------------------------------------------------------------------
+# tail_sensitivity(): how much does the DISTRIBUTION CHOICE move the extreme
+# tail? Fits EVERY candidate distribution to the same regional L-moments and
+# reports the growth factor and depth at the target return period(s), so a
+# reviewer can see the spread at the 10,000-yr extrapolation (where the
+# candidates diverge most and the choice matters most — H&W ch. 5). Pure over
+# lmomRFA::regfit/regquant; a candidate that fails to fit is skipped (NA).
+#   regdata     : the final region (regdata object)
+#   candidates  : character vector of distribution codes
+#   index_flood : site index flood (mm)
+#   T           : return period(s), years (default 10000)
+#   -> data.frame(dist, T, growth_factor, depth_mm), one row per dist x T.
+# ---------------------------------------------------------------------------
+tail_sensitivity <- function(regdata, candidates, index_flood, T = 10000) {
+  Fv <- rp_to_prob(T)
+  rows <- lapply(candidates, function(d) {
+    q <- tryCatch(as.numeric(regquant(Fv, regfit(regdata, d))),
+                  error = function(e) rep(NA_real_, length(Fv)))
+    data.frame(dist = toupper(d), T = T, growth_factor = round(q, 4),
+               depth_mm = round(index_flood * q, 2), stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, rows)
+  out[order(out$T, out$depth_mm), ]
+}

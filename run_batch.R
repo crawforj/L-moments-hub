@@ -40,6 +40,11 @@ gen_configs_from_manifest <- function(manifest_csv,
           " mirror (vintage ~2013) and carries NO ground elevations. See DATA_SOURCES.md.\n",
           "============================================================================\n")
   m <- utils::read.csv(manifest_csv, stringsAsFactors = FALSE)
+  # Optionally fill missing ground elevations from a DEM (needs elevatr +
+  # network). Off by default; enable with LMC_ENRICH_ELEV=1. When unavailable
+  # it is a safe no-op (index-flood falls back to the regional mean).
+  if (isTRUE(as.logical(Sys.getenv("LMC_ENRICH_ELEV", "FALSE"))))
+    m <- enrich_elevations(m)
   tmpl <- yaml::read_yaml(template)
   paths <- character(0)
   for (i in seq_len(nrow(m))) {
@@ -124,9 +129,12 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
   run_one <- function(cp) {
     res <- tryCatch(run_analysis(cp), error = function(e) e)
     if (inherits(res, "error"))
-      list(ok = FALSE, config = cp, site = NA, message = conditionMessage(res), ddf = NULL)
+      list(ok = FALSE, config = cp, site = NA, message = conditionMessage(res),
+           ddf = NULL, diag = NULL)
     else
-      list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok", ddf = res$ddf)
+      list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok",
+           ddf = res$ddf, diag = tryCatch(facility_diagnostics(res), error = function(e) NULL),
+           tail = tryCatch(collect_tail_sensitivity(res), error = function(e) NULL))
   }
 
   results <- if (cores > 1 && .Platform$OS.type != "windows")
@@ -143,10 +151,54 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
     utils::write.csv(do.call(rbind, all_ddf),
                      file.path(outb, "all_facilities_DDF.csv"), row.names = FALSE)
   utils::write.csv(status, file.path(outb, "batch_status.csv"), row.names = FALSE)
+
+  # Per-facility triage diagnostics: heterogeneity (H1) + chosen-distribution
+  # fit (|Z|), with a needs_review flag (H1 >= 2 or |Z| > 1.64). This is the
+  # fleet triage list (docs/PLAN.md sec. 12): review these before trusting a
+  # facility's numbers.
+  all_tail <- Filter(Negate(is.null), lapply(results, function(r) r$tail))
+  if (length(all_tail))
+    utils::write.csv(do.call(rbind, all_tail),
+                     file.path(outb, "tail_sensitivity.csv"), row.names = FALSE)
+
+  all_diag <- Filter(Negate(is.null), lapply(results, function(r) r$diag))
+  if (length(all_diag)) {
+    diag_df <- do.call(rbind, all_diag)
+    utils::write.csv(diag_df, file.path(outb, "batch_diagnostics.csv"), row.names = FALSE)
+    review <- diag_df[isTRUE_vec(diag_df$needs_review), , drop = FALSE]
+    message(sprintf("Diagnostics: %d/%d facility-durations flagged for review (H1>=2 or |Z|>1.64).",
+                    nrow(review), nrow(diag_df)))
+    if (nrow(review))
+      for (i in seq_len(nrow(review)))
+        message(sprintf("  REVIEW: %-16s %-4s  H1=%.2f  %s |Z|=%.2f",
+                        review$site[i], review$duration[i], review$H1[i],
+                        review$chosen_dist[i], review$chosen_absZ[i]))
+
+    # Expert distribution-review worklist: automated runs AUTO-SELECT, but flag
+    # the distribution choices an expert should confirm (poor fit, or a close
+    # call vs the runner-up). Record decisions in config/distribution_review.csv
+    # to override on future runs. Facilities already carrying a recorded
+    # expert decision are shown as such.
+    if ("review_recommended" %in% names(diag_df)) {
+      rec <- diag_df[isTRUE_vec(diag_df$review_recommended), , drop = FALSE]
+      n_expert <- sum(diag_df$selection_source == "expert_review", na.rm = TRUE)
+      message(sprintf("Distribution selection: %d auto, %d expert-reviewed; %d recommended for expert review.",
+                      sum(diag_df$selection_source == "auto", na.rm = TRUE), n_expert, nrow(rec)))
+      if (nrow(rec))
+        for (i in seq_len(nrow(rec)))
+          message(sprintf("  DIST-REVIEW: %-16s %-4s  chose %s |Z|=%.2f (runner-up %s |Z|=%.2f, margin %.2f)",
+                          rec$site[i], rec$duration[i], rec$chosen_dist[i], rec$chosen_absZ[i],
+                          rec$runner_up[i], rec$runner_up_absZ[i], rec$z_margin[i]))
+    }
+  }
+
   message(sprintf("\nBatch complete: %d ok, %d failed. See %s.",
                   sum(status$ok), sum(!status$ok), outb))
   invisible(status)
 }
+
+# isTRUE_vec(): vectorised isTRUE (NA/logical-safe) for row filtering.
+isTRUE_vec <- function(x) !is.na(x) & x
 
 # ---- CLI -------------------------------------------------------------------
 .invoked_as_main <- function(fname) {

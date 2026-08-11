@@ -28,6 +28,9 @@ load_packages <- function() {
 setup_analysis <- function(config_path) {
   load_packages()
   cfg <- load_config(config_path)
+  # Optional expert distribution-review registry (empty/absent => auto-select).
+  cfg$distribution_review <- load_distribution_review(
+    .here("config", "distribution_review.csv"))
   set.seed(cfg$seed %||% 1L)                 # reproducible screening/simulation
   for (d in c("outputs", "outputs/figures", "outputs/tables",
               "outputs/provenance", "data/processed"))
