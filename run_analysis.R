@@ -21,7 +21,7 @@ suppressWarnings(suppressMessages({
   if (is.na(root) || root == "") root <- "."
 }))
 options(lmc.root = root)
-for (f in c("functions.R", "region_methods.R", "checks.R", "00_setup.R",
+for (f in c("functions.R", "region_methods.R", "arf.R", "checks.R", "00_setup.R",
             "01_data_acquisition.R", "02_lmoments.R", "03_screening.R",
             "04_homogeneity.R", "05_distribution.R", "06_estimation.R",
             "07_uncertainty.R", "08_mapping.R", "09_plots.R",
@@ -68,6 +68,19 @@ run_analysis <- function(config_path = "config/como.yml") {
     ams_used <- ams_list[used_ids]
     figs <- step09_plots(rd_final, ams_used, dsel$chosen, est, unc, cfg, lab, out_dir)
 
+    # Areal Reduction Factor (optional, additive): converts the point depth
+    # toward a basin-average depth when a drainage area is configured for the
+    # site (see R/arf.R, enrich_drainage_area.R). NEVER replaces depth_mm --
+    # only adds depth_areal_mm alongside it. NA area -> arf_factor NA, no
+    # areal column populated (graceful degrade; most facilities lack no data).
+    area_km2 <- site_drainage_area_km2(cfg)
+    arf_factor <- if (is.finite(area_km2)) compute_arf(area_km2, dur$days * 24, cfg) else NA_real_
+    depth_areal_mm <- if (is.finite(area_km2)) unc$depth_mm * arf_factor else rep(NA_real_, length(unc$depth_mm))
+    if (is.finite(area_km2))
+      audit_log(sprintf("ARF [%s]: area=%.1f km2 (%.1f mi2), factor=%.4f (method=%s).",
+                        lab, area_km2, cfg$site$drainage_area_mi2, arf_factor,
+                        cfg$arf$method %||% "leclerc_schaake"))
+
     # Reconcile station counts for this duration (audit invariant 9.2).
     n_cand_dur <- nrow(meta_all)
     used_table <- data.frame(
@@ -92,7 +105,8 @@ run_analysis <- function(config_path = "config/como.yml") {
       H = hom$H, homog_status = hom$status, homog_history = hom$history,
       ams_used = ams_used, figs = figs,
       used_table = used_table, removed_table = removed_table,
-      D = scr$D, Dcrit = scr$Dcrit)
+      D = scr$D, Dcrit = scr$Dcrit,
+      arf_area_km2 = area_km2, arf_factor = arf_factor, depth_areal_mm = depth_areal_mm)
     used_any <- union(used_any, used_ids)
   }
 

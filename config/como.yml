@@ -14,6 +14,10 @@ site:
   latitude: 46.0583             # decimal degrees N  (Lake Como outlet, approx.)
   longitude: -114.2306          # decimal degrees E (negative = W)
   elevation_m: 1240             # site elevation, metres (approx. dam crest area)
+  drainage_area_mi2: 56.4       # catchment area (Rock Creek + Little Rock Creek above
+                                 # the dam), per https://en.wikipedia.org/wiki/Como_Dam;
+                                 # drives the optional ARF step (R/arf.R) -- confirm
+                                 # against a primary Reclamation source before relying on it
 
 region:
   method: "circular"            # circular (default) | cluster -- see R/region_methods.R
@@ -67,6 +71,10 @@ return_periods: [2, 5, 10, 25, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
 # ~ elevation across regional gauges; "nearest" uses the closest gauge's mean.
 index_flood:
   method: "regression"          # "regression" | "nearest"
+
+arf:
+  method: "leclerc_schaake"     # only method implemented so far; see R/arf.R.
+                                 # Only used when site.drainage_area_mi2 is set.
 
 uncertainty:
   n_sim: 500                    # Monte-Carlo repetitions for regsimq / regtst

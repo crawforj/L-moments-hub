@@ -54,6 +54,11 @@ gen_configs_from_manifest <- function(manifest_csv,
     cfg$site$latitude  <- m$latitude[i]
     cfg$site$longitude <- m$longitude[i]
     cfg$site$elevation_m <- m$elevation_m[i]
+    # Drainage area (see enrich_drainage_area.R) drives the optional ARF step
+    # in R/arf.R; absent for ~13-23% of facilities depending on manifest (the
+    # NID mirror's own coverage) -- NA is a valid, handled value (no ARF applied).
+    if (!is.null(m$drainage_area_mi2))
+      cfg$site$drainage_area_mi2 <- m$drainage_area_mi2[i]
     if (!is.null(m$search_radius_km) && !is.na(m$search_radius_km[i]))
       cfg$region$search_radius_km <- m$search_radius_km[i]
     # Optional per-facility region-method override (circular | cluster), so a

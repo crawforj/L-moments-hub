@@ -15,7 +15,7 @@ root <- normalizePath(root)   # test_dir() changes the working directory while r
 options(lmc.root = root)
 
 suppressMessages({library(lmom); library(lmomRFA); library(testthat)})
-for (f in c("functions.R", "region_methods.R", "make_demo_data.R", "checks.R", "00_setup.R",
+for (f in c("functions.R", "region_methods.R", "arf.R", "make_demo_data.R", "checks.R", "00_setup.R",
             "01_data_acquisition.R", "02_lmoments.R", "03_screening.R",
             "04_homogeneity.R", "05_distribution.R", "06_estimation.R",
             "07_uncertainty.R"))

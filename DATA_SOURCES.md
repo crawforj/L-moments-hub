@@ -62,6 +62,18 @@
     internal naming.
   - The list may include off-stream, diversion, or non-analysis structures that
     should be excluded for precipitation-frequency work.
+  - **Drainage area** (`drainage_area_mi2`) is populated by `enrich_drainage_area.R`
+    from the SAME `lcford2/predict-release` NID mirror (its `Drainage_Area`
+    column, sq mi, was simply not selected when these manifests were first
+    built) — covers 266/308 (86.4%) of `facilities_BOR.csv` and 56,307/73,303
+    (76.8%) of `nid_manifest.csv`. Same UNVERIFIED ~2013 vintage as every other
+    field here. Drives the optional Areal Reduction Factor step (`R/arf.R`);
+    `NA` where the mirror has no value, and no ARF is applied for those
+    facilities. Como Dam's `drainage_area_mi2` (56.4, in `config/como.yml`) is
+    NOT from this mirror — it's cited directly to
+    [Wikipedia's Como Dam infobox](https://en.wikipedia.org/wiki/Como_Dam),
+    since Como isn't a manifest-driven facility; confirm against a primary
+    Reclamation source before relying on it.
 
 ### 2a. Full NID manifest (`config/nid_manifest.csv`) — REVIEW REQUIRED
 
@@ -104,6 +116,10 @@ force-push the branch.
    `data.source: "ghcn"`) and sign off per `docs/audit_guide.md`.
 4. Run a small pilot batch and review each region map + homogeneity log before the
    full fleet.
+5. Confirm drainage areas (`drainage_area_mi2`) against a current source before
+   relying on `depth_areal_mm`, and confirm the default ARF curve
+   (`R/arf.R`, Leclerc & Schaake 1972 — a national-average curve) is
+   appropriate for the region, or swap in a Reclamation-preferred one.
 
 ## 4. Software packages
 

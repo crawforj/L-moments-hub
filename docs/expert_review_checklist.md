@@ -81,7 +81,13 @@ and every dam you intend to actually rely on, gets a completed form.
 
 ## 7. Areal / point
 
-- ☐ Understood these are **point** depths with **no areal reduction**; ARF applied
+- ☐ Understood `depth_mm` is always the **point** depth.
+- ☐ Where `depth_areal_mm` is populated, confirmed the drainage area
+  (`arf_area_km2` / `config/*.csv`'s `drainage_area_mi2`) and reviewed whether
+  the default Leclerc & Schaake (1972) ARF curve (`R/arf.R`, general
+  national-average, not region-specific) is appropriate here, or should be
+  swapped for a Reclamation-preferred curve (`arf.method` in the config).
+- ☐ Where `depth_areal_mm` is `NA` (no drainage area on file), applied an ARF
   downstream if a basin-average design rainfall is needed.
 
 ## Disposition

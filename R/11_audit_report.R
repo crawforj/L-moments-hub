@@ -65,6 +65,13 @@ th{background:#f0f0f0}code,pre{background:#f6f8fa;padding:2px 4px;border-radius:
               pd$homog_status, pd$H[1], nrow(pd$regdata_final)),
       sprintf("<p>At-site mean annual maximum (<b>ASM</b> / index flood), transferred to this ungauged site: <b>%.2f mm</b> (transfer method: <code>%s</code>).</p>",
               pd$est$index_flood, cfg$index_flood$method %||% "regression"),
+      if (is.finite(pd$arf_factor))
+        sprintf("<p><b>Areal Reduction Factor (ARF)</b>: %.4f (drainage area %.1f km&sup2; / %.1f mi&sup2;, method: <code>%s</code>). 100-yr point depth %.1f mm &rarr; areal-reduced %.1f mm.</p>",
+                pd$arf_factor, pd$arf_area_km2, cfg$site$drainage_area_mi2,
+                cfg$arf$method %||% "leclerc_schaake",
+                pd$unc$depth_mm[pd$unc$T == 100][1], pd$depth_areal_mm[pd$unc$T == 100][1])
+      else
+        "<p><b>Areal Reduction Factor (ARF)</b>: not applied — no drainage area configured for this site (see DATA_SOURCES.md / enrich_drainage_area.R). All reported depths are point depths.</p>",
       "<p>Heterogeneity iteration history (each row = one greedy refinement step):</p>",
       .tbl_html(pd$homog_history),
       "<h3>2b. Stations used</h3>", .tbl_html(pd$used_table),
@@ -94,6 +101,7 @@ th{background:#f0f0f0}code,pre{background:#f6f8fa;padding:2px 4px;border-radius:
     "<li>10,000-yr depths extrapolate far beyond the observed record; the reported Monte-Carlo band and the growth-curve comparison plot show the model sensitivity.</li>",
     "<li>Daily gauge totals are fixed calendar-day; fixed-interval factors only approximate true clock-hour depths.</li>",
     "<li>The site index flood is transferred from regional gauges (the dam is ungauged), adding uncertainty.</li>",
+    "<li><code>depth_mm</code> is always the POINT depth. <code>depth_areal_mm</code> (where present) applies an Areal Reduction Factor (R/arf.R) on top of it — a general national-average curve (Leclerc &amp; Schaake 1972), not a region-specific one; treat it as a documented default pending expert review, not a final answer.</li>",
     "</ul></div>")
 
   html <- paste0("<!doctype html><html><head><meta charset='utf-8'><title>RFA report — ",

@@ -22,6 +22,7 @@ step10_tables <- function(results, out_dir) {
 
   # Combined DDF across durations (headline deliverable).
   idxfl_method <- cfg$index_flood$method %||% "regression"
+  arf_method <- cfg$arf$method %||% "leclerc_schaake"
   ddf <- do.call(rbind, lapply(names(results$per_duration), function(lab) {
     pd <- results$per_duration[[lab]]
     u <- pd$unc
@@ -36,7 +37,14 @@ step10_tables <- function(results, out_dir) {
                # in functions.R. Constant within a duration, repeated per row so
                # the headline DDF table is self-contained for a reviewer.
                index_flood_asm_mm = round(pd$est$index_flood, 2),
-               index_flood_method = idxfl_method)
+               index_flood_method = idxfl_method,
+               # ARF: additive, NEVER replaces depth_mm (still the point depth).
+               # NA whenever the facility has no configured drainage area — see
+               # R/arf.R and enrich_drainage_area.R.
+               depth_areal_mm = round(pd$depth_areal_mm, 2),
+               arf_factor = round(pd$arf_factor, 4),
+               arf_area_km2 = round(pd$arf_area_km2, 1),
+               arf_method = ifelse(is.finite(pd$arf_factor), arf_method, NA_character_))
   }))
   wr(ddf, sprintf("quantiles_DDF_%s.csv", id))
 
