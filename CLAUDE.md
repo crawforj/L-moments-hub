@@ -14,19 +14,28 @@ one YAML config, and built to scale to the **Bureau of Reclamation fleet**
 ## Current state (working & pushed)
 
 - Full pipeline `R/00..11` runs end-to-end: GHCN acquisition (with offline
-  synthetic fallback), seasonal windowing (default **April–July**), L-moments,
+  synthetic fallback), seasonal windowing (default **full calendar year**; a
+  season can be configured for season-specific studies), L-moments,
   discordancy screening, iterative heterogeneity-based region definition,
   distribution selection (ratio diagram + Z-stat), index-flood estimation to the
   **10,000-yr** return period, Monte-Carlo bounds, maps, plots, CSV deliverables,
   an HTML audit report, and a provenance manifest.
 - **Validated:** `Rscript run_golden.R` → ALL PASS (recovers a known GEV growth
   curve; auto-selects GEV; Cascades benchmark anchor). `Rscript run_tests.R` →
-  30/30. `Rscript run_analysis.R config/como.yml` produces all deliverables.
+  58/58. `Rscript run_analysis.R config/como.yml` produces all deliverables.
 - GHCN inventory caching + candidate discovery, parallel batch (`LMC_CORES`), and
   a cross-facility prefetch are implemented.
-- **This cloud sandbox blocks NOAA NCEI and CRAN**, so all runs here used
-  **synthetic** data and packages were built from the CRAN GitHub mirrors. On a
-  networked desktop, real data and normal installs work.
+- **Como has been run on REAL GHCN data** (not just synthetic): the default
+  `ghcn_base` is the AWS Open-Data S3 mirror (`noaa-ghcn-pds.s3.amazonaws.com`),
+  reachable where `www.ncei.noaa.gov` is blocked. Real Como region: homogeneous
+  (~36–41 stations, H1 &lt; 1), 24h 100-yr ≈ 60 mm / 10,000-yr ≈ 93 mm, 72h
+  100-yr ≈ 89 mm / 10,000-yr ≈ 179 mm (all-year AMS). Still needs the human
+  review + sign-off in `docs/audit_guide.md` before engineering use.
+- **Environment note:** on a fresh cloud sandbox, install R with
+  `apt-get install -y r-base-core gfortran r-cran-{yaml,jsonlite,ggplot2,sf,maps,testthat}`
+  and build `lmom`/`lmomRFA` from the GitHub CRAN mirrors
+  (`git clone https://github.com/cran/lmom && R CMD INSTALL lmom`, same for
+  `lmomRFA`). CRAN itself is blocked; GitHub and the AWS S3 GHCN mirror are not.
 
 ## Environment setup (desktop, networked)
 
@@ -42,9 +51,14 @@ If CRAN is restricted, see `docs/users_guide.md` §1 (GitHub CRAN mirrors +
 
 1. **Make the repo public** if desired — GitHub → Settings → General → Danger
    Zone → Change visibility. (The cloud session could not do this; no repo-admin.)
-2. **Validate Como on REAL data.** In `config/como.yml` keep `data.source: "ghcn"`,
-   confirm the exact dam coordinates, run `Rscript run_analysis.R config/como.yml`,
-   open `outputs/report_COMO_DAM.html`, and sign off per `docs/audit_guide.md`.
+2. **Validate Como on REAL data — DONE (ran on real GHCN via the S3 mirror);
+   still needs human sign-off.** `Rscript run_analysis.R config/como.yml`
+   produces `outputs/report_COMO_DAM.html` from real observations. Remaining:
+   confirm the exact dam coordinates, review the region map / homogeneity log,
+   and sign off per `docs/audit_guide.md`. (Consider whether the ~110 km /
+   756–2515 m region should be tightened for a valley-specific estimate, and
+   note the 72h tail is GLO-driven — sensitivity-check GEV/PE3 at the 10,000-yr
+   extrapolation.)
 3. **Review the data sources** (`DATA_SOURCES.md`): 
    - Re-pull the **dam inventory** from the current NID
      (`https://nid.sec.usace.army.mil`) and/or Reclamation RISE

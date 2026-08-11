@@ -224,6 +224,7 @@ ghcn_load_inventory <- function(cfg, refresh = FALSE) {
   rds <- file.path(cache, "inventory_prcp.rds")
   if (!refresh && file.exists(rds)) return(readRDS(rds))
   base <- cfg$data$ghcn_base
+  if (getOption("timeout") < 600L) options(timeout = 600L)  # inventory is ~35 MB
   sp <- file.path(cache, "ghcnd-stations.txt")
   iv <- file.path(cache, "ghcnd-inventory.txt")
   ok <- tryCatch({
@@ -258,28 +259,42 @@ ghcn_candidates <- function(inv, cfg) {
   cand[, c("station_id", "name", "lat", "lon", "elev_m")]
 }
 
+# ghcn_is_s3(): is this GHCN base the AWS Open-Data S3 mirror? The S3 mirror
+# (noaa-ghcn-pds) serves UNCOMPRESSED per-station CSVs WITH a header under
+# csv/by_station/, whereas NOAA NCEI serves gzipped headerless CSVs under
+# by_station/. The AWS mirror is often reachable where www.ncei.noaa.gov is not.
+ghcn_is_s3 <- function(ghcn_base) grepl("noaa-ghcn-pds|s3\\.amazonaws\\.com", ghcn_base)
+
 # download_ghcn_daily(): pull GHCN-Daily for one station, cached on disk.
-#   Returns data.frame(date,prcp) or NULL on failure. Cached .csv.gz is reused.
+#   Returns data.frame(date,prcp) or NULL on failure. Supports BOTH the AWS S3
+#   mirror (uncompressed .csv, header, csv/by_station/) and NOAA NCEI (gzipped
+#   .csv.gz, no header, by_station/); the by_station column layout is identical
+#   either way: ID, DATE(YYYYMMDD), ELEMENT, VALUE(tenths mm), MFLAG, QFLAG,
+#   SFLAG(, OBS_TIME). Column 6 (QFLAG) non-blank = failed QA.
 download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL,
                                 qflag_screen = TRUE, qflag_keep = character(0)) {
-  gz <- if (!is.null(cache_dir)) {
+  if (getOption("timeout") < 600L) options(timeout = 600L)  # large files over a proxy
+  s3  <- ghcn_is_s3(ghcn_base)
+  ext <- if (s3) ".csv" else ".csv.gz"
+  base <- sub("/$", "", ghcn_base)
+  url <- if (s3) sprintf("%s/csv/by_station/%s.csv", base, station_id)
+         else    sprintf("%s/by_station/%s.csv.gz", base, station_id)
+  fp <- if (!is.null(cache_dir)) {
     dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
-    file.path(cache_dir, paste0(station_id, ".csv.gz"))
-  } else tempfile(fileext = ".csv.gz")
-  if (is.null(cache_dir) || !file.exists(gz) || file.size(gz) == 0) {
-    url <- sprintf("%s/by_station/%s.csv.gz", ghcn_base, station_id)
-    ok <- tryCatch({ utils::download.file(url, gz, quiet = TRUE, mode = "wb"); TRUE },
+    file.path(cache_dir, paste0(station_id, ext))
+  } else tempfile(fileext = ext)
+  if (is.null(cache_dir) || !file.exists(fp) || file.size(fp) == 0) {
+    ok <- tryCatch({ utils::download.file(url, fp, quiet = TRUE, mode = "wb"); TRUE },
                    error = function(e) FALSE, warning = function(w) FALSE)
-    if (!ok || !file.exists(gz) || file.size(gz) == 0) return(NULL)
+    if (!ok || !file.exists(fp) || file.size(fp) == 0) return(NULL)
   }
-  d <- tryCatch(utils::read.csv(gzfile(gz), header = FALSE, stringsAsFactors = FALSE),
+  con <- if (s3) fp else gzfile(fp)        # S3 plain csv vs NCEI gzip
+  d <- tryCatch(utils::read.csv(con, header = s3, stringsAsFactors = FALSE),
                 error = function(e) NULL)
   if (is.null(d) || !nrow(d)) return(NULL)
-  # GHCN by_station schema: ID, YYYYMMDD, ELEMENT, VALUE(tenths mm), MFLAG,
-  # QFLAG, SFLAG. Column 6 (QFLAG) is the quality flag; non-blank = failed QA.
   d <- d[d[[3]] == "PRCP", , drop = FALSE]
   if (!nrow(d)) return(NULL)
-  prcp <- d[[4]] / 10                     # tenths of mm -> mm
+  prcp <- suppressWarnings(as.numeric(d[[4]])) / 10   # tenths of mm -> mm
   qflag <- if (ncol(d) >= 6) d[[6]] else NULL
   prcp <- screen_qflag(prcp, qflag, screen = qflag_screen, keep = qflag_keep)
   data.frame(date = as.Date(as.character(d[[2]]), "%Y%m%d"),

@@ -43,8 +43,11 @@ Everything basin-specific lives in one YAML file (`config/como.yml`). Key blocks
 - **`durations`** — list of `{label, days, fixed_interval_factor}`. Defaults are
   24-hour (1-day, ×1.13) and 72-hour (3-day, ×1.03). The factor corrects fixed
   calendar-day totals toward true clock-hour depths (WMO-No.1045 / Hershfield).
-- **`season`** — `start_month`/`end_month`; **default April–July** (Bitterroot
-  snowmelt/rain-on-snow season). Use 1–12 for the whole year. Wrap-around windows
+- **`season`** — `start_month`/`end_month`; **default 1–12 (full calendar
+  year = true annual maximum)**, which is what precipitation-frequency for
+  spillway design needs. Restrict to a season (e.g. 4–7 for the Bitterroot
+  snowmelt/rain-on-snow season) only for a season-specific study — it biases the
+  estimates low. Wrap-around windows
   (e.g. 11–2) are supported.
 - **`distributions`** — candidates for the *Z*-test; `distribution_override` forces
   a choice (`null` = automatic).

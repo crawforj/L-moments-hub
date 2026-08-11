@@ -7,8 +7,12 @@
 
 ## 1. Weather / precipitation data (GHCN-Daily) — REVIEW REQUIRED
 
-- **Intended source:** NOAA NCEI Global Historical Climatology Network &ndash;
-  Daily (GHCN-Daily), element `PRCP`, at `data.ghcn_base`.
+- **Source:** NOAA Global Historical Climatology Network &ndash; Daily
+  (GHCN-Daily), element `PRCP`, at `data.ghcn_base`. **Default base is now the
+  AWS Open-Data S3 mirror** (`noaa-ghcn-pds.s3.amazonaws.com`), which serves the
+  identical NOAA data and is reachable in environments where `www.ncei.noaa.gov`
+  is blocked; the NCEI base is still supported (the reader auto-detects the
+  gzipped-headerless NCEI layout vs. the uncompressed-with-header S3 layout).
 - **How it is used:** station discovery from the GHCN inventory by
   radius/elevation/record-length; daily totals aggregated to seasonal 1-day and
   3-day annual maxima with a fixed-interval correction.
@@ -24,9 +28,17 @@
     should be confirmed for the region and gauge reporting times.
   - Trans-boundary / short-record stations, station moves, and unit consistency.
   - Whether daily-gauge maxima are adequate, or sub-daily/hourly data are needed.
-- **In this sandbox** NOAA NCEI is not reachable, so demonstration runs use a
-  clearly-labelled **synthetic** dataset (`R/make_demo_data.R`). Synthetic results
-  are **not** valid for any real decision.
+- **Real data now runs in this environment** via the AWS S3 mirror above; Como
+  was executed on real GHCN observations (a homogeneous ~36–41-station region,
+  H1 &lt; 1, good-fitting distribution). Where no network is available the
+  pipeline still falls back to a clearly-labelled **synthetic** dataset
+  (`R/make_demo_data.R`); synthetic results are **not** valid for any real
+  decision, and real results still require the review in this document plus the
+  sign-off in `docs/audit_guide.md`.
+- **Season matters:** the default annual-maximum window is the **full calendar
+  year** (the true annual maximum). A seasonal window (e.g. April–July) biases
+  precipitation-frequency estimates low — measured ~12–14% at 24h and up to
+  ~54% at 72h for Como — so restrict the season only for a season-specific study.
 
 ## 2. Dam inventory / facility list (National Inventory of Dams) — REVIEW REQUIRED
 

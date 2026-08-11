@@ -76,6 +76,21 @@ test_that("download_ghcn_daily screens QFLAG'd observations (col 6)", {
   expect_equal(d2$prcp, c(40.1, 99.9, 25.2))
 })
 
+test_that("download_ghcn_daily reads the AWS S3 mirror format (header row, uncompressed)", {
+  expect_true(ghcn_is_s3("https://noaa-ghcn-pds.s3.amazonaws.com"))
+  expect_false(ghcn_is_s3("https://www.ncei.noaa.gov/pub/data/ghcn/daily"))
+  cache <- tempfile(); dir.create(cache)
+  # S3 by_station schema HAS a header and an OBS_TIME column; QFLAG is still col 6.
+  writeLines(c("ID,DATE,ELEMENT,DATA_VALUE,M_FLAG,Q_FLAG,S_FLAG,OBS_TIME",
+               "USX,20000515,PRCP,401,,,6,",     # clean -> 40.1 mm
+               "USX,20010610,PRCP,999,,G,6,",    # failed QA -> NA
+               "USX,20000516,TMAX,150,,,6,"),    # ignored element
+             file.path(cache, "USX.csv"))
+  d <- download_ghcn_daily("USX", "https://noaa-ghcn-pds.s3.amazonaws.com", cache_dir = cache)
+  expect_equal(nrow(d), 2)                        # PRCP rows only, header consumed
+  expect_equal(d$prcp, c(40.1, NA))               # tenths->mm; G-flagged screened
+})
+
 test_that("make_demo_data centers on the requested site (offline batch works anywhere)", {
   # A non-Como facility (Grand Coulee, WA) must still get an in-region set.
   d <- tempfile(); site <- list(latitude = 47.96, longitude = -118.98)
