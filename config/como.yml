@@ -61,5 +61,7 @@ data:
   local_dir: "data/external"    # where local station files live
   ghcn_base: "https://www.ncei.noaa.gov/pub/data/ghcn/daily"
   ghcn_cache_dir: "data/raw/ghcn"  # cached inventory + per-station files (shared across facilities)
+  qflag_screen: true            # drop GHCN observations with a non-blank quality flag (failed QA)
+  qflag_keep: []                # QFLAG codes to retain despite being non-blank (default: none)
 
 seed: 20260811                  # RNG seed -> reproducible screening/simulation

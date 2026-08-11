@@ -53,8 +53,10 @@ If CRAN is restricted, see `docs/users_guide.md` §1 (GitHub CRAN mirrors +
    - **Add ground elevations** (the NID mirror has none). Easiest: use the R
      `elevatr` package to fill `elevation_m` from lat/lon, or set the fleet
      `index_flood.method: "nearest"` so results don't depend on site elevation.
-   - Consider enabling GHCN quality-flag (QFLAG) screening in
-     `R/01_data_acquisition.R` / `build_ams_from_daily`.
+   - ~~Consider enabling GHCN quality-flag (QFLAG) screening~~ **DONE** —
+     `screen_qflag()` in `R/functions.R` NA-outs failed-QA observations on both
+     the GHCN download and local-CSV paths; config `data.qflag_screen` (default
+     true) / `data.qflag_keep`; covered by `tests/testthat/test-ghcn.R`.
 4. **Pilot batch** — a ready-made 8-dam manifest is provided in
    **`config/pilot.csv`** (Grand Coulee, Hungry Horse, Shasta, Hoover, Glen Canyon,
    Flaming Gorge, Elephant Butte, Owyhee — spanning Pacific NW, California, desert

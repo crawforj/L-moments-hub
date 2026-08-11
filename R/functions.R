@@ -78,6 +78,35 @@ rolling_sum <- function(x, days) {
 }
 
 # ---------------------------------------------------------------------------
+# screen_qflag(): NA-out observations that FAILED GHCN-Daily quality assurance.
+#   value  : numeric vector of daily values
+#   qflag  : character vector of GHCN QFLAG codes, aligned to `value`
+#            (blank = passed QA; any non-blank letter = a failed QA check)
+#   screen : if FALSE (or qflag NULL), return `value` unchanged
+#   keep   : QFLAG codes to RETAIN despite being non-blank (default: none, i.e.
+#            drop every flagged value) — lets a reviewer keep specific codes
+#   -> the value vector with failed-QA entries set to NA; the number screened
+#      is attached as attr(,"n_flagged").
+#
+# NOAA guidance: "if the quality flag is not blank, the observation should be
+# considered suspect." For extreme-value frequency analysis a suspect daily
+# total (often a spuriously large one) can dominate an annual maximum, so
+# failed-QA values are treated as MISSING (NA) — not zero — which then flows
+# through the existing completeness gate in build_ams_from_daily().
+# ---------------------------------------------------------------------------
+screen_qflag <- function(value, qflag, screen = TRUE, keep = character(0)) {
+  if (!isTRUE(screen) || is.null(qflag)) return(value)
+  q <- trimws(as.character(qflag))
+  q[is.na(q)] <- ""                    # a missing/absent flag = passed QA, not flagged
+  # (guards the common case where an all-blank QFLAG column is read as logical NA,
+  #  which nzchar() would otherwise treat as non-blank and wrongly screen out)
+  flagged <- nzchar(q) & !(q %in% keep)
+  value[flagged] <- NA_real_
+  attr(value, "n_flagged") <- sum(flagged, na.rm = TRUE)
+  value
+}
+
+# ---------------------------------------------------------------------------
 # build_ams_from_daily(): annual-maximum series for one station & duration.
 #   daily        : data.frame(date <Date>, prcp <numeric mm>) — may have gaps
 #   days         : duration in days
@@ -119,7 +148,7 @@ build_ams_from_daily <- function(daily, days, factor, season, min_complete) {
 #   dir : directory containing stations.csv + <station_id>.csv (date,prcp)
 #   -> list(meta = data.frame, daily = named list of data.frame(date,prcp))
 # ---------------------------------------------------------------------------
-read_local_daily <- function(dir) {
+read_local_daily <- function(dir, qflag_screen = TRUE, qflag_keep = character(0)) {
   meta_path <- file.path(dir, "stations.csv")
   if (!file.exists(meta_path)) stop("Missing station metadata: ", meta_path)
   meta <- utils::read.csv(meta_path, stringsAsFactors = FALSE)
@@ -129,6 +158,10 @@ read_local_daily <- function(dir) {
     if (!file.exists(f)) next
     d <- utils::read.csv(f, stringsAsFactors = FALSE)
     d$date <- as.Date(d$date)
+    # If a user-supplied local file carries a GHCN quality flag column, screen
+    # it the same way as the download path; otherwise this is a no-op.
+    if ("qflag" %in% names(d))
+      d$prcp <- as.numeric(screen_qflag(d$prcp, d$qflag, screen = qflag_screen, keep = qflag_keep))
     daily[[sid]] <- d[, c("date", "prcp")]
   }
   list(meta = meta, daily = daily)
@@ -227,7 +260,8 @@ ghcn_candidates <- function(inv, cfg) {
 
 # download_ghcn_daily(): pull GHCN-Daily for one station, cached on disk.
 #   Returns data.frame(date,prcp) or NULL on failure. Cached .csv.gz is reused.
-download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL) {
+download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL,
+                                qflag_screen = TRUE, qflag_keep = character(0)) {
   gz <- if (!is.null(cache_dir)) {
     dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
     file.path(cache_dir, paste0(station_id, ".csv.gz"))
@@ -241,11 +275,15 @@ download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL) {
   d <- tryCatch(utils::read.csv(gzfile(gz), header = FALSE, stringsAsFactors = FALSE),
                 error = function(e) NULL)
   if (is.null(d) || !nrow(d)) return(NULL)
-  # GHCN by_station schema: ID, YYYYMMDD, ELEMENT, VALUE(tenths mm), ...
+  # GHCN by_station schema: ID, YYYYMMDD, ELEMENT, VALUE(tenths mm), MFLAG,
+  # QFLAG, SFLAG. Column 6 (QFLAG) is the quality flag; non-blank = failed QA.
   d <- d[d[[3]] == "PRCP", , drop = FALSE]
   if (!nrow(d)) return(NULL)
+  prcp <- d[[4]] / 10                     # tenths of mm -> mm
+  qflag <- if (ncol(d) >= 6) d[[6]] else NULL
+  prcp <- screen_qflag(prcp, qflag, screen = qflag_screen, keep = qflag_keep)
   data.frame(date = as.Date(as.character(d[[2]]), "%Y%m%d"),
-             prcp = d[[4]] / 10)          # tenths of mm -> mm
+             prcp = as.numeric(prcp))     # as.numeric drops the n_flagged attr
 }
 
 # ---------------------------------------------------------------------------
@@ -254,6 +292,8 @@ download_ghcn_daily <- function(station_id, ghcn_base, cache_dir = NULL) {
 # bundled data otherwise. Returns the same shape as read_local_daily().
 # ---------------------------------------------------------------------------
 acquire_station_data <- function(cfg) {
+  qflag_screen <- cfg$data$qflag_screen %||% TRUE   # screen failed-QA obs by default
+  qflag_keep   <- cfg$data$qflag_keep %||% character(0)
   if (identical(cfg$data$source, "ghcn")) {
     inv <- tryCatch(ghcn_load_inventory(cfg), error = function(e) NULL)
     if (!is.null(inv)) {
@@ -261,7 +301,8 @@ acquire_station_data <- function(cfg) {
       cache <- file.path(ghcn_cache_dir(cfg), "by_station")
       got <- list(meta = NULL, daily = list())
       for (sid in meta$station_id) {
-        dd <- download_ghcn_daily(sid, cfg$data$ghcn_base, cache_dir = cache)
+        dd <- download_ghcn_daily(sid, cfg$data$ghcn_base, cache_dir = cache,
+                                  qflag_screen = qflag_screen, qflag_keep = qflag_keep)
         if (!is.null(dd)) got$daily[[sid]] <- dd
       }
       if (length(got$daily)) {
@@ -287,7 +328,7 @@ acquire_station_data <- function(cfg) {
       make_demo_data(cfg$data$local_dir)
     }
   }
-  read_local_daily(cfg$data$local_dir)
+  read_local_daily(cfg$data$local_dir, qflag_screen = qflag_screen, qflag_keep = qflag_keep)
 }
 
 # ---------------------------------------------------------------------------

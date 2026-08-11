@@ -13,8 +13,13 @@
   radius/elevation/record-length; daily totals aggregated to seasonal 1-day and
   3-day annual maxima with a fixed-interval correction.
 - **Review items before operational use:**
-  - Station record completeness, gaps, and quality flags (this pipeline applies a
-    completeness gate but does **not** yet screen GHCN QFLAGs).
+  - Station record completeness and gaps (this pipeline applies a completeness
+    gate). **GHCN quality-flag (QFLAG) screening is now implemented** — any
+    observation with a non-blank QFLAG (failed a NOAA QA check) is treated as
+    missing before the annual maxima are computed; toggle with
+    `data.qflag_screen` (default `true`) and retain specific codes with
+    `data.qflag_keep`. Confirm the retained/dropped flag set is appropriate for
+    the region.
   - Fixed-interval correction factors (defaults ~1.13 for 1-day, ~1.03 for 3-day)
     should be confirmed for the region and gauge reporting times.
   - Trans-boundary / short-record stations, station moves, and unit consistency.

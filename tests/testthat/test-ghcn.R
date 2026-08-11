@@ -45,3 +45,33 @@ test_that("download_ghcn_daily reads a cached .csv.gz without network", {
   expect_equal(nrow(d), 2)                     # only PRCP rows
   expect_equal(d$prcp, c(40.1, 25.2))          # tenths mm -> mm
 })
+
+test_that("screen_qflag NAs failed-QA values, keeps blanks and retained codes", {
+  v <- c(10, 20, 30, 40)
+  q <- c("", " ", "G", "X")                    # blank/space pass; G,X are failed-QA
+  out <- screen_qflag(v, q)                    # default: drop every non-blank flag
+  expect_equal(as.numeric(out), c(10, 20, NA, NA))
+  expect_equal(attr(out, "n_flagged"), 2L)
+  # keep = "G" retains that code but still drops X
+  expect_equal(as.numeric(screen_qflag(v, q, keep = "G")), c(10, 20, 30, NA))
+  # screen = FALSE or NULL qflag is a no-op
+  expect_equal(screen_qflag(v, q, screen = FALSE), v)
+  expect_equal(screen_qflag(v, NULL), v)
+})
+
+test_that("download_ghcn_daily screens QFLAG'd observations (col 6)", {
+  cache <- tempfile(); dir.create(cache)
+  gz <- file.path(cache, "S002.csv.gz")
+  con <- gzfile(gz, "w")
+  writeLines(c("S002,20000515,PRCP,401,,,",    # clean -> 40.1 mm
+               "S002,20010610,PRCP,999,,G,",   # failed QA (QFLAG=G) -> screened to NA
+               "S002,20020712,PRCP,252,,,"),   # clean -> 25.2 mm
+             con); close(con)
+  d <- download_ghcn_daily("S002", ghcn_base = "unused", cache_dir = cache)
+  expect_equal(nrow(d), 3)                      # all PRCP rows returned
+  expect_equal(d$prcp, c(40.1, NA, 25.2))       # the G-flagged value is NA
+  # with screening disabled the flagged value passes through (999 tenths -> 99.9)
+  d2 <- download_ghcn_daily("S002", ghcn_base = "unused", cache_dir = cache,
+                            qflag_screen = FALSE)
+  expect_equal(d2$prcp, c(40.1, 99.9, 25.2))
+})
