@@ -56,9 +56,14 @@ gen_configs_from_manifest <- function(manifest_csv,
     cfg$site$elevation_m <- m$elevation_m[i]
     # Drainage area (see enrich_drainage_area.R) drives the optional ARF step
     # in R/arf.R; absent for ~13-23% of facilities depending on manifest (the
-    # NID mirror's own coverage) -- NA is a valid, handled value (no ARF applied).
-    if (!is.null(m$drainage_area_mi2))
-      cfg$site$drainage_area_mi2 <- m$drainage_area_mi2[i]
+    # NID mirror's own coverage) -- NA is a valid, handled value (no ARF
+    # applied). ALWAYS overwritten (never left at the template's value) --
+    # otherwise a manifest with no drainage_area_mi2 column at all (e.g.
+    # config/pilot.csv) would silently inherit the TEMPLATE facility's area
+    # (Como's, in como.yml) for every generated facility. Caught via the
+    # 8-dam pilot batch: Owyhee was reporting Como's 56.4 mi2.
+    cfg$site$drainage_area_mi2 <-
+      if (!is.null(m$drainage_area_mi2)) m$drainage_area_mi2[i] else NA_real_
     if (!is.null(m$search_radius_km) && !is.na(m$search_radius_km[i]))
       cfg$region$search_radius_km <- m$search_radius_km[i]
     # Optional per-facility region-method override (circular | cluster), so a

@@ -136,4 +136,9 @@ test_that("gen_configs_from_manifest honours an optional region_method column", 
   c1 <- yaml::read_yaml(paths[1]); c2 <- yaml::read_yaml(paths[2])
   expect_equal(c1$region$method, "cluster")
   expect_equal(c2$region$method, "circular")   # blank cell -> template default unchanged
+  # Regression: a manifest with NO drainage_area_mi2 column must NOT leave the
+  # TEMPLATE facility's area (Como's 56.4 in como.yml) on every generated
+  # config -- caught via the 8-dam pilot batch reporting Como's area for Owyhee.
+  expect_true(is.null(c1$site$drainage_area_mi2) || is.na(c1$site$drainage_area_mi2))
+  expect_true(is.null(c2$site$drainage_area_mi2) || is.na(c2$site$drainage_area_mi2))
 })
