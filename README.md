@@ -156,3 +156,25 @@ Rscript run_nid_tranche.R                            # next tranche of the full 
 - **[`docs/atlas14_comparison.md`](docs/atlas14_comparison.md)** — protocol for the external NOAA Atlas 14 cross-check (`compare_atlas14.R`)
 - **[`DATA_SOURCES.md`](DATA_SOURCES.md)** — data provenance and review requirements
 - **[`docs/PLAN.md`](docs/PLAN.md)** — full design · **[`docs/users_guide.md`](docs/users_guide.md)** — how to run · **[`docs/audit_guide.md`](docs/audit_guide.md)** — audit procedure
+
+## License
+
+The **code** in this repository is released under the **MIT License** — see
+[`LICENSE`](LICENSE). As MIT states, the software is provided "as is", without
+warranty; this reinforces the research/triage framing above — **results are not
+valid for engineering decisions without expert review.**
+
+**Data is not covered by the MIT license.** Bundled or downloaded datasets come
+from public third-party sources under their own terms and remain the property of
+those providers:
+
+- **GHCN-Daily** precipitation (`data/ghcn_prcp_cache/`, `data/ghcn_inventory/`) —
+  NOAA/NCEI, a U.S. Government public-domain product, retrieved via the AWS
+  Open-Data mirror.
+- **Dam inventory** (`config/facilities_BOR.csv`, `config/nid_manifest.csv`) —
+  derived from a third-party mirror of the USACE National Inventory of Dams.
+
+Attribute the original providers when reusing the data, and see
+[`DATA_SOURCES.md`](DATA_SOURCES.md) for provenance and the **unverified-data**
+caveats. Third-party R packages (`lmom`, `lmomRFA`, etc.) are dependencies under
+their own licenses and are not redistributed here.
