@@ -62,7 +62,17 @@ uncertainty:
 
 data:
   source: "ghcn"                # "ghcn" (auto-download) | "local"
-  use_local_fallback: true      # if download fails, read local demo/user data
+  use_local_fallback: false     # TEMPORARILY DISABLED (2026-08-11): the NID fleet
+                                 # batch was silently substituting SYNTHETIC data for
+                                 # any facility whose GHCN download failed, and still
+                                 # recording it as a successful ("ok") result in the
+                                 # ledger -- ~110/753 facilities attempted so far
+                                 # (~15%) did this undetected. With this off, a GHCN
+                                 # failure now correctly fails the facility (visible in
+                                 # batch_status.csv / needs re-attempt) instead of
+                                 # silently faking a result. Re-enable only for a
+                                 # deliberate offline demo/test run, never for a fleet
+                                 # batch whose results might be reviewed.
   local_format: "daily"         # "daily" (date,prcp per station) | "ams"
   local_dir: "data/external"    # where local station files live
   ghcn_base: "https://noaa-ghcn-pds.s3.amazonaws.com"  # AWS Open-Data GHCN-Daily mirror (reachable where www.ncei.noaa.gov is blocked); NCEI base also supported
