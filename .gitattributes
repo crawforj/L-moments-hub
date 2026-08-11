@@ -1,2 +1,0 @@
-data/ghcn_inventory/*.txt.gz filter=lfs diff=lfs merge=lfs -text
-data/ghcn_prcp_cache/*.csv.gz filter=lfs diff=lfs merge=lfs -text
