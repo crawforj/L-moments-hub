@@ -1,9 +1,42 @@
-# L-moments-como
+# L-moments-hub
 
 Regional precipitation-frequency analysis by **L-moments** (Hosking &amp; Wallis,
-1997), implemented in R. Primary test site: **Como Dam**, Bitterroot Valley,
-Montana. The pipeline is **portable** — point it at a different config to analyse
-any other basin.
+1997), implemented in R — from a single dam to a **national-scale** sweep of the
+entire U.S. dam inventory. Primary test site: **Como Dam**, Bitterroot Valley,
+Montana; the pipeline is **portable** — one config analyses any basin.
+
+## Highlights
+
+What this project pulls together, end to end:
+
+- **National scale from one codebase.** The *same* validated pipeline runs a
+  single dam, the **308-dam Bureau of Reclamation fleet**, and the **entire
+  73,303-dam National Inventory of Dams** — a single YAML/manifest is the only
+  thing that changes.
+- **Real observations, not toy data.** Pulls real **GHCN-Daily** precipitation
+  from NOAA's AWS Open-Data mirror (worked around blocked NCEI/CRAN egress), with
+  **QA-flag quality screening** and a **committed cache** so every run reproduces
+  offline — 4,400+ stations cached and growing.
+- **Verified against the textbook and by hand.** Built on Hosking's own reference
+  `lmomRFA`, then *independently* checked: it **reproduces the Hosking &amp; Wallis
+  (1997) worked-example findings**, and its index-flood depths match a
+  **from-scratch hand-calculation to 0.000%** through the 10,000-year event. Runs
+  are seeded and bit-for-bit reproducible. → [`docs/VALIDATION.md`](docs/VALIDATION.md)
+- **Built to actually finish 73k dams.** A **resumable** driver with a committed
+  ledger processes the fleet in tranches (largest dams first), never recomputes a
+  dam, and a **nightly job carries the sweep forward on its own** — engineered for
+  an ephemeral machine that can't hold a two-week run.
+- **Reviewer-ready, not a black box.** Every run emits a full **audit trail**:
+  region maps, used/removed station lists with reasons, L-moment ratio diagrams,
+  DDF tables with Monte-Carlo bounds, **per-facility triage diagnostics**, a
+  **distribution tail-sensitivity** analysis, an **expert distribution-review**
+  workflow, and a provenance manifest — plus a technical-basis doc, an
+  assumptions register, an output data dictionary, a per-facility sign-off
+  checklist, and a NOAA Atlas 14 cross-check tool.
+- **Honest about its limits.** Every input is treated as **unverified**; the tool
+  is framed as a **research / triage screen** that flags where an expert should
+  look, explicitly **not** a source of engineering numbers. The rigor is in
+  saying so.
 
 ## Scope &amp; progress
 
@@ -17,7 +50,7 @@ numbers on its own.
 |---|---|---|
 | **1. Como Dam** | 1 site (Montana), full audit trail | ✅ validated on real GHCN data |
 | **2. BOR fleet** | **308** Bureau of Reclamation dams (`run_batch.R`) | ✅ complete — **305 ok / 3 failed** (the 3 lack enough nearby gauges to form a region) |
-| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — see the batch plan below |
+| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **453 done** so far, nightly sweep continuing (see batch plan below) |
 
 **Batch plan for the full NID.** 73,303 dams is ~2 weeks of compute and many GB
 of weather data — too large for one run on an ephemeral machine. So
