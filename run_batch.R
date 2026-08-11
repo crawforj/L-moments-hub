@@ -133,7 +133,8 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
            ddf = NULL, diag = NULL)
     else
       list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok",
-           ddf = res$ddf, diag = tryCatch(facility_diagnostics(res), error = function(e) NULL))
+           ddf = res$ddf, diag = tryCatch(facility_diagnostics(res), error = function(e) NULL),
+           tail = tryCatch(collect_tail_sensitivity(res), error = function(e) NULL))
   }
 
   results <- if (cores > 1 && .Platform$OS.type != "windows")
@@ -155,6 +156,11 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
   # fit (|Z|), with a needs_review flag (H1 >= 2 or |Z| > 1.64). This is the
   # fleet triage list (docs/PLAN.md sec. 12): review these before trusting a
   # facility's numbers.
+  all_tail <- Filter(Negate(is.null), lapply(results, function(r) r$tail))
+  if (length(all_tail))
+    utils::write.csv(do.call(rbind, all_tail),
+                     file.path(outb, "tail_sensitivity.csv"), row.names = FALSE)
+
   all_diag <- Filter(Negate(is.null), lapply(results, function(r) r$diag))
   if (length(all_diag)) {
     diag_df <- do.call(rbind, all_diag)

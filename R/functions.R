@@ -483,6 +483,26 @@ enrich_elevations <- function(manifest, lookup = elevatr_lookup) {
 }
 
 # ---------------------------------------------------------------------------
+# collect_tail_sensitivity(): flatten a run_analysis() result's per-duration
+# tail_sensitivity tables into one data.frame keyed by site/site_id/duration
+# (the reviewer's detailed view of the 10,000-yr depth under every candidate
+# distribution). Returns NULL if none present.
+# ---------------------------------------------------------------------------
+collect_tail_sensitivity <- function(res) {
+  labs <- names(res$per_duration)
+  parts <- lapply(labs, function(lab) {
+    t <- res$per_duration[[lab]]$tail_sensitivity
+    if (is.null(t) || !nrow(t)) return(NULL)
+    data.frame(site = res$cfg$site$name %||% NA_character_,
+               site_id = res$cfg$site$id %||% NA_character_,
+               duration = lab, t, stringsAsFactors = FALSE)
+  })
+  parts <- Filter(Negate(is.null), parts)
+  if (!length(parts)) return(NULL)
+  do.call(rbind, parts)
+}
+
+# ---------------------------------------------------------------------------
 # load_distribution_review(): read the optional EXPERT distribution-review
 # registry (config/distribution_review.csv). Each row records a reviewer's
 # chosen distribution for a facility (optionally a specific duration),
@@ -563,6 +583,20 @@ facility_diagnostics <- function(res) {
     z_margin <- runner_up_absZ - absZ
     review_recommended <- identical(source, "auto") &&
       (!acceptable || (is.finite(z_margin) && z_margin < 0.5))
+    # Tail-choice sensitivity: how far apart are the candidate distributions at
+    # the 10,000-yr depth, as a % of the chosen one? A large spread means the
+    # distribution choice materially drives the extreme, so review it closely.
+    ts <- pd$tail_sensitivity
+    chosen_10k <- tryCatch(pd$est$quantiles$depth_mm[pd$est$quantiles$T == 10000][1],
+                           error = function(e) NA_real_)
+    if (is.null(chosen_10k) || length(chosen_10k) != 1) chosen_10k <- NA_real_
+    tail_min <- if (!is.null(ts) && nrow(ts))
+      suppressWarnings(min(ts$depth_mm, na.rm = TRUE)) else NA_real_
+    tail_max <- if (!is.null(ts) && nrow(ts))
+      suppressWarnings(max(ts$depth_mm, na.rm = TRUE)) else NA_real_
+    tail_spread_pct <- if (is.finite(chosen_10k) && chosen_10k > 0 &&
+                           is.finite(tail_min) && is.finite(tail_max))
+      round(100 * (tail_max - tail_min) / chosen_10k, 1) else NA_real_
     data.frame(
       site        = res$cfg$site$name %||% NA_character_,
       site_id     = res$cfg$site$id %||% NA_character_,
@@ -579,6 +613,10 @@ facility_diagnostics <- function(res) {
       runner_up_absZ = round(runner_up_absZ, 3),
       z_margin    = round(z_margin, 3),
       review_recommended = review_recommended,
+      depth_10k_mm = round(chosen_10k, 1),
+      tail_min_10k_mm = round(tail_min, 1),
+      tail_max_10k_mm = round(tail_max, 1),
+      tail_spread_pct = tail_spread_pct,
       needs_review = (isTRUE(H1 >= 2) || !acceptable),
       stringsAsFactors = FALSE)
   })

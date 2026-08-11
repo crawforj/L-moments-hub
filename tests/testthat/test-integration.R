@@ -71,3 +71,16 @@ test_that("facility_diagnostics summarises H1/|Z| and flags facilities needing r
   # poor fit (|Z| > 1.64 / not acceptable) -> review
   expect_true(facility_diagnostics(mk(0.3, "pe3", c(pe3 = 2.10), FALSE, 15))$needs_review)
 })
+
+test_that("tail_sensitivity reports the 10,000-yr depth under every candidate", {
+  rd <- step02_lmoments(synth_region(nS = 25, nY = 200, para = c(50, 15, -0.10), seed = 7))
+  cands <- c("glo", "gev", "gno", "pe3", "gpa")
+  ts <- tail_sensitivity(rd, cands, index_flood = 50, T = 10000)
+  expect_setequal(toupper(ts$dist), toupper(cands))     # one row per candidate
+  expect_true(all(ts$depth_mm > 0))                      # positive depths
+  expect_true(all(ts$T == 10000))
+  # candidates genuinely disagree at the extreme tail (that's the point)
+  expect_gt(max(ts$depth_mm) - min(ts$depth_mm), 0)
+  # depth = index_flood * growth_factor holds
+  expect_equal(ts$depth_mm, round(50 * ts$growth_factor, 2), tolerance = 0.01)
+})

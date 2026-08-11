@@ -61,6 +61,8 @@ run_analysis <- function(config_path = "config/como.yml") {
     idxfl <- estimate_index_flood(used_meta, rd_final$l_1, cfg)
 
     est <- step06_estimation(rd_final, dsel$chosen, cfg, idxfl)
+    # Distribution-choice sensitivity at the extreme tail (all candidates).
+    tail_sens <- tail_sensitivity(rd_final, cfg$distributions, idxfl, T = 10000)
     unc <- step07_uncertainty(rd_final, est, cfg)
 
     ams_used <- ams_list[used_ids]
@@ -86,6 +88,7 @@ run_analysis <- function(config_path = "config/como.yml") {
 
     per_duration[[lab]] <- list(
       regdata_final = rd_final, dist_sel = dsel, est = est, unc = unc,
+      tail_sensitivity = tail_sens,
       H = hom$H, homog_status = hom$status, homog_history = hom$history,
       ams_used = ams_used, figs = figs,
       used_table = used_table, removed_table = removed_table,
