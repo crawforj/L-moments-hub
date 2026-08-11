@@ -21,14 +21,22 @@ step10_tables <- function(results, out_dir) {
   }
 
   # Combined DDF across durations (headline deliverable).
+  idxfl_method <- cfg$index_flood$method %||% "regression"
   ddf <- do.call(rbind, lapply(names(results$per_duration), function(lab) {
-    u <- results$per_duration[[lab]]$unc
+    pd <- results$per_duration[[lab]]
+    u <- pd$unc
     data.frame(site = cfg$site$name, duration = lab,
                return_period_yr = u$T, AEP = round(1 - u$F, 6),
                depth_mm = round(u$depth_mm, 2),
                depth_lo_mm = round(u$depth_lo, 2),
                depth_hi_mm = round(u$depth_hi, 2),
-               rel_rmse = round(u$rel_rmse, 3))
+               rel_rmse = round(u$rel_rmse, 3),
+               # ASM = at-site mean annual maximum, i.e. the H&W index flood
+               # transferred to this (ungauged) site — see estimate_index_flood()
+               # in functions.R. Constant within a duration, repeated per row so
+               # the headline DDF table is self-contained for a reviewer.
+               index_flood_asm_mm = round(pd$est$index_flood, 2),
+               index_flood_method = idxfl_method)
   }))
   wr(ddf, sprintf("quantiles_DDF_%s.csv", id))
 

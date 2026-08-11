@@ -63,6 +63,8 @@ th{background:#f0f0f0}code,pre{background:#f6f8fa;padding:2px 4px;border-radius:
       "<h3>2a. Homogeneous region (discordancy &amp; heterogeneity)</h3>",
       sprintf("<p class='status'>Region status: <span class='ok'>%s</span> — final H1 = %.3f, %d stations.</p>",
               pd$homog_status, pd$H[1], nrow(pd$regdata_final)),
+      sprintf("<p>At-site mean annual maximum (<b>ASM</b> / index flood), transferred to this ungauged site: <b>%.2f mm</b> (transfer method: <code>%s</code>).</p>",
+              pd$est$index_flood, cfg$index_flood$method %||% "regression"),
       "<p>Heterogeneity iteration history (each row = one greedy refinement step):</p>",
       .tbl_html(pd$homog_history),
       "<h3>2b. Stations used</h3>", .tbl_html(pd$used_table),
