@@ -17,7 +17,24 @@ site:
 
 region:
   search_radius_km: 175         # candidate stations within this radius of the site
-  elevation_band_m: [600, 2600] # keep stations within this elevation range
+  elevation_band_m: [-100, 6200] # WIDENED 2026-08-11: this file doubles as the fleet
+                                 # batch TEMPLATE (gen_configs_from_manifest() copies
+                                 # this whole region: block unchanged to every facility).
+                                 # The old [600,2600] band -- fine for Como's ~1240m
+                                 # Montana site -- silently zeroed the candidate pool
+                                 # for any low-elevation facility: confirmed 272/311
+                                 # (87.5%) of fleet failures so far were this, not a
+                                 # real data gap (e.g. Minnesota's Miltona Lake dam has
+                                 # 118 valid nearby GHCN stations, ALL below 600m).
+                                 # Widened to cover from below Death Valley to above
+                                 # Denali. The REAL region-homogeneity gate is the H&W
+                                 # discordancy (Di) and heterogeneity (H1) statistics
+                                 # downstream (03/04_*.R), which operate on L-moment
+                                 # ratios (storm-regime shape), not raw elevation -- a
+                                 # tight elevation prefilter was never the actual
+                                 # safeguard, just an efficiency/geographic filter.
+                                 # Re-validated Como itself under this wider band
+                                 # (see docs/batch_runs_guide.md) before relying on it.
   min_record_years: 20          # drop stations with fewer valid annual maxima
   min_year_completeness: 0.90   # fraction of in-season days required per year
   max_stations: 60              # cap nearest GHCN stations pulled (bounds download)
