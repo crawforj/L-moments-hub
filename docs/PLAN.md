@@ -96,7 +96,8 @@ L-moments-como-/
   README.md
   renv.lock                # pinned package versions
   config/
-    como.yml               # ALL site/basin knobs (portability boundary)
+    como.yml               # Como site/basin knobs (portability boundary)
+    golden.yml             # golden (known-answer) validation case
   R/
     00_setup.R             # packages, source functions, read config
     01_data_acquisition.R  # GHCN-Daily download/parse + CSV fallback -> AMS
@@ -109,12 +110,22 @@ L-moments-como-/
     08_mapping.R           # region map: used vs removed stations + boundary
     09_plots.R             # ratio diagram, growth curve, DDF curves
     10_report_tables.R     # write deliverable CSVs + station lists
+    11_audit_report.R      # render the reviewer report (Quarto/RMarkdown)
+    checks.R               # embedded invariant assertions (halt on failure)
     functions.R            # site-agnostic reusable helpers (portable core)
   data/{raw,processed,external}/
-  outputs/{figures,tables}/
-  run_analysis.R           # master: runs 00..10 for a given config
+  golden/                  # frozen golden inputs + expected reference outputs
+  tests/                   # testthat unit + regression tests
+  outputs/
+    {figures,tables}/
+    provenance/            # per-run manifest: git hash, pkg versions, data vintage
+    report.html            # rendered human-review / audit report
+  run_analysis.R           # master: runs 00..11 for a given config
+  run_golden.R             # runs the golden case beside Como (same code paths)
+  report.qmd               # Quarto audit report source
   docs/
     users_guide.md
+    audit_guide.md         # how to review & audit a run; sign-off checklist
     PLAN.md                # this file
 ```
 
@@ -197,19 +208,61 @@ are site-agnostic; no hard-coded Como values.
 
 ---
 
-## 9. Verification
+## 9. Verification, human review & audit
 
-- **Reference check:** reproduce a Hosking & Wallis worked example using the
-  datasets bundled with `lmomRFA` (e.g., `Cascades`, `Maxwind`, `appalach`) and
-  confirm `regtst` `Di`/`H`/`Z` match published values — a correctness test of
-  the pipeline wiring.
-- **Sanity checks:** quantiles monotone increasing in `T`; growth curve
-  increasing in `F`; heterogeneity `H` drops after removing discordant sites.
-- **Offline dry-run:** execute end-to-end on the bundled fallback CSV to prove
-  the pipeline runs with no network.
-- **Como run:** full 24-hr & 72-hr execution; inspect all figures/tables.
-- Optional cross-check of results against published NOAA Atlas 14 / Atlas 2
-  precipitation-frequency estimates for the region, where available.
+The results must be **reproducible, traceable, and defensible** to an
+independent reviewer (dam-safety context). Five layers:
+
+### 9.1 Reproducibility & provenance
+- `renv` lock + fixed RNG seeds → bit-for-bit repeatable runs.
+- Every run writes `outputs/provenance/run_manifest.json`: timestamp, git commit
+  hash, `sessionInfo()` (R + package versions), the **exact config used** (copied
+  verbatim), GHCN data vintage / download date, and input station inventory with
+  record spans. An auditor can reproduce any figure from the manifest alone.
+
+### 9.2 Automated invariant checks (`checks.R`)
+Assertions embedded in the pipeline that **halt with a clear message** if an
+invariant breaks, so a silent error can't reach the output: quantiles monotone
+increasing in `T`; growth curve increasing in `F`; `H` decreasing after
+discordant-site removal; `|Z^DIST|` reported for every candidate; no `NA`
+leakage into L-moments; station counts reconcile (candidates = used + removed).
+Passed checks are logged as an audit trail.
+
+### 9.3 Golden-dataset validation (run **side-by-side** with Como)
+A known-answer case is run through the **identical code paths** as Como
+(`run_golden.R`, same functions, a `golden.yml` config) so the reviewer sees the
+same machinery produce a verifiable result and the real result:
+- **(a) Published benchmark** — Hosking & Wallis worked examples bundled in
+  `lmomRFA` (e.g., `Cascades`, `appalach`, `Maxwind`). The pipeline must
+  reproduce the book's published `Di`, `H`, `Z`, and quantiles within tolerance.
+  Validates that the method is wired correctly.
+- **(b) Synthetic known-truth** — simulate stations from a **known** regional
+  distribution (known growth curve, known index floods, fixed seed), so the
+  *true* quantiles to AEP 1e-4 are known exactly; confirm the pipeline recovers
+  them within Monte-Carlo tolerance. Validates the whole chain end-to-end,
+  including estimation and the 10,000-yr extrapolation.
+- Expected reference outputs are **frozen in `golden/`** and compared on every
+  run; explicit numeric tolerances are defined, and drift fails the test.
+
+### 9.4 Human-review audit report (`report.qmd` → `outputs/report.html`)
+A single rendered report that walks a reviewer through each H&W step with the
+diagnostics inline: candidate stations and the map, the `Di`/`H` decision log
+(which sites were dropped and **why**, at each iteration), the L-moment ratio
+diagram and `Z`-statistic table with the selection rationale, the growth curve
+and DDF tables with uncertainty bands, the golden-case results beside Como, and
+the provenance manifest. Every table ships with a **data dictionary**; every
+figure/table is captioned with the script/function and H&W section that produced
+it. `docs/audit_guide.md` gives a reviewer sign-off checklist.
+
+### 9.5 Tests & cross-checks
+- `tests/` (`testthat`): unit tests for each function + a **regression test**
+  asserting golden outputs match the frozen reference within tolerance (CI-ready).
+- Independent recomputation of key L-moments two ways (via `lmom` and a
+  from-scratch helper) as a cross-check.
+- **Offline dry-run** on the bundled fallback CSV proves the pipeline runs with
+  no network.
+- Optional cross-check of Como results against published NOAA Atlas 14 / Atlas 2
+  estimates for the region, where available.
 
 ---
 
@@ -237,3 +290,8 @@ are site-agnostic; no hard-coded Como values.
 - [x] Precipitation-frequency results to the **10,000-year** return period
       (AEP 1e-4), for **24-hr and 72-hr** durations, with uncertainty bounds
 - [x] Portable, inline-commented R code + user's guide
+- [x] **Auditability:** provenance manifest, embedded invariant checks, decision
+      log, rendered human-review report, data dictionaries, reviewer sign-off guide
+- [x] **Golden dataset** (published benchmark + synthetic known-truth) run
+      side-by-side with Como and regression-tested to prove output is
+      error-free and defensible
