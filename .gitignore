@@ -24,3 +24,6 @@ config/facilities/
 
 # testthat failure artifact (regenerated; not tracked)
 tests/testthat/testthat-problems.rds
+
+# NID tranche temp manifest (regenerated each run)
+data/nid_progress/_tranche_current.csv
