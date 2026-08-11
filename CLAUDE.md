@@ -50,9 +50,12 @@ If CRAN is restricted, see `docs/users_guide.md` §1 (GitHub CRAN mirrors +
      (`https://nid.sec.usace.army.mil`) and/or Reclamation RISE
      (`https://data.usbr.gov`); reconcile coordinates/ownership in
      `config/facilities_BOR.csv`.
-   - **Add ground elevations** (the NID mirror has none). Easiest: use the R
-     `elevatr` package to fill `elevation_m` from lat/lon, or set the fleet
-     `index_flood.method: "nearest"` so results don't depend on site elevation.
+   - **Add ground elevations** (the NID mirror has none). `enrich_elevations()`
+     is now built (`R/functions.R`): fills missing `elevation_m` from a DEM via
+     the `elevatr` package — enable in the batch with `LMC_ENRICH_ELEV=1`
+     (needs `elevatr` + network; safe no-op offline). Or set the fleet
+     `index_flood.method: "nearest"`. Either way the pipeline no longer crashes
+     on blank elevations (the regression method falls back to the regional mean).
    - ~~Consider enabling GHCN quality-flag (QFLAG) screening~~ **DONE** —
      `screen_qflag()` in `R/functions.R` NA-outs failed-QA observations on both
      the GHCN download and local-CSV paths; config `data.qflag_screen` (default

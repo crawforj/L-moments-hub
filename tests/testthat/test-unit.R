@@ -62,3 +62,19 @@ test_that("estimate_index_flood falls back to the regional mean when site elevat
     expect_equal(estimate_index_flood(meta, means, cfg), 40, tolerance = 1e-6)
   }
 })
+
+test_that("enrich_elevations fills only missing elevations and no-ops offline", {
+  man <- data.frame(name = c("a", "b", "c"),
+                    latitude = c(46, 47, 48), longitude = c(-114, -115, -116),
+                    elevation_m = c(1200, NA, NA))
+  # mock DEM: returns 900 + 100*index for the requested (missing) points
+  mock <- function(lat, lon) 900 + 100 * seq_along(lat)
+  out <- enrich_elevations(man, lookup = mock)
+  expect_equal(out$elevation_m, c(1200, 1000, 1100))   # existing kept, missing filled
+  # offline / unavailable lookup -> missing stay NA (safe; index-flood uses mean)
+  off <- enrich_elevations(man, lookup = function(lat, lon) rep(NA_real_, length(lat)))
+  expect_equal(off$elevation_m, c(1200, NA, NA))
+  # a manifest with no elevation_m column gains one
+  man2 <- data.frame(latitude = 46, longitude = -114)
+  expect_true("elevation_m" %in% names(enrich_elevations(man2, lookup = function(a, b) 1500)))
+})

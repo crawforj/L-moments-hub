@@ -420,6 +420,54 @@ estimate_index_flood <- function(used_meta, means, cfg) {
 }
 
 # ---------------------------------------------------------------------------
+# elevatr_lookup(): default DEM elevation lookup (metres) via the elevatr
+# package. Needs elevatr installed AND network (AWS Terrain Tiles); returns all
+# NA when either is unavailable, so callers degrade gracefully offline.
+# ---------------------------------------------------------------------------
+elevatr_lookup <- function(lat, lon) {
+  if (!requireNamespace("elevatr", quietly = TRUE) ||
+      !requireNamespace("sf", quietly = TRUE))
+    return(rep(NA_real_, length(lat)))
+  pts <- data.frame(x = as.numeric(lon), y = as.numeric(lat))
+  e <- tryCatch(
+    elevatr::get_elev_point(pts, prj = "EPSG:4326", src = "aws"),
+    error = function(err) NULL, warning = function(w) NULL)
+  if (is.null(e) || is.null(e$elevation)) return(rep(NA_real_, length(lat)))
+  as.numeric(e$elevation)
+}
+
+# ---------------------------------------------------------------------------
+# enrich_elevations(): fill MISSING elevation_m in a facilities manifest from a
+# DEM, so the regression index-flood method can use the site elevation (the NID
+# dam-inventory mirror carries none — see DATA_SOURCES.md). Existing values are
+# preserved; only NA/blank entries are filled.
+#   manifest : data.frame with latitude, longitude[, elevation_m]
+#   lookup   : function(lat, lon) -> numeric metres, vectorised (default
+#              elevatr_lookup). A no-op (keeps NA) when the lookup is
+#              unavailable — the index flood then falls back to the regional
+#              mean, which is safe (see estimate_index_flood()).
+#   -> the manifest with elevation_m filled where possible.
+# ---------------------------------------------------------------------------
+enrich_elevations <- function(manifest, lookup = elevatr_lookup) {
+  if (!"elevation_m" %in% names(manifest)) manifest$elevation_m <- NA_real_
+  elev <- suppressWarnings(as.numeric(manifest$elevation_m))
+  missing <- is.na(elev)
+  if (!any(missing)) { manifest$elevation_m <- elev; return(manifest) }
+  got <- tryCatch(lookup(manifest$latitude[missing], manifest$longitude[missing]),
+                  error = function(e) rep(NA_real_, sum(missing)))
+  got <- suppressWarnings(as.numeric(got))
+  if (length(got) != sum(missing)) got <- rep(NA_real_, sum(missing))
+  elev[missing] <- got
+  manifest$elevation_m <- elev
+  n_filled <- sum(missing & !is.na(elev))
+  message(sprintf("enrich_elevations: filled %d/%d missing elevations%s.",
+                  n_filled, sum(missing),
+                  if (n_filled < sum(missing))
+                    " (rest unavailable — index-flood uses the regional mean)" else ""))
+  manifest
+}
+
+# ---------------------------------------------------------------------------
 # facility_diagnostics(): one-row-per-duration triage summary from a
 # run_analysis() result. Surfaces the two things a fleet reviewer must check
 # per facility (H&W): region heterogeneity (H1) and goodness-of-fit of the

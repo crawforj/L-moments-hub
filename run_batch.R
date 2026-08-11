@@ -40,6 +40,11 @@ gen_configs_from_manifest <- function(manifest_csv,
           " mirror (vintage ~2013) and carries NO ground elevations. See DATA_SOURCES.md.\n",
           "============================================================================\n")
   m <- utils::read.csv(manifest_csv, stringsAsFactors = FALSE)
+  # Optionally fill missing ground elevations from a DEM (needs elevatr +
+  # network). Off by default; enable with LMC_ENRICH_ELEV=1. When unavailable
+  # it is a safe no-op (index-flood falls back to the regional mean).
+  if (isTRUE(as.logical(Sys.getenv("LMC_ENRICH_ELEV", "FALSE"))))
+    m <- enrich_elevations(m)
   tmpl <- yaml::read_yaml(template)
   paths <- character(0)
   for (i in seq_len(nrow(m))) {
