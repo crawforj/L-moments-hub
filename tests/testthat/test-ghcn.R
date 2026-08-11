@@ -75,3 +75,18 @@ test_that("download_ghcn_daily screens QFLAG'd observations (col 6)", {
                             qflag_screen = FALSE)
   expect_equal(d2$prcp, c(40.1, 99.9, 25.2))
 })
+
+test_that("make_demo_data centers on the requested site (offline batch works anywhere)", {
+  # A non-Como facility (Grand Coulee, WA) must still get an in-region set.
+  d <- tempfile(); site <- list(latitude = 47.96, longitude = -118.98)
+  meta <- make_demo_data(d, center_lat = site$latitude, center_lon = site$longitude,
+                         radius_km = 200)
+  st <- utils::read.csv(file.path(d, "stations.csv"), stringsAsFactors = FALSE)
+  cfg <- list(site = site,
+              region = list(search_radius_km = 200, elevation_band_m = c(600, 2600)))
+  filt <- filter_candidates(st, cfg)
+  expect_gte(nrow(filt$kept), 12)                       # a usable region forms
+  expect_true("DEMO17" %in% filt$removed$station_id)    # the 'far' gauge is excluded
+  # stations are actually near the requested site, not Como
+  expect_lt(max(filt$kept$distance_km), 200)
+})

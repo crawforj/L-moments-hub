@@ -313,22 +313,36 @@ acquire_station_data <- function(cfg) {
     }
     if (!isTRUE(cfg$data$use_local_fallback))
       stop("GHCN download failed and use_local_fallback is FALSE.")
-    message("GHCN download unavailable; using local fallback data in ",
-            cfg$data$local_dir, ".")
+    message("GHCN download unavailable; falling back to SYNTHETIC demo data.")
   }
+  # We reach here either via the GHCN fallback (source == "ghcn", NCEI
+  # unreachable) or via an explicit local source. In the fallback case the
+  # synthetic set is generated PER SITE and CENTERED on the site, isolated under
+  # data/synthetic/<site_id>/, so batch facilities never collide and every
+  # facility gets an in-region set offline. Explicit source == "local" honours
+  # the user's local_dir.
+  synthetic_fallback <- identical(cfg$data$source, "ghcn")
+
   if (identical(cfg$data$local_format, "ams"))
     return(read_local_ams(cfg$data$local_dir))
-  # Daily local path: if no data present, generate the seeded synthetic demo set
-  # so the pipeline is runnable immediately after a fresh clone (offline).
-  if (!file.exists(file.path(cfg$data$local_dir, "stations.csv"))) {
+
+  ldir <- if (synthetic_fallback)
+    file.path(getOption("lmc.root", "."), "data", "synthetic", cfg$site$id %||% "site")
+  else cfg$data$local_dir
+
+  if (!file.exists(file.path(ldir, "stations.csv"))) {
     gen <- file.path(getOption("lmc.root", "."), "R", "make_demo_data.R")
     if (file.exists(gen)) {
       source(gen, local = TRUE)
-      message("No local data found; generating SYNTHETIC demo data (offline).")
-      make_demo_data(cfg$data$local_dir)
+      message("Generating SYNTHETIC demo data (offline) for ",
+              cfg$site$id %||% "site", " at (", cfg$site$latitude, ", ",
+              cfg$site$longitude, ").")
+      make_demo_data(ldir, center_lat = cfg$site$latitude,
+                     center_lon = cfg$site$longitude,
+                     radius_km = cfg$region$search_radius_km %||% 200)
     }
   }
-  read_local_daily(cfg$data$local_dir, qflag_screen = qflag_screen, qflag_keep = qflag_keep)
+  read_local_daily(ldir, qflag_screen = qflag_screen, qflag_keep = qflag_keep)
 }
 
 # ---------------------------------------------------------------------------
@@ -386,15 +400,23 @@ estimate_index_flood <- function(used_meta, means, cfg) {
     j <- which.min(used_meta$distance_km)
     return(means[j])
   }
-  # regression of mean AMS on elevation; fall back to plain mean if degenerate
-  df  <- data.frame(mean_ams = means, elev = used_meta$elev_m)
+  # Regression of mean AMS on elevation; fall back to the plain regional mean if
+  # it can't be applied. The target site's elevation is often blank/NA in the
+  # dam inventory (the NID mirror carries no ground elevations — see
+  # DATA_SOURCES.md); without it a regression prediction is impossible, so fall
+  # back to the regional mean rather than crashing (predict.lm rejects a logical
+  # NA). This is the documented default until elevations are enriched.
+  site_elev <- suppressWarnings(as.numeric(cfg$site$elevation_m))
+  if (length(site_elev) != 1L || !is.finite(site_elev))
+    return(mean(means))
+  df  <- data.frame(mean_ams = means, elev = suppressWarnings(as.numeric(used_meta$elev_m)))
   fit <- try(stats::lm(mean_ams ~ elev, data = df), silent = TRUE)
   if (inherits(fit, "try-error") || any(is.na(stats::coef(fit))))
     return(mean(means))
-  pred <- as.numeric(stats::predict(fit,
-    newdata = data.frame(elev = cfg$site$elevation_m)))
-  # guard against an implausible (e.g. negative) extrapolation
-  if (!is.finite(pred) || pred <= 0) mean(means) else pred
+  pred <- try(as.numeric(stats::predict(fit,
+    newdata = data.frame(elev = site_elev))), silent = TRUE)
+  # guard against a failed or implausible (e.g. negative) extrapolation
+  if (inherits(pred, "try-error") || !is.finite(pred) || pred <= 0) mean(means) else pred
 }
 
 # ---------------------------------------------------------------------------

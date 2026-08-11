@@ -65,6 +65,11 @@ If CRAN is restricted, see `docs/users_guide.md` §1 (GitHub CRAN mirrors +
    region map and homogeneity history; tune `search_radius_km`, `elevation_band_m`,
    and `season` as needed. (Elevations are blank pending DEM enrichment; index-flood
    falls back to the regional mean until then, or set `index_flood.method: "nearest"`.)
+   **The batch machinery now runs end-to-end OFFLINE** (all 8 pilot facilities:
+   8 ok, 0 failed): the synthetic fallback is site-centered and isolated per
+   facility under `data/synthetic/<id>/`, so you can dry-run the whole fleet
+   pipeline before wiring real GHCN data. (Offline results are SYNTHETIC — for
+   machinery validation only, never engineering use.)
 5. **Full fleet:** `LMC_CORES=8 Rscript run_batch.R --manifest config/facilities_BOR.csv`.
    Results collect in `outputs/batch/`. Triage any facility flagged
    *heterogeneous* (H1 ≥ 2) or with chosen `|Z| > 1.64` for manual region revision.

@@ -12,6 +12,7 @@ outputs/
 
 # Generated / downloaded station data (reproducible; synthetic demo or GHCN cache)
 data/external/
+data/synthetic/
 data/raw/
 data/processed/
 

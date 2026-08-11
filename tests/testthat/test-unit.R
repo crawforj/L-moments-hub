@@ -51,3 +51,14 @@ test_that("estimate_index_flood regression predicts at the site elevation", {
               index_flood = list(method = "regression"))
   expect_equal(estimate_index_flood(meta, means, cfg), 35, tolerance = 1e-6)
 })
+
+test_that("estimate_index_flood falls back to the regional mean when site elevation is missing", {
+  meta <- data.frame(elev_m = c(1000, 1500, 2000), distance_km = c(5, 10, 15))
+  means <- c(30, 40, 50)
+  # Blank site elevation (the common dam-inventory case) must NOT crash the
+  # regression path; it falls back to the regional mean (= 40).
+  for (e in list(NA, NA_real_, NULL, "")) {
+    cfg <- list(site = list(elevation_m = e), index_flood = list(method = "regression"))
+    expect_equal(estimate_index_flood(meta, means, cfg), 40, tolerance = 1e-6)
+  }
+})
