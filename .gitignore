@@ -27,3 +27,4 @@ tests/testthat/testthat-problems.rds
 
 # NID tranche temp manifest (regenerated each run)
 data/nid_progress/_tranche_current.csv
+data/nid_progress/*.log
