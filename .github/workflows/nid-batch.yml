@@ -41,14 +41,38 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
-      - name: Install system dependencies (sf / geospatial + gfortran for lmom)
+      - name: Install system dependencies (sf / geospatial + gfortran for lmom + libuv for testthat's deps)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev gfortran
+          sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev gfortran libuv1-dev
 
       - name: Install R packages
+        # Prefer the RSPM binary mirror (fast, prebuilt) with plain CRAN as a
+        # source-build fallback -- the first real run of this workflow hardcoded
+        # plain CRAN here by mistake, forcing sf/lmom/lmomRFA etc. to all compile
+        # from source (took ~10+ min instead of ~1-2).
         run: |
-          Rscript -e 'install.packages(c("lmom","lmomRFA","yaml","jsonlite","ggplot2","sf","maps","testthat"), repos="https://cloud.r-project.org")'
+          Rscript -e '
+            repos <- c(RSPM = Sys.getenv("RSPM", "https://packagemanager.posit.co/cran/__linux__/noble/latest"),
+                       CRAN = "https://cloud.r-project.org")
+            install.packages(c("lmom","lmomRFA","yaml","jsonlite","ggplot2","sf","maps","testthat"), repos = repos)'
+
+      - name: Verify every required package actually installed
+        # install.packages() with multiple packages does NOT fail the step (and
+        # so does not fail this job) when an individual package fails partway --
+        # the first real run showed this step green while testthat had silently
+        # failed to install (a missing system lib for one of its dependencies).
+        # Check explicitly rather than trusting the previous step's exit code.
+        run: |
+          Rscript -e '
+            need <- c("lmom","lmomRFA","yaml","jsonlite","ggplot2","sf","maps","testthat")
+            have <- rownames(installed.packages())
+            missing <- setdiff(need, have)
+            if (length(missing)) {
+              cat("::error::Missing R packages after install step:", paste(missing, collapse=", "), "\n")
+              quit(status = 1)
+            }
+            cat("All required packages present:", paste(need, collapse=", "), "\n")'
 
       - name: Validate before trusting this run
         run: |
