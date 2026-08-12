@@ -25,6 +25,15 @@ on:
 
 permissions:
   contents: write
+  actions: write   # needed to dispatch the next run (self-chaining, see final step)
+
+# Belt-and-suspenders: even though this workflow chains itself rather than
+# relying on overlapping schedules, a concurrency group means a stray manual
+# trigger (or two chained runs somehow overlapping) queues instead of racing
+# another run for the same branch's ledger.
+concurrency:
+  group: nid-batch-${{ inputs.branch }}
+  cancel-in-progress: false
 
 jobs:
   run-fleet-batch:
@@ -139,3 +148,28 @@ jobs:
         with:
           name: nid-progress-${{ github.run_id }}
           path: data/nid_progress/progress.md
+
+      - name: Chain -- trigger the next run unless the fleet is complete
+        # Makes this genuinely autonomous: a single run can't fit all 73,303
+        # facilities (job time is capped at ~6h by GitHub), so each run
+        # dispatches its own successor with the same settings, using the
+        # workflow_dispatch exception to the "GITHUB_TOKEN can't trigger
+        # workflows" rule. `if: always()` so this fires even if the tranche
+        # loop above got cut off by the job timeout mid-round (matches the
+        # same "at most one in-flight tranche lost" safety property as
+        # everywhere else in this pipeline) -- an unfinished round just means
+        # the next run re-attempts those same not-yet-completed facilities,
+        # same as the ledger's normal resumability.
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if grep -q "All NID facilities complete" data/nid_progress/progress.md 2>/dev/null; then
+            echo "Full NID fleet complete -- not chaining a next run."
+          else
+            echo "Fleet not yet complete -- dispatching the next run."
+            gh workflow run nid-batch.yml --repo "${{ github.repository }}" \
+              -f branch="${{ inputs.branch }}" \
+              -f tranche_size="${{ inputs.tranche_size }}" \
+              -f budget_minutes="${{ inputs.budget_minutes }}"
+          fi
