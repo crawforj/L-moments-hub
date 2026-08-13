@@ -24,6 +24,29 @@
     `data.qflag_screen` (default `true`) and retain specific codes with
     `data.qflag_keep`. Confirm the retained/dropped flag set is appropriate for
     the region.
+  - **Digital archive vs. independently-published record.** GHCN-Daily's QFLAG
+    screening (above) catches internal-consistency problems in the digital
+    archive itself; it does not confirm the digitized values agree with what
+    was originally published (older station records were compiled from
+    printed/microfilm bulletins, and digitization-era transcription errors are
+    a known, separate error class QFLAG isn't designed to catch). Mitigated
+    2026-08-13 by `qc_ghcnm_crosscheck.R`, which reconciles this project's
+    GHCN-Daily-derived monthly totals against GHCN-Monthly (a separately
+    NOAA-maintained product) — but only for station-months GHCN-Monthly itself
+    sourced independently of GHCN-Daily (source flag != `D`; many station-months
+    ARE sourced from GHCN-Daily, and comparing those would just check GHCN-Daily
+    against itself). It also surfaces GHCN-Monthly's own institutional QC flags
+    (outlier / exceeds-world-record / spatially-inconsistent / day-count-inconsistent)
+    regardless of source. Output is a REVIEW worklist
+    (`data/qc/ghcnm_crosscheck_flagged.csv`), not an auto-correction — same
+    discipline as the discordancy/distribution-review worklists elsewhere in
+    this pipeline. Run it and read its own header comment for usage; results as
+    of this writing are still being generated (a full run across this project's
+    cached stations was in progress) -- check
+    `data/qc/ghcnm_crosscheck_flagged.csv`'s row count and this repo's git log
+    for the current state rather than trusting a specific number here. The
+    GHCN-Monthly archive isn't committed (public/free/refetchable; fetch
+    instructions are in the script's own header comment).
   - Fixed-interval correction factors (defaults ~1.13 for 1-day, ~1.03 for 3-day)
     should be confirmed for the region and gauge reporting times.
   - Trans-boundary / short-record stations, station moves, and unit consistency.
