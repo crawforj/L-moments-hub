@@ -122,23 +122,37 @@ astone@usbr.gov) 2026-08-11. Feedback so far, and status:
 - Region-building should offer more than circular radius (subjective/
   covariate, objective/L-CV threshold, cluster analysis) — **cluster analysis
   implemented** (H&W sec. 9.2.3 via `lmomRFA::cluagg/cluinf/clukm`,
-  `region.method: cluster`), on branch `claude/region-methods-asm-arf` (PR #2,
-  **not yet merged to main**). Subjective/objective partitioning deferred
-  pending expert-set thresholds.
+  `region.method: cluster`). PR #2 **merged to `main` 2026-08-11.** Subjective/
+  objective partitioning deferred pending expert-set thresholds.
 - Does the pipeline develop an at-site mean (ASM) and apply an areal
   reduction factor (ARF)? ASM was already computed internally, now exposed;
-  ARF added (Leclerc & Schaake 1972 default, swappable). Also on the
-  unmerged PR #2 branch — **not present on `claude/desktop-nid-ad-hoc`**,
-  where the fleet batch work in this file has been happening. The two
-  branches will need reconciling before a full fleet run has both region-
-  method flexibility and ASM/ARF.
+  ARF added (Leclerc & Schaake 1972 default, swappable). Same PR #2, same
+  merge status.
+- **Confirmed 2026-08-13, still true: none of this has reached the active
+  fleet branch.** `claude/desktop-nid-ad-hoc` (where the NID fleet batch and
+  the completed 308-facility BOR batch have been running) branched off
+  *before* PR #2 merged and was never rebased — every fleet/BOR result to
+  date used only the original circular region method, with no ASM/ARF. `main`
+  has the improvement; the branch actually doing the work doesn't. Rebasing
+  mid-fleet-run needs a deliberate decision (re-scoring already-completed
+  facilities under a new default is its own pass, not a silent side effect
+  of merging — see the original region-methods plan) — flagged, not done.
+- **New 2026-08-13**, answering a direct question about digital-vs-published
+  data quality: `qc_ghcnm_crosscheck.R` reconciles this project's GHCN-Daily
+  monthly totals against GHCN-Monthly (independently-sourced station-months
+  only) and surfaces GHCN-Monthly's own institutional QC flags. See
+  `DATA_SOURCES.md` §1 and the script's own header comment.
 
 ## Next steps (priority order)
 
-1. **Merge PR #2** (`claude/region-methods-asm-arf`) and reconcile with
-   `claude/desktop-nid-ad-hoc`'s fleet-run fixes (synthetic-fallback block,
-   elevation-band widening, live NID refresh, fleet-wide tables) — right now
-   these live on separate branches and neither has 100% of today's fixes.
+1. **Reconcile `main` (has PR #2's region-clustering/ASM/ARF) with
+   `claude/desktop-nid-ad-hoc`** (has the fleet-run fixes: synthetic-fallback
+   block, elevation-band widening, live NID refresh, fleet-wide tables, LFS
+   migration). PR #2 itself merged 2026-08-11 -- confirmed 2026-08-13 the
+   fleet branch still never got it. Rebasing the fleet branch onto main is
+   the mechanical part; the real decision is whether/when to re-score
+   already-completed facilities under the new region method (a deliberate
+   `--rebuild-region` pass, not automatic).
 2. **Make the repo public** if desired — GitHub → Settings → General → Danger
    Zone → Change visibility. (Already public as of the Reclamation outreach.)
 3. **Ground elevations** — still the one gap no data source fixes: neither the
