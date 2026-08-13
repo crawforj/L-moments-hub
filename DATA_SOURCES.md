@@ -40,12 +40,24 @@
     regardless of source. Output is a REVIEW worklist
     (`data/qc/ghcnm_crosscheck_flagged.csv`), not an auto-correction — same
     discipline as the discordancy/distribution-review worklists elsewhere in
-    this pipeline. Run it and read its own header comment for usage; results as
-    of this writing are still being generated (a full run across this project's
-    cached stations was in progress) -- check
-    `data/qc/ghcnm_crosscheck_flagged.csv`'s row count and this repo's git log
-    for the current state rather than trusting a specific number here. The
-    GHCN-Monthly archive isn't committed (public/free/refetchable; fetch
+    this pipeline. Run it and read its own header comment for usage.
+    **Full run completed 2026-08-13** across all 17,971 cached stations:
+    5,022 station-months flagged across 2,340 stations (17,771 matched in
+    GHCN-Monthly; 200 cached stations aren't in it at all). Of those, only
+    **88 are genuine independent-source mismatches** — the rest (4,934) are
+    NOAA's own institutional QC flags surfaced regardless of source. Of the
+    88 genuine mismatches, all but 2 are Mexican stations (source flag `M`,
+    the actual independent MCDW bulletin) mostly showing "our total = 0mm,
+    published = nonzero" — almost certainly a completeness gap in our
+    cached daily data for those station-months (missing days, not a wrong
+    transcribed value) rather than evidence of widespread digitization
+    error. **The two U.S. cases are worth real review**: Memphis Intl
+    Airport, TN (USW00013893), July 1996 — our total 251.3mm vs. GHCN-
+    Monthly's GSOD-sourced 146.1mm (+72%); and Mt. Clemens ANG Base, MI
+    (USW00014804), April 2015 — our total 40.9mm vs. GHCN-Monthly's
+    USHCN-sourced 94.2mm (-56.6%). Neither station has been checked yet
+    against whether either month feeds into an actual fleet/BOR result.
+    The GHCN-Monthly archive isn't committed (public/free/refetchable; fetch
     instructions are in the script's own header comment).
   - Fixed-interval correction factors (defaults ~1.13 for 1-day, ~1.03 for 3-day)
     should be confirmed for the region and gauge reporting times.
