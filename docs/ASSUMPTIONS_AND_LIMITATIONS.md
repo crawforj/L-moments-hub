@@ -137,18 +137,23 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    from the elevation fix **alone**, nothing to do with region method. The
    215 genuine-`cluster` facilities show median 15.3% / mean 20.0% at
    T=10,000 yr against the same stale baseline — smaller than the confound's
-   own noise floor, so **this fleet run cannot cleanly separate "region
-   method changed the answer" from "the baseline predates the elevation
-   fix."** The controlled, same-elevation, same-process Como/Hoover
-   comparisons above remain the most trustworthy quantification of the
-   region-method effect specifically; a clean fleet-wide number needs either
-   a fresh circular baseline re-run (not done — out of scope for the task
-   that produced this result) or fleet-scale paired `compare_regions.R`
-   runs. See `docs/CLUSTER_FLEET_RESULTS.md`'s "Same-day follow-up" section
-   for the full breakdown, including real (if confound-tinged) patterns:
-   spread correlates with elevation and is highest in WA/UT/OR/CO, and is
-   larger for smaller cluster regions and for facilities where `GLO` was the
-   chosen distribution.
+   own noise floor, so that comparison could not cleanly separate the two
+   effects.
+   **RESOLVED same day (2026-08-14 evening): the circular baseline was
+   re-run fleet-wide with the same elevation-enriched manifest** (297/308
+   ok), eliminating the confound rather than merely disclosing it. Proof of
+   cleanliness: the internal-fallback control group's spread vs. the fresh
+   baseline is now **exactly 0.0% across all 296 combinations** (was median
+   26.4% against the stale one). The clean, region-method-only fleet result
+   (221 genuine-cluster facilities, 428 facility×duration combinations):
+   **median 15.1% / mean 20.0% spread at T=10,000 yr, with 50.2% of
+   combinations exceeding 15%** and a tail reaching 94.6% (Bradbury). The
+   reviewer's "one of the most influential points" is confirmed at fleet
+   scale on clean data. See `docs/CLUSTER_FLEET_RESULTS.md`'s "FINAL, CLEAN
+   RESULT" section — the interim patterns noted there (spread correlates
+   with elevation; highest in WA/UT/OR/CO; larger for smaller cluster
+   regions and GLO-selected facilities) came from the confounded pass and
+   should be re-derived from the clean data before being quoted.
 6. **The regional distribution is the right family.** One distribution is chosen
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity
