@@ -63,19 +63,57 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    both are **not yet implemented** — deferred pending Reclamation-set
    thresholds/weights this project should not guess at (a climatological
    judgment call, not a software one).
-   **Fleet-wide caveat, found 2026-08-14, not yet resolved:** `cluster` uses
-   site elevation as a clustering attribute and silently falls back to
-   `circular` (logged, not errored) whenever a facility's config has no
-   `elevation_m`. As of this writing, **0/308 facilities in
-   `config/facilities_BOR.csv` and 0/73,303 in `config/nid_manifest.csv`**
-   have real elevation data (both are the literal string `NA` throughout) —
-   `region.method: cluster` is therefore currently a **complete no-op for the
-   entire fleet**; it only ran for real at Como because that config's
-   elevation was set by hand. `enrich_elevations()` (`R/functions.R`) already
-   exists to fix this (a DEM lookup) but is off by default
-   (`LMC_ENRICH_ELEV=1`) and has not been run against either manifest.
-   Anything told to Reclamation about fleet-wide cluster-region availability
-   must account for this until it's resolved.
+   **Fleet-wide caveat, found 2026-08-14, partially resolved same day:**
+   `cluster` uses site elevation as a clustering attribute and silently
+   falls back to `circular` (logged, not errored) whenever a facility's
+   config has no `elevation_m`. As first found, **0/308 facilities in
+   `config/facilities_BOR.csv`, 0/8 in `config/pilot.csv`, and 0/73,303 in
+   `config/nid_manifest.csv`** had real elevation data (all the literal
+   string `NA`) — `region.method: cluster` was therefore a **complete no-op
+   for the entire fleet**; it only ran for real at Como because that
+   config's elevation was set by hand.
+
+   **Fixed the same day for the BOR-308 and pilot-8 manifests only.**
+   `enrich_elevations()` (`R/functions.R`, DEM lookup via
+   `elevatr::get_elev_point(src = "aws")`, AWS Terrain Tiles, no auth) was
+   run for real and its result written back durably to the CSVs (new script:
+   `enrich_manifest_elevations.R` at the repo root — `enrich_elevations()`
+   was already wired into `run_batch.R`'s `gen_configs_from_manifest()`
+   behind `LMC_ENRICH_ELEV=1`, but that only enriched the manifest in
+   memory for one run and never persisted it, so every run re-did the same
+   DEM lookups; this closes that gap for good). Result: **308/308 (100%) of
+   `config/facilities_BOR.csv` and 8/8 (100%) of `config/pilot.csv`** now
+   have a real DEM-derived `elevation_m`, in ~6 s and ~1 s respectively (AWS
+   Terrain Tiles was fast and reliable both times — no timeouts, no
+   retries needed). Spot-checked against known crest/reservoir elevations:
+   Hoover 421-425 m (real crest ~376 m), Grand Coulee 413-446 m (real
+   reservoir full pool ~393 m), Shasta 301-332 m (real crest ~328 m) —
+   all in the right ballpark for a coordinate-based DEM point lookup near,
+   not exactly on, the dam structure (a few tens of metres off is expected;
+   values are never negative, zero, or off by orders of magnitude). Note:
+   re-running the enrichment produces slightly different values run to run
+   (Hoover: 421 m alone vs. 425 m as part of the 308-row batch) — `elevatr`
+   appears to auto-select its DEM zoom/tile resolution from the bounding box
+   of all points in a single call, so a wider-spanning batch samples at
+   coarser resolution. This is noise at the few-tens-of-metres level, not a
+   correctness bug, but it means elevation values (and therefore `cluster`
+   region composition) are not perfectly deterministic across separate
+   enrichment runs.
+
+   `config/nid_manifest.csv` (73,303 rows) is **explicitly out of scope**
+   for this fix — still 0/73,303, still a complete no-op there. Enriching
+   the full NID fleet is a much larger DEM-lookup cost/scope decision left
+   to the project owner. Anything told to Reclamation about fleet-wide
+   cluster-region availability must state clearly: BOR-308 and pilot-8 now
+   have real elevation and can genuinely use `cluster`; the full
+   73k-manifest fleet still cannot.
+
+   With elevation now real, the Hoover Dam (`NV10122`) region comparison in
+   `docs/REGION_METHOD_SENSITIVITY.md` was re-run and **no longer falls
+   back** — `cluster` builds a real, different region (7 stations vs.
+   `circular`'s 27-29) with a real spread (27-48% across return periods, a
+   different shape than Como's tail-growing 18-22% pattern but confirming
+   the reviewer's concern generalizes beyond one basin).
 6. **The regional distribution is the right family.** One distribution is chosen
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity

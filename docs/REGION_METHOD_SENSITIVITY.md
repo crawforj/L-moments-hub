@@ -113,44 +113,115 @@ gitignored (regenerate locally; not tracked in the repo).
 
 ## Hoover Dam (Colorado River, NV) — second facility, desert Southwest
 
-Run 2026-08-13, same procedure: a one-off config built from the `NV10122`
-row of `config/pilot.csv` via the same pattern `run_batch.R`'s
-`gen_configs_from_manifest()` uses (template = `config/como.yml`, so
-everything except site identity/coordinates matches Como's config), then
-`Rscript compare_regions.R <that config>`.
-
-**Result: 0.0% spread at every duration x return period.** Not because the
-region-building choice doesn't matter here — it's a null result for a
-different, and itself useful, reason:
+**2026-08-13 finding (superseded below): the first run of this comparison
+was a false null.** `config/pilot.csv` had no `elevation_m` for any of its 8
+facilities (`NA` fleet-wide), so the Ward's-method cluster region-builder in
+`R/region_methods.R` — which uses site elevation as one of its clustering
+attributes — silently fell back to `circular` (logged, not errored):
 
 ```text
 [...] Cluster region: site attributes (e.g. elevation) unavailable;
       falling back to circular.
 ```
 
-`config/pilot.csv` (the 8-dam BOR pilot manifest) has no `elevation_m` for
-any facility (`NA` — see the manifest and the note in
-`gen_configs_from_manifest()`'s comments in `run_batch.R`). The Ward's-method
-cluster region-builder in `R/region_methods.R` uses site elevation as one of
-its clustering attributes; without it, it silently falls back to the
-circular method instead of erroring — so `region.method: cluster` and
-`region.method: circular` produced **the literal same region** for Hoover
-(confirmed: identical `n_stations`, `H1`, chosen distribution, and depths for
-both "methods" in `outputs/tables/NV10122_region_method_sensitivity.csv`).
+That produced **the literal same region** for both "methods" (identical
+`n_stations`, `H1`, chosen distribution, depths) and a meaningless 0.0%
+spread. It was a real, useful finding on its own — cluster is silently a
+no-op wherever elevation is missing — but it did not answer the intended
+question. See `docs/ASSUMPTIONS_AND_LIMITATIONS.md` section B item 5 for how
+that gap was closed (DEM elevation enrichment via `enrich_elevations()`,
+run for real against `config/pilot.csv` and `config/facilities_BOR.csv` on
+2026-08-14).
 
-This is a real, separate finding worth flagging on its own: **the cluster
-method is silently a no-op for any facility whose config lacks
-`elevation_m`** (all 8 current pilot dams, unless DEM elevation enrichment —
-`LMC_ENRICH_ELEV=1`, off by default per `run_batch.R` — is run first). A
-reviewer or future fleet run relying on `region.method: cluster` for
-elevation-less facilities is silently getting circular's result, not
-cluster's, with no warning surfaced above the `message()` log line. Whether
-that fallback should instead be a hard error (so a mismatched
-config/manifest combination can't pass silently) is a design question for
-the project owner, not addressed here.
+### 2026-08-14 — real run, elevation enriched, no fallback
 
-Given the fallback, Hoover does **not** answer whether the ~20% Como tail
-spread is Rocky-Mountain-specific — it answers a different, useful question
-(the elevation-dependency gotcha above). A real second data point would need
-either a facility with real elevation data, or a Como/pilot run with
-`LMC_ENRICH_ELEV=1` first.
+`config/pilot.csv`'s `NV10122` row now carries a real DEM-derived
+`elevation_m` (421 m — see the elevation-enrichment run in
+`ASSUMPTIONS_AND_LIMITATIONS.md` §B5; Hoover's actual dam-crest elevation is
+~376 m, so this is in the right ballpark for a coordinate-based DEM point
+lookup near, not exactly on, the crest). Same procedure as before: a one-off
+config built from that row via `gen_configs_from_manifest()`
+(template = `config/como.yml`), then `Rscript compare_regions.R <that
+config>`. The audit log for this run contains **no** "site attributes
+unavailable" message — `cluster` genuinely engaged and built a different
+region from `circular`:
+
+| duration | method | stations used | H1 | status | chosen dist. | index flood (mm) |
+|---|---|---|---|---|---|---|
+| 24h | circular | 29 | 0.912 | homogeneous | GLO | 16.86 |
+| 24h | cluster | 7 | -1.304 | homogeneous | GLO | 28.92 |
+| 72h | circular | 27 | 0.308 | homogeneous | GLO | 18.02 |
+| 72h | cluster | 7 | -1.893 | homogeneous | GLO | 33.92 |
+
+Unlike Como, the chosen distribution family doesn't flip (GLO both methods,
+both durations) — but the region **size** swings hard: `cluster` picks a
+much tighter pool (7 stations) than `circular`'s radius-based 27-29, and
+that smaller, more climatologically homogeneous-by-construction pool has a
+markedly higher regional mean (index flood ~1.7x `circular`'s).
+
+**Spread in the resulting depth estimate, per duration x return period**
+(`outputs/tables/NV10122_region_method_spread.csv`):
+
+| duration | T (yr) | depth, circular (mm) | depth, cluster (mm) | spread_pct |
+|---|---|---|---|---|
+| 72h | 2 | 16.61 | 31.74 | 47.7% |
+| 72h | 5 | 23.76 | 45.41 | 47.7% |
+| 72h | 10 | 28.87 | 54.79 | 47.3% |
+| 72h | 25 | 36.14 | 67.72 | 46.6% |
+| 72h | 50 | 42.30 | 78.35 | 46.0% |
+| 24h | 2 | 15.39 | 26.98 | 43.0% |
+| 72h | 100 | 49.21 | 89.97 | 45.3% |
+| 24h | 5 | 21.95 | 38.45 | 42.9% |
+| 72h | 200 | 57.00 | 102.74 | 44.5% |
+| 24h | 10 | 26.76 | 46.39 | 42.3% |
+| 72h | 500 | 68.90 | 121.67 | 43.4% |
+| 24h | 25 | 33.79 | 57.42 | 41.2% |
+| 72h | 1000 | 79.29 | 137.73 | 42.4% |
+| 24h | 50 | 39.88 | 66.56 | 40.1% |
+| 72h | 2000 | 91.07 | 155.49 | 41.4% |
+| 24h | 100 | 46.84 | 76.61 | 38.9% |
+| 72h | 5000 | 109.10 | 181.88 | 40.0% |
+| 24h | 200 | 54.83 | 87.72 | 37.5% |
+| 72h | 10000 | 124.88 | 204.31 | 38.9% |
+| 24h | 500 | 67.30 | 104.30 | 35.5% |
+| 24h | 1000 | 78.43 | 118.47 | 33.8% |
+| 24h | 2000 | 91.28 | 134.23 | 32.0% |
+| 24h | 5000 | 111.38 | 157.82 | 29.4% |
+| 24h | 10000 | 129.35 | 178.00 | 27.3% |
+
+### Reading — Hoover answers the open question, and the answer is "no, not Rocky-Mountain-specific, but the SHAPE is different"
+
+- **Region-building method moves Hoover's estimate a lot more than Como's,
+  and in the opposite direction with respect to return period.** At Como,
+  spread *grows* with T (13-14% around T=1000 up to 18-22% at T=10,000 — the
+  tail is where it matters most). At Hoover, spread *shrinks* with T (~43-48%
+  at T=2-50 down to 27-39% at T=10,000). The desert-Southwest site is not a
+  smaller-magnitude repeat of Como's finding — it's a genuinely different
+  failure mode: `cluster`'s much smaller donor pool (7 vs. 27-29 stations)
+  pulls the regional mean up hard at every return period, and the GLO growth
+  curve's shape (same family both methods, so no distribution-choice effect
+  here) means that inflation attenuates slightly, rather than compounds, at
+  the extreme tail.
+- **So: yes, this is a real second data point, and it says the
+  reviewer's concern generalizes rather than being basin-specific** — but
+  each facility's spread has its own shape, driven by how differently
+  `cluster` and `circular` populate the donor pool at that location, not by
+  a single fleet-wide "cluster runs X% high" rule. That reinforces the
+  existing reviewer guidance: `compare_regions.R` should be run **per
+  facility**, not assumed from one prior result.
+- **Both regions still pass homogeneity** (`cluster`'s negative H1 values,
+  -1.3 and -1.9, indicate an unusually *tight*, low-dispersion pool — well
+  within the homogeneous range, not a red flag by itself, but worth an
+  expert eyeballing whether 7 stations is enough donor depth for a
+  10,000-yr estimate; see `expert_review_checklist.md`).
+
+### How to reproduce
+
+```
+Rscript compare_regions.R config/facilities/NV10122.yml
+```
+
+(`config/facilities/NV10122.yml` is generated on demand from
+`config/pilot.csv`'s `NV10122` row via `run_batch.R`'s
+`gen_configs_from_manifest()` — not tracked in the repo, `config/facilities/`
+is gitignored; regenerate locally.)
