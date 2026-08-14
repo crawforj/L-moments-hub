@@ -114,6 +114,41 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    `circular`'s 27-29) with a real spread (27-48% across return periods, a
    different shape than Como's tail-growing 18-22% pattern but confirming
    the reviewer's concern generalizes beyond one basin).
+
+   **Fleet-scale result, 2026-08-14 (`docs/CLUSTER_FLEET_RESULTS.md`):**
+   `cluster` was run for real across all 308 `facilities_BOR.csv` dams
+   (292/308 succeeded; 16 failed for reasons unrelated to region method —
+   8 transient GHCN download errors, 8 genuine too-few-station cases,
+   6 of those 8 clustered in Oklahoma, worth a separate look). Of the 292
+   successes, **215 genuinely engaged `cluster`**; the other **74 silently
+   fell back to `circular`** internally (too few stations in the 600 km
+   prefilter pool, undersized assigned cluster, etc. — same graceful-degrade
+   behavior as the single-facility case above, logged not errored).
+   Comparing depths against the pre-existing circular-308 baseline
+   (`C:\dev\L-moments-hub\outputs\batch\all_facilities_DDF_full308.csv`)
+   found a **second, unrelated confound**: that baseline was run before the
+   elevation fix (still `NA` fleet-wide in the main clone today), so
+   `estimate_index_flood()`'s default `"regression"` method silently
+   degraded to a plain regional mean for every baseline facility, whereas
+   every facility in the new run (region method aside) now gets a real
+   elevation-regression index flood. The 74 internal-fallback facilities —
+   identical region-building to the baseline by construction — isolate this
+   confound's own magnitude: median 26.4% / mean 27.9% spread at T=10,000 yr
+   from the elevation fix **alone**, nothing to do with region method. The
+   215 genuine-`cluster` facilities show median 15.3% / mean 20.0% at
+   T=10,000 yr against the same stale baseline — smaller than the confound's
+   own noise floor, so **this fleet run cannot cleanly separate "region
+   method changed the answer" from "the baseline predates the elevation
+   fix."** The controlled, same-elevation, same-process Como/Hoover
+   comparisons above remain the most trustworthy quantification of the
+   region-method effect specifically; a clean fleet-wide number needs either
+   a fresh circular baseline re-run (not done — out of scope for the task
+   that produced this result) or fleet-scale paired `compare_regions.R`
+   runs. See `docs/CLUSTER_FLEET_RESULTS.md`'s "Same-day follow-up" section
+   for the full breakdown, including real (if confound-tinged) patterns:
+   spread correlates with elevation and is highest in WA/UT/OR/CO, and is
+   larger for smaller cluster regions and for facilities where `GLO` was the
+   chosen distribution.
 6. **The regional distribution is the right family.** One distribution is chosen
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity
