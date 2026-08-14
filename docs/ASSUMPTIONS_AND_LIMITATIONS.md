@@ -40,9 +40,115 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
 5. **Regional homogeneity.** The index-flood method assumes all gauges in a
    region share one dimensionless frequency distribution. This is *tested*
    (heterogeneity `H`) and flagged when violated (`H₁ ≥ 2`), but a region passing
-   the test is still an approximation, and automated region formation (radius +
-   elevation band) can cross a divide, rain-shadow, or climate boundary. **Region
-   appropriateness must be eyeballed per facility.**
+   the test is still an approximation, and automated region formation can cross a
+   divide, rain-shadow, or climate boundary. **Region appropriateness must be
+   eyeballed per facility.**
+   Two region-*building* methods are available (`region.method` in
+   `config/<id>.yml`): the default `circular` (geographic-radius + elevation
+   band — H&W 1997's "geographical convenience" approach, the one susceptible
+   to the divide/rain-shadow risk above) and `cluster` (H&W 1997 sec. 9.2.3,
+   Ward's-method clustering on standardized site attributes via `lmomRFA`,
+   added in response to Reclamation reviewer feedback calling region
+   construction "one of the most influential points in the L-moments
+   analysis" — see `R/region_methods.R`). Neither is authoritative; run
+   `compare_regions.R config/<id>.yml circular,cluster` per facility to see how
+   much the choice moves the tail estimate. **Verified 2026-08-14 at Como**
+   (see `docs/REGION_METHOD_SENSITIVITY.md` for the full table): the two
+   methods move the depth estimate **18-22% at T=10,000 yr** (both durations),
+   shrinking to **3.7-10.5% by T=100 yr** and under 10% below T=25 yr — large
+   enough at the design-relevant tail that the choice is a documented,
+   per-facility reviewed decision, not a cosmetic option. H&W (1997) also
+   describes **subjective** (covariate, e.g. mean-annual-precipitation,
+   partitioning) and **objective** (L-moment-ratio threshold) partitioning;
+   both are **not yet implemented** — deferred pending Reclamation-set
+   thresholds/weights this project should not guess at (a climatological
+   judgment call, not a software one).
+   **Fleet-wide caveat, found 2026-08-14, partially resolved same day:**
+   `cluster` uses site elevation as a clustering attribute and silently
+   falls back to `circular` (logged, not errored) whenever a facility's
+   config has no `elevation_m`. As first found, **0/308 facilities in
+   `config/facilities_BOR.csv`, 0/8 in `config/pilot.csv`, and 0/73,303 in
+   `config/nid_manifest.csv`** had real elevation data (all the literal
+   string `NA`) — `region.method: cluster` was therefore a **complete no-op
+   for the entire fleet**; it only ran for real at Como because that
+   config's elevation was set by hand.
+
+   **Fixed the same day for the BOR-308 and pilot-8 manifests only.**
+   `enrich_elevations()` (`R/functions.R`, DEM lookup via
+   `elevatr::get_elev_point(src = "aws")`, AWS Terrain Tiles, no auth) was
+   run for real and its result written back durably to the CSVs (new script:
+   `enrich_manifest_elevations.R` at the repo root — `enrich_elevations()`
+   was already wired into `run_batch.R`'s `gen_configs_from_manifest()`
+   behind `LMC_ENRICH_ELEV=1`, but that only enriched the manifest in
+   memory for one run and never persisted it, so every run re-did the same
+   DEM lookups; this closes that gap for good). Result: **308/308 (100%) of
+   `config/facilities_BOR.csv` and 8/8 (100%) of `config/pilot.csv`** now
+   have a real DEM-derived `elevation_m`, in ~6 s and ~1 s respectively (AWS
+   Terrain Tiles was fast and reliable both times — no timeouts, no
+   retries needed). Spot-checked against known crest/reservoir elevations:
+   Hoover 421-425 m (real crest ~376 m), Grand Coulee 413-446 m (real
+   reservoir full pool ~393 m), Shasta 301-332 m (real crest ~328 m) —
+   all in the right ballpark for a coordinate-based DEM point lookup near,
+   not exactly on, the dam structure (a few tens of metres off is expected;
+   values are never negative, zero, or off by orders of magnitude). Note:
+   re-running the enrichment produces slightly different values run to run
+   (Hoover: 421 m alone vs. 425 m as part of the 308-row batch) — `elevatr`
+   appears to auto-select its DEM zoom/tile resolution from the bounding box
+   of all points in a single call, so a wider-spanning batch samples at
+   coarser resolution. This is noise at the few-tens-of-metres level, not a
+   correctness bug, but it means elevation values (and therefore `cluster`
+   region composition) are not perfectly deterministic across separate
+   enrichment runs.
+
+   `config/nid_manifest.csv` (73,303 rows) is **explicitly out of scope**
+   for this fix — still 0/73,303, still a complete no-op there. Enriching
+   the full NID fleet is a much larger DEM-lookup cost/scope decision left
+   to the project owner. Anything told to Reclamation about fleet-wide
+   cluster-region availability must state clearly: BOR-308 and pilot-8 now
+   have real elevation and can genuinely use `cluster`; the full
+   73k-manifest fleet still cannot.
+
+   With elevation now real, the Hoover Dam (`NV10122`) region comparison in
+   `docs/REGION_METHOD_SENSITIVITY.md` was re-run and **no longer falls
+   back** — `cluster` builds a real, different region (7 stations vs.
+   `circular`'s 27-29) with a real spread (27-48% across return periods, a
+   different shape than Como's tail-growing 18-22% pattern but confirming
+   the reviewer's concern generalizes beyond one basin).
+
+   **Fleet-scale result, 2026-08-14 (`docs/CLUSTER_FLEET_RESULTS.md`):**
+   `cluster` was run for real across all 308 `facilities_BOR.csv` dams
+   (292/308 succeeded; 16 failed for reasons unrelated to region method —
+   8 transient GHCN download errors, 8 genuine too-few-station cases,
+   6 of those 8 clustered in Oklahoma, worth a separate look). Of the 292
+   successes, **215 genuinely engaged `cluster`**; the other **74 silently
+   fell back to `circular`** internally (too few stations in the 600 km
+   prefilter pool, undersized assigned cluster, etc. — same graceful-degrade
+   behavior as the single-facility case above, logged not errored).
+   Comparing depths against the pre-existing circular-308 baseline
+   (`C:\dev\L-moments-hub\outputs\batch\all_facilities_DDF_full308.csv`)
+   found a **second, unrelated confound**: that baseline was run before the
+   elevation fix (still `NA` fleet-wide in the main clone today), so
+   `estimate_index_flood()`'s default `"regression"` method silently
+   degraded to a plain regional mean for every baseline facility, whereas
+   every facility in the new run (region method aside) now gets a real
+   elevation-regression index flood. The 74 internal-fallback facilities —
+   identical region-building to the baseline by construction — isolate this
+   confound's own magnitude: median 26.4% / mean 27.9% spread at T=10,000 yr
+   from the elevation fix **alone**, nothing to do with region method. The
+   215 genuine-`cluster` facilities show median 15.3% / mean 20.0% at
+   T=10,000 yr against the same stale baseline — smaller than the confound's
+   own noise floor, so **this fleet run cannot cleanly separate "region
+   method changed the answer" from "the baseline predates the elevation
+   fix."** The controlled, same-elevation, same-process Como/Hoover
+   comparisons above remain the most trustworthy quantification of the
+   region-method effect specifically; a clean fleet-wide number needs either
+   a fresh circular baseline re-run (not done — out of scope for the task
+   that produced this result) or fleet-scale paired `compare_regions.R`
+   runs. See `docs/CLUSTER_FLEET_RESULTS.md`'s "Same-day follow-up" section
+   for the full breakdown, including real (if confound-tinged) patterns:
+   spread correlates with elevation and is highest in WA/UT/OR/CO, and is
+   larger for smaller cluster regions and for facilities where `GLO` was the
+   chosen distribution.
 6. **The regional distribution is the right family.** One distribution is chosen
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity
@@ -56,8 +162,9 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    (Leclerc & Schaake 1972 — see `R/arf.R`), never replacing the point depth.
    This is a documented DEFAULT, not a region-specific or Reclamation-reviewed
    curve — treat `depth_areal_mm` as provisional until an expert confirms the
-   method is appropriate for the region (see `docs/PLAN.md`). Facilities with
-   no drainage area on file report `depth_areal_mm = NA` (point-only, as before).
+   method is appropriate for the region, or supplies a preferred curve to swap
+   in via `arf.method` (`R/arf.R`). Facilities with no drainage area on file
+   report `depth_areal_mm = NA` (point-only, as before).
 8. **Fixed-interval adjustment is a constant factor.** Calendar-day maxima are
    scaled to true-duration depths by fixed factors (1.13 at 24 h, 1.03 at 72 h;
    Hershfield/WMO). This is a standard approximation, not a site-specific

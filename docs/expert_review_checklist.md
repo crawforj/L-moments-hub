@@ -40,6 +40,40 @@ and every dam you intend to actually rely on, gets a completed form.
   and their drop reasons make sense.
 - ☐ Discordant sites removed (`Dᵢ ≥ D_crit`) are genuinely atypical, not real
   signal being discarded.
+- ☐ **Region-building method confirmed** (`region.method` in `config/<id>.yml`:
+  `circular`, the default geographic-radius pool, or `cluster`, H&W 1997 sec.
+  9.2.3 Ward's-method clustering on standardized site attributes — see
+  `R/region_methods.R`). If `cluster`, check the audit log for a
+  nearest-vs-runner-up centroid note (`"borderline — close call"` means this
+  facility sits near a cluster boundary — read that result more cautiously)
+  and confirm it didn't silently fall back to `circular` (also logged, e.g.
+  too few stations in a cluster).
+- ☐ **Region-choice sensitivity understood.** The Reclamation reviewer who
+  raised this called region construction "one of the most influential points
+  in the L-moments analysis" — verify that's true or false for *this*
+  facility, don't assume Como's result transfers. Run
+  `Rscript compare_regions.R config/<id>.yml circular,cluster` and check
+  `outputs/tables/<id>_region_method_spread.csv`'s `spread_pct` column. (Como's
+  own verified run — `docs/REGION_METHOD_SENSITIVITY.md` — found **18-22%**
+  spread at the design-relevant T=10,000-yr tail, shrinking to 3.7-10.5% by
+  T=100 yr: a reference point, not this facility's answer, and large enough
+  that it should never be assumed negligible.) A large spread means the
+  method choice materially changes the design value and deserves explicit
+  sign-off on which method's result is being relied on; subjective
+  (covariate-based) and objective (L-moment-ratio) partitioning — the other
+  two approaches H&W (1997) describes — are **not yet implemented**
+  (deferred, pending Reclamation-set thresholds — see Limitations §B5), so
+  `circular` vs `cluster` is the full comparison available today.
+- ☐ **Confirmed `cluster` actually ran, not silently fell back.** `cluster`
+  requires the facility's config to carry a real `elevation_m` — if it's
+  missing, the audit log shows `"site attributes (e.g. elevation)
+  unavailable; falling back to circular"` and `region.method: cluster`
+  silently produces the identical circular result with no error. As of
+  2026-08-14, **neither fleet manifest has real elevation data for any
+  facility** (`config/facilities_BOR.csv`, `config/nid_manifest.csv` — see
+  Limitations §B5), so this fallback is the default outcome fleet-wide today,
+  not a rare edge case — do not assume `cluster` ran just because it was
+  configured.
 
 ## 3. Homogeneity  (METHODS §7)
 
@@ -68,6 +102,15 @@ and every dam you intend to actually rely on, gets a completed form.
 ## 6. Estimates & uncertainty  (METHODS §9–10, Limitations §C–D)
 
 - ☐ Growth curve monotonic; depths physically plausible vs regional climatology.
+- ☐ **Index flood / at-site mean (ASM) reviewed** (`index_flood_asm_mm` in the
+  DDF table and audit report — the H&W at-site mean, transferred to this
+  site). Confirm which transfer method was used (`index_flood.method` in
+  `config/<id>.yml`: `regression` — elevation regression on the region's
+  station means, the default — or `nearest` — nearest station's mean).
+  Elevation-regression silently falls back to the plain regional mean when
+  the site has no elevation on file (common — the NID mirror carries no
+  ground elevations, see `DATA_SOURCES.md`); confirm that's not silently
+  happening here when a real elevation should be available.
 - ☐ Monte-Carlo bounds reviewed **and** their limits understood (they exclude
   model-selection, regionalization, and input-data error — true uncertainty is
   wider).
