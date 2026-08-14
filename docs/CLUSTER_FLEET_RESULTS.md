@@ -22,6 +22,56 @@ actually run instead of silently falling back to `circular`.
   cases) — not a `cluster`-specific failure mode, comparable to this
   project's usual fleet failure rate.
 
+## FINAL, CLEAN RESULT (2026-08-14 evening): confound eliminated, comparison re-run
+
+The baseline-staleness confound documented in the follow-up section below is
+now **resolved, not just disclosed**: the full 308-dam `circular` baseline was
+re-run with the same real, elevation-enriched manifest the cluster run used
+(`config/facilities_BOR_circular.csv`, 297/308 ok), so both sides of the
+comparison share the identical index-flood method. Every number in this
+section supersedes both the original headline section and the interim
+corrected reading below.
+
+**Proof the comparison is now clean — the fallback control group:** the 84
+facilities where `cluster` internally fell back to `circular` (identical
+region-building to the baseline by construction) now show **0.0% spread at
+every one of their 296 facility×duration×return-period combinations** —
+exactly the ~0% a clean comparison requires. In the confounded version this
+group's spread was median 26.4% at T=10,000 yr, purely from the elevation
+artifact. It is now zero. The comparison methodology is validated, not
+assumed.
+
+**The real, region-method-only fleet-wide effect (221 genuine-cluster
+facilities, 428 facility×duration combinations):**
+
+| Return period | Median spread | Mean spread | Max spread | >15% spread |
+|---|---:|---:|---:|---:|
+| T = 100 yr | 9.5% | 13.4% | 95.6% | — |
+| T = 10,000 yr | **15.1%** | **20.0%** | 94.6% | **215/428 (50.2%)** |
+
+Distribution at T=10,000 yr: <5%: 74 · 5–15%: 139 · 15–30%: 108 ·
+30–50%: 83 · >50%: 24.
+
+Top movers (T=10,000 yr): Bradbury 94.6%, BOR Deer Creek 67.0%, Jamestown
+Dam 66.7%, Lauro 65.2%, Ochoco 62.8%, Roza Diversion 62.7%, East Canyon
+61.8% — the same names the confounded pass surfaced, confirming those were
+real signal, not artifact.
+
+**Bottom line for Reclamation:** where cluster analysis genuinely engages
+(221 of 292 completed facilities; the rest fall back to circular by
+design), the region-building choice moves the design-relevant tail estimate
+by a median ~15% and mean ~20%, with **half the fleet moving more than 15%**
+and a tail of facilities moving 50–95%. The reviewer's "one of the most
+influential points" assessment is quantitatively confirmed at fleet scale,
+cleanly. Neither method is thereby shown "correct" — both pass homogeneity
+testing — so per-facility expert review of region composition (see
+`expert_review_checklist.md`) remains the resolution path, now with real
+numbers showing where that review matters most.
+
+The two sections below are retained as the honest record of how this result
+was first computed wrong, caught, and fixed — read them for provenance, not
+for numbers.
+
 ## Same-day follow-up: the headline numbers below conflate two effects — read this first
 
 A second pass over this same run's output (same `outputs/batch/all_facilities_DDF.csv`
