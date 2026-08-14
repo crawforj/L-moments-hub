@@ -68,6 +68,29 @@ testing — so per-facility expert review of region composition (see
 `expert_review_checklist.md`) remains the resolution path, now with real
 numbers showing where that review matters most.
 
+**Correlational patterns, re-derived from the clean data** (T=10,000 yr,
+428 genuine-cluster combinations — these supersede the confound-era
+patterns in the follow-up section below):
+
+- **The elevation pattern DID NOT SURVIVE.** Clean terciles: low-elevation
+  mean 20.3%, mid 18.6%, high 21.0% — essentially flat. The confounded
+  pass's low-17.6%/high-23.1% gradient was largely an artifact of the
+  confound itself (unsurprising in hindsight: the confound *was* the
+  elevation/index-flood fix, which acts through site elevation). Do not
+  quote "mountainous sites are more sensitive to region-building choice" —
+  the clean data doesn't support it.
+- **The state pattern survives**: WA (mean 29.5%), UT (24.0%), OR (23.7%)
+  highest; NE (9.8%), NM (12.8%), ND (13.7%) lowest. Pacific NW /
+  Intermountain West facilities remain the most method-sensitive.
+- **The small-region pattern survives, strongly**: cluster regions under 18
+  stations show mean 26.7% spread vs. 16.3% for regions above 28 stations —
+  fewer donor stations means each has more leverage on the growth curve.
+  This is the most actionable pattern: small-cluster facilities deserve the
+  closest region-composition review.
+- **The distribution-family pattern survives and sharpens**: PE3-selected
+  facilities mean 29.5% (n=26, small), GLO 24.7% (n=116), GEV 17.6%
+  (n=244), GNO 15.0% (n=42).
+
 The two sections below are retained as the honest record of how this result
 was first computed wrong, caught, and fixed — read them for provenance, not
 for numbers.
