@@ -40,9 +40,25 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
 5. **Regional homogeneity.** The index-flood method assumes all gauges in a
    region share one dimensionless frequency distribution. This is *tested*
    (heterogeneity `H`) and flagged when violated (`H₁ ≥ 2`), but a region passing
-   the test is still an approximation, and automated region formation (radius +
-   elevation band) can cross a divide, rain-shadow, or climate boundary. **Region
-   appropriateness must be eyeballed per facility.**
+   the test is still an approximation, and automated region formation can cross a
+   divide, rain-shadow, or climate boundary. **Region appropriateness must be
+   eyeballed per facility.**
+   Two region-*building* methods are available (`region.method` in
+   `config/<id>.yml`): the default `circular` (geographic-radius + elevation
+   band — H&W 1997's "geographical convenience" approach, the one susceptible
+   to the divide/rain-shadow risk above) and `cluster` (H&W 1997 sec. 9.2.3,
+   Ward's-method clustering on standardized site attributes via `lmomRFA`,
+   added in response to Reclamation reviewer feedback calling region
+   construction "one of the most influential points in the L-moments
+   analysis" — see `R/region_methods.R`). Neither is authoritative; run
+   `compare_regions.R config/<id>.yml circular,cluster` per facility to see how
+   much the choice moves the tail estimate (Como: up to ~12% at low return
+   periods, narrowing to ~2.5% at the 10,000-yr tail — a reference point, not
+   a universal answer). H&W (1997) also describes **subjective** (covariate,
+   e.g. mean-annual-precipitation, partitioning) and **objective**
+   (L-moment-ratio threshold) partitioning; both are **not yet implemented** —
+   deferred pending Reclamation-set thresholds/weights this project should not
+   guess at (a climatological judgment call, not a software one).
 6. **The regional distribution is the right family.** One distribution is chosen
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity
@@ -56,8 +72,9 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    (Leclerc & Schaake 1972 — see `R/arf.R`), never replacing the point depth.
    This is a documented DEFAULT, not a region-specific or Reclamation-reviewed
    curve — treat `depth_areal_mm` as provisional until an expert confirms the
-   method is appropriate for the region (see `docs/PLAN.md`). Facilities with
-   no drainage area on file report `depth_areal_mm = NA` (point-only, as before).
+   method is appropriate for the region, or supplies a preferred curve to swap
+   in via `arf.method` (`R/arf.R`). Facilities with no drainage area on file
+   report `depth_areal_mm = NA` (point-only, as before).
 8. **Fixed-interval adjustment is a constant factor.** Calendar-day maxima are
    scaled to true-duration depths by fixed factors (1.13 at 24 h, 1.03 at 72 h;
    Hershfield/WMO). This is a standard approximation, not a site-specific
