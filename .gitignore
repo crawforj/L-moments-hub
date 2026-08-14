@@ -15,6 +15,8 @@ data/external/
 data/synthetic/
 data/raw/
 data/processed/
+data/ghcn_prcp_cache/
+data/cluster_cache/
 
 # Per-facility configs generated from the manifest by run_batch.R
 config/facilities/
