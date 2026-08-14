@@ -1,0 +1,183 @@
+name: NID fleet batch (manual)
+
+# Manual-only on purpose: this repo already runs the same resumable fleet
+# batch from a desktop machine (see docs/batch_runs_guide.md); this workflow
+# is a free, genuinely-parallel (Linux runner -> R's mclapply actually works,
+# unlike Windows) alternative/supplement, NOT something that should fire on
+# its own and race the desktop loop for the same branch's ledger. Trigger it
+# by hand (Actions tab -> Run workflow, or `gh workflow run nid-batch.yml`)
+# only once you've confirmed nothing else is committing to the target branch.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch with the fleet code + ledger to check out and push back to'
+        required: true
+        default: 'claude/desktop-nid-ad-hoc'
+      tranche_size:
+        description: 'Facilities per Rscript run_nid_tranche.R call'
+        required: false
+        default: '400'
+      budget_minutes:
+        description: 'Wall-clock budget for this job (kept under the 360-min GH Actions hard limit)'
+        required: false
+        default: '330'
+
+permissions:
+  contents: write
+  actions: write   # needed to dispatch the next run (self-chaining, see final step)
+
+# Belt-and-suspenders: even though this workflow chains itself rather than
+# relying on overlapping schedules, a concurrency group means a stray manual
+# trigger (or two chained runs somehow overlapping) queues instead of racing
+# another run for the same branch's ledger.
+concurrency:
+  group: nid-batch-${{ inputs.branch }}
+  cancel-in-progress: false
+
+jobs:
+  run-fleet-batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          lfs: true   # data/nid_progress/*.csv moved to LFS (2026-08-13) once
+                      # the cumulative fleet tables crossed GitHub's 50MB
+                      # soft-limit and started failing pushes -- without this,
+                      # checkout only fetches pointer files and the batch
+                      # would silently corrupt them on the next commit.
+
+      - name: Configure git-lfs
+        run: git lfs install --local
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - name: Install system dependencies (sf / geospatial + gfortran for lmom + libuv for testthat's deps)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev gfortran libuv1-dev
+
+      - name: Install R packages
+        # Prefer the RSPM binary mirror (fast, prebuilt) with plain CRAN as a
+        # source-build fallback -- the first real run of this workflow hardcoded
+        # plain CRAN here by mistake, forcing sf/lmom/lmomRFA etc. to all compile
+        # from source (took ~10+ min instead of ~1-2).
+        run: |
+          Rscript -e '
+            repos <- c(RSPM = Sys.getenv("RSPM", "https://packagemanager.posit.co/cran/__linux__/noble/latest"),
+                       CRAN = "https://cloud.r-project.org")
+            install.packages(c("lmom","lmomRFA","yaml","jsonlite","ggplot2","sf","maps","testthat"), repos = repos)'
+
+      - name: Verify every required package actually installed
+        # install.packages() with multiple packages does NOT fail the step (and
+        # so does not fail this job) when an individual package fails partway --
+        # the first real run showed this step green while testthat had silently
+        # failed to install (a missing system lib for one of its dependencies).
+        # Check explicitly rather than trusting the previous step's exit code.
+        run: |
+          Rscript -e '
+            need <- c("lmom","lmomRFA","yaml","jsonlite","ggplot2","sf","maps","testthat")
+            have <- rownames(installed.packages())
+            missing <- setdiff(need, have)
+            if (length(missing)) {
+              cat("::error::Missing R packages after install step:", paste(missing, collapse=", "), "\n")
+              quit(status = 1)
+            }
+            cat("All required packages present:", paste(need, collapse=", "), "\n")'
+
+      - name: Validate before trusting this run
+        run: |
+          Rscript run_golden.R
+          Rscript run_tests.R
+
+      - name: Refuse to run if synthetic fallback is enabled
+        # See docs/batch_runs_guide.md, "Never run unattended with synthetic
+        # fallback on" -- this already caused a real incident once. An
+        # unattended CI batch is exactly the scenario that bit us before.
+        run: |
+          if grep -q "use_local_fallback: true" config/como.yml; then
+            echo "::error::config/como.yml has use_local_fallback: true -- refusing to run an unattended fleet batch that could silently fake results. Fix the config and re-run."
+            exit 1
+          fi
+          echo "use_local_fallback check passed (not true)."
+
+      - name: Configure git identity for automated commits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Report parallelism actually available
+        run: |
+          Rscript -e 'cat("Cores detected:", parallel::detectCores(), "| OS:", .Platform$OS.type, "\n")'
+
+      - name: Run NID tranches until the time budget is spent
+        env:
+          LMC_TRANCHE: ${{ inputs.tranche_size }}
+        run: |
+          BUDGET_SECONDS=$(( ${{ inputs.budget_minutes }} * 60 ))
+          START=$(date +%s)
+          ROUND=0
+          while true; do
+            ROUND=$((ROUND+1))
+            NOW=$(date +%s)
+            ELAPSED=$((NOW-START))
+            if [ "$ELAPSED" -ge "$BUDGET_SECONDS" ]; then
+              echo "Time budget spent (${ELAPSED}s >= ${BUDGET_SECONDS}s). Stopping cleanly."
+              break
+            fi
+            echo "===== Round $ROUND (elapsed ${ELAPSED}s / budget ${BUDGET_SECONDS}s) ====="
+            Rscript run_nid_tranche.R || echo "::warning::run_nid_tranche.R exited non-zero this round; continuing to next round."
+
+            git add data/nid_progress/ data/ghcn_prcp_cache/
+            if ! git diff --cached --quiet; then
+              SUMMARY=$(grep 'Facilities attempted' data/nid_progress/progress.md || echo 'progress updated')
+              git commit -q -m "NID GH-Actions tranche (round $ROUND): $SUMMARY"
+              git push -q origin HEAD:"${{ inputs.branch }}"
+              echo "Committed and pushed round $ROUND."
+            else
+              echo "No changes to commit this round."
+            fi
+
+            if grep -q "All NID facilities complete" data/nid_progress/progress.md 2>/dev/null; then
+              echo "Full NID fleet complete. Stopping."
+              break
+            fi
+          done
+
+      - name: Upload progress summary as a build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nid-progress-${{ github.run_id }}
+          path: data/nid_progress/progress.md
+
+      - name: Chain -- trigger the next run unless the fleet is complete
+        # Makes this genuinely autonomous: a single run can't fit all 73,303
+        # facilities (job time is capped at ~6h by GitHub), so each run
+        # dispatches its own successor with the same settings, using the
+        # workflow_dispatch exception to the "GITHUB_TOKEN can't trigger
+        # workflows" rule. `if: always()` so this fires even if the tranche
+        # loop above got cut off by the job timeout mid-round (matches the
+        # same "at most one in-flight tranche lost" safety property as
+        # everywhere else in this pipeline) -- an unfinished round just means
+        # the next run re-attempts those same not-yet-completed facilities,
+        # same as the ledger's normal resumability.
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if grep -q "All NID facilities complete" data/nid_progress/progress.md 2>/dev/null; then
+            echo "Full NID fleet complete -- not chaining a next run."
+          else
+            echo "Fleet not yet complete -- dispatching the next run."
+            gh workflow run nid-batch.yml --repo "${{ github.repository }}" \
+              -f branch="${{ inputs.branch }}" \
+              -f tranche_size="${{ inputs.tranche_size }}" \
+              -f budget_minutes="${{ inputs.budget_minutes }}"
+          fi
