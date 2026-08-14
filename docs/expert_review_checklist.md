@@ -54,14 +54,26 @@ and every dam you intend to actually rely on, gets a completed form.
   facility, don't assume Como's result transfers. Run
   `Rscript compare_regions.R config/<id>.yml circular,cluster` and check
   `outputs/tables/<id>_region_method_spread.csv`'s `spread_pct` column. (Como's
-  own run: up to ~12% spread at low return periods, narrowing to ~2.5% at the
-  10,000-yr tail — a reference point, not this facility's answer.) A large
-  spread means the method choice materially changes the design value and
-  deserves explicit sign-off on which method's result is being relied on;
-  subjective (covariate-based) and objective (L-moment-ratio) partitioning —
-  the other two approaches H&W (1997) describes — are **not yet implemented**
+  own verified run — `docs/REGION_METHOD_SENSITIVITY.md` — found **18-22%**
+  spread at the design-relevant T=10,000-yr tail, shrinking to 3.7-10.5% by
+  T=100 yr: a reference point, not this facility's answer, and large enough
+  that it should never be assumed negligible.) A large spread means the
+  method choice materially changes the design value and deserves explicit
+  sign-off on which method's result is being relied on; subjective
+  (covariate-based) and objective (L-moment-ratio) partitioning — the other
+  two approaches H&W (1997) describes — are **not yet implemented**
   (deferred, pending Reclamation-set thresholds — see Limitations §B5), so
   `circular` vs `cluster` is the full comparison available today.
+- ☐ **Confirmed `cluster` actually ran, not silently fell back.** `cluster`
+  requires the facility's config to carry a real `elevation_m` — if it's
+  missing, the audit log shows `"site attributes (e.g. elevation)
+  unavailable; falling back to circular"` and `region.method: cluster`
+  silently produces the identical circular result with no error. As of
+  2026-08-14, **neither fleet manifest has real elevation data for any
+  facility** (`config/facilities_BOR.csv`, `config/nid_manifest.csv` — see
+  Limitations §B5), so this fallback is the default outcome fleet-wide today,
+  not a rare edge case — do not assume `cluster` ran just because it was
+  configured.
 
 ## 3. Homogeneity  (METHODS §7)
 

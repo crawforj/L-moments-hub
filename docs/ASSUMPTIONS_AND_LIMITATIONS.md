@@ -52,13 +52,30 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    construction "one of the most influential points in the L-moments
    analysis" — see `R/region_methods.R`). Neither is authoritative; run
    `compare_regions.R config/<id>.yml circular,cluster` per facility to see how
-   much the choice moves the tail estimate (Como: up to ~12% at low return
-   periods, narrowing to ~2.5% at the 10,000-yr tail — a reference point, not
-   a universal answer). H&W (1997) also describes **subjective** (covariate,
-   e.g. mean-annual-precipitation, partitioning) and **objective**
-   (L-moment-ratio threshold) partitioning; both are **not yet implemented** —
-   deferred pending Reclamation-set thresholds/weights this project should not
-   guess at (a climatological judgment call, not a software one).
+   much the choice moves the tail estimate. **Verified 2026-08-14 at Como**
+   (see `docs/REGION_METHOD_SENSITIVITY.md` for the full table): the two
+   methods move the depth estimate **18-22% at T=10,000 yr** (both durations),
+   shrinking to **3.7-10.5% by T=100 yr** and under 10% below T=25 yr — large
+   enough at the design-relevant tail that the choice is a documented,
+   per-facility reviewed decision, not a cosmetic option. H&W (1997) also
+   describes **subjective** (covariate, e.g. mean-annual-precipitation,
+   partitioning) and **objective** (L-moment-ratio threshold) partitioning;
+   both are **not yet implemented** — deferred pending Reclamation-set
+   thresholds/weights this project should not guess at (a climatological
+   judgment call, not a software one).
+   **Fleet-wide caveat, found 2026-08-14, not yet resolved:** `cluster` uses
+   site elevation as a clustering attribute and silently falls back to
+   `circular` (logged, not errored) whenever a facility's config has no
+   `elevation_m`. As of this writing, **0/308 facilities in
+   `config/facilities_BOR.csv` and 0/73,303 in `config/nid_manifest.csv`**
+   have real elevation data (both are the literal string `NA` throughout) —
+   `region.method: cluster` is therefore currently a **complete no-op for the
+   entire fleet**; it only ran for real at Como because that config's
+   elevation was set by hand. `enrich_elevations()` (`R/functions.R`) already
+   exists to fix this (a DEM lookup) but is off by default
+   (`LMC_ENRICH_ELEV=1`) and has not been run against either manifest.
+   Anything told to Reclamation about fleet-wide cluster-region availability
+   must account for this until it's resolved.
 6. **The regional distribution is the right family.** One distribution is chosen
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity
