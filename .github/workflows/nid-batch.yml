@@ -17,7 +17,18 @@ on:
       tranche_size:
         description: 'Facilities per Rscript run_nid_tranche.R call'
         required: false
-        default: '400'
+        # Real measured rate (2026-08-14, ubuntu-latest runner): ~200
+        # facilities took ~2,400s consistently across 6 rounds (~12s/dam) --
+        # at that rate a 200-facility round runs ~40 min, and the inner loop
+        # only checks its time budget BETWEEN rounds, so a round that starts
+        # late in the budget window can carry the job well past the 350-min
+        # hard timeout before it finishes, wasting that whole round's
+        # progress (never committed -- see run_nid_tranche.R's buffer-then-
+        # commit design). Shrunk from 400 -> 75 (~15 min/round at the same
+        # measured rate) so the worst-case wasted tail is ~15-20 min instead
+        # of up to ~40, without making per-round fixed overhead (R startup,
+        # GHCN inventory reload, git commit+push) dominate.
+        default: '75'
       budget_minutes:
         description: 'Wall-clock budget for this job (kept under the 360-min GH Actions hard limit)'
         required: false
