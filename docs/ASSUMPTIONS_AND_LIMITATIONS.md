@@ -150,10 +150,12 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    combinations exceeding 15%** and a tail reaching 94.6% (Bradbury). The
    reviewer's "one of the most influential points" is confirmed at fleet
    scale on clean data. See `docs/CLUSTER_FLEET_RESULTS.md`'s "FINAL, CLEAN
-   RESULT" section — the interim patterns noted there (spread correlates
-   with elevation; highest in WA/UT/OR/CO; larger for smaller cluster
-   regions and GLO-selected facilities) came from the confounded pass and
-   should be re-derived from the clean data before being quoted.
+   RESULT" section. Patterns re-derived from clean data (same section):
+   the elevation gradient **did not survive** (it was largely the confound
+   itself); the state pattern (WA/UT/OR highest, NE lowest) and the
+   small-cluster-region pattern (<18 stations: mean 26.7% vs. 16.3% for
+   >28) both survive — small-region facilities deserve the closest
+   region-composition review.
 6. **The regional distribution is the right family.** One distribution is chosen
    by min `|Z|`. When several fit comparably, or none fits well (`|Z| > 1.645`,
    flagged `needs_review`), the far tail is uncertain — see the tail-sensitivity
