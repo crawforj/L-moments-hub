@@ -187,8 +187,14 @@ jobs:
             echo "Full NID fleet complete -- not chaining a next run."
           else
             echo "Fleet not yet complete -- dispatching the next run."
+            # Deliberately do NOT propagate tranche_size/budget_minutes: the
+            # successor picks up the workflow file's current defaults from
+            # main instead. Propagating them made tuning impossible -- every
+            # cancelled run's always()-chain re-dispatched the OLD value
+            # ahead of any operator redispatch (a real race hit 2026-08-14:
+            # the 400->75 tranche default took multiple generations to
+            # actually land because each cancel spawned a successor pinned
+            # to the old explicit input, beating the manual fix every time).
             gh workflow run nid-batch.yml --repo "${{ github.repository }}" \
-              -f branch="${{ inputs.branch }}" \
-              -f tranche_size="${{ inputs.tranche_size }}" \
-              -f budget_minutes="${{ inputs.budget_minutes }}"
+              -f branch="${{ inputs.branch }}"
           fi
