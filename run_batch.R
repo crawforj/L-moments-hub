@@ -180,7 +180,18 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
   all_diag <- Filter(Negate(is.null), lapply(results, function(r) r$diag))
   if (length(all_diag)) {
     diag_df <- do.call(rbind, all_diag)
+    # Region-method ensemble band: where a committed circular-vs-cluster band
+    # table exists (data/region_method_band/), annotate each facility with the
+    # T=10,000 yr regionalization-choice band + a >15% review flag. Graceful
+    # no-op when no band table is present. See join_region_band() (functions.R)
+    # and docs/CLUSTER_FLEET_RESULTS.md.
+    diag_df <- join_region_band(diag_df)
     utils::write.csv(diag_df, file.path(outb, "batch_diagnostics.csv"), row.names = FALSE)
+    n_band <- sum(!is.na(diag_df$region_band_pct_10k %||% NA))
+    if (n_band)
+      message(sprintf("Region-method band: %d/%d rows annotated; %d flagged >15%% (region_band_review).",
+                      n_band, nrow(diag_df),
+                      sum(isTRUE_vec(diag_df$region_band_review))))
     review <- diag_df[isTRUE_vec(diag_df$needs_review), , drop = FALSE]
     message(sprintf("Diagnostics: %d/%d facility-durations flagged for review (H1>=2 or |Z|>1.64).",
                     nrow(review), nrow(diag_df)))

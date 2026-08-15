@@ -91,6 +91,46 @@ patterns in the follow-up section below):
   facilities mean 29.5% (n=26, small), GLO 24.7% (n=116), GEV 17.6%
   (n=244), GNO 15.0% (n=42).
 
+## Ensemble band now shipped (2026-08-15)
+
+The project decision following the clean result above: since both methods
+pass homogeneity everywhere, neither is declared the winner — the two are
+treated as an **ensemble**, and the per-facility disagreement is shipped as a
+first-class uncertainty band rather than left in this document's summary
+tables.
+
+- **The band table**: `data/region_method_band/bor308_band.csv` (committed —
+  `outputs/` is gitignored, so this is the durable record). One row per
+  facility × duration × return period: `depth_circular_mm`,
+  `depth_cluster_mm`, `band_pct` = 100·|diff|/max, and `band_source`
+  distinguishing `two_method` rows (cluster genuinely engaged) from
+  `identical_fallback` rows (cluster fell back to circular, so the band is 0
+  **by construction** — same region on both sides, not two methods agreeing).
+  Rebuild with `Rscript data/region_method_band/build_band_table.R`. The 3
+  duplicate-name facilities are excluded (name-only join ambiguity, same
+  exclusion as the analysis above); the committed table covers 285 facilities
+  (T=10,000 two_method rows: n=424, median 14.9%, mean 19.9%, max 94.6%,
+  50.0% above 15% — the ~4-row delta vs. the 428-combination analysis above
+  is the log-grep vs. `fallback_outcome.json` classification difference,
+  immaterial).
+- **Pipeline wiring**: future `run_batch.R` runs annotate
+  `batch_diagnostics.csv` with `region_band_pct_10k` (the T=10,000-yr band)
+  and `region_band_review` (TRUE above 15%), joined per site_id × duration by
+  `join_region_band()` (`R/functions.R`) whenever a band table is present at
+  the default committed path (or `LMC_REGION_BAND_CSV`). No band table → a
+  graceful no-op, byte-identical previous behaviour. Columns documented in
+  `OUTPUT_DATA_DICTIONARY.md`.
+- **Band semantics** (what a reviewer should read it as): the band is the
+  **regionalization-choice component of uncertainty** — how much the answer
+  moves if you build the donor region the other defensible way. It is
+  complementary to, and **excluded from**, the Monte-Carlo `depth_lo/hi`
+  bounds, which condition on a fixed region (see
+  `ASSUMPTIONS_AND_LIMITATIONS.md`): a facility can have tight Monte-Carlo
+  bounds and still carry a 60% region-method band. Report depths as
+  *value + region-method band*, and treat `region_band_review = TRUE`
+  (>15%, the fleet median) as the trigger for the region-composition review
+  in `expert_review_checklist.md`.
+
 The two sections below are retained as the honest record of how this result
 was first computed wrong, caught, and fixed — read them for provenance, not
 for numbers.

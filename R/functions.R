@@ -687,6 +687,51 @@ facility_diagnostics <- function(res) {
 }
 
 # ---------------------------------------------------------------------------
+# join_region_band(): annotate a batch-diagnostics table with the
+# region-method ensemble band (docs/CLUSTER_FLEET_RESULTS.md, "Ensemble band
+# now shipped"). Where a committed band table is available (default:
+# data/region_method_band/bor308_band.csv; override via the
+# LMC_REGION_BAND_CSV env var or the band_csv argument), each facility x
+# duration row gains:
+#   region_band_pct_10k  — the T=10,000 yr circular-vs-cluster band (%):
+#                          the REGIONALIZATION-CHOICE uncertainty component,
+#                          complementary to (and excluded from) the per-run
+#                          Monte-Carlo bounds. NA where no comparison exists.
+#   region_band_review   — TRUE when that band exceeds 15% (the fleet-median
+#                          threshold from the 308-dam comparison): region
+#                          composition deserves expert review before the
+#                          facility's tail numbers are relied on.
+# Graceful no-op: when the band CSV is absent (or unreadable / missing the
+# required columns), the diagnostics table is returned UNCHANGED — users
+# without a band table see exactly the pre-existing behaviour.
+# ---------------------------------------------------------------------------
+join_region_band <- function(diag_df, band_csv = NULL) {
+  if (is.null(diag_df) || !nrow(diag_df)) return(diag_df)
+  if (is.null(band_csv) || !nzchar(band_csv)) {
+    band_csv <- Sys.getenv("LMC_REGION_BAND_CSV", "")
+    if (!nzchar(band_csv))
+      band_csv <- file.path(getOption("lmc.root", "."),
+                            "data", "region_method_band", "bor308_band.csv")
+  }
+  if (!file.exists(band_csv)) return(diag_df)
+  band <- tryCatch(utils::read.csv(band_csv, stringsAsFactors = FALSE),
+                   error = function(e) NULL)
+  need <- c("site_id", "duration", "return_period_yr", "band_pct")
+  if (is.null(band) || !all(need %in% names(band))) {
+    message("Region band table ", band_csv,
+            " unreadable or missing columns; diagnostics left unannotated.")
+    return(diag_df)
+  }
+  b10 <- band[band$return_period_yr == 10000, , drop = FALSE]
+  idx <- match(paste(diag_df$site_id, diag_df$duration),
+               paste(b10$site_id, b10$duration))
+  diag_df$region_band_pct_10k <- b10$band_pct[idx]
+  diag_df$region_band_review  <- !is.na(diag_df$region_band_pct_10k) &
+                                 diag_df$region_band_pct_10k > 15
+  diag_df
+}
+
+# ---------------------------------------------------------------------------
 # write_manifest(): record run provenance for audit/reproducibility.
 #   Writes outputs/provenance/run_manifest_<id>.json capturing config, package
 #   versions, sessionInfo, seed, git commit (if available), and station spans.
