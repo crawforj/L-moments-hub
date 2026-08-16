@@ -33,3 +33,4 @@ data/nid_progress/*.log
 
 # QC data cache (read-only extracts of the fleet branch, keyed by commit)
 qc/_cache/
+__pycache__/
