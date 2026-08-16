@@ -64,23 +64,23 @@ cfgs <- gen_configs_from_manifest(tr_csv)
 status <- run_batch(cfgs)
 
 # ---- fold this tranche's results into the committed cumulative ledgers ------
+# append_cum_csv() (R/functions.R) de-dups on the natural key so a re-run never
+# double-counts, unions mixed schemas (historical rows predating a new column
+# get NA there), and keys NA-id historical rows on the legacy fallback key so
+# they never collapse together. Per-facility keys MUST lead with site_id, not
+# the dam name: 1,174 NID dam names are duplicated nationally, and name-keyed
+# dedup silently overwrote earlier same-named facilities (QC bug, 2026-08-16).
+# Forward-only fix: historical no-site_id DDF rows stay name-keyed (damage
+# documented in the QC known-issue register; affected cohort re-run later).
 outb <- file.path(root, "outputs", "batch")
-append_cum <- function(src_name, key_cols) {
-  src <- file.path(outb, src_name); dst <- file.path(prog_dir, src_name)
-  if (!file.exists(src)) return(invisible())
-  new <- utils::read.csv(src, stringsAsFactors = FALSE)
-  if (file.exists(dst)) {
-    old <- utils::read.csv(dst, stringsAsFactors = FALSE)
-    both <- rbind(old, new[, names(old), drop = FALSE])
-  } else both <- new
-  # de-dup on the natural key so a re-run never double-counts
-  k <- do.call(paste, c(both[, intersect(key_cols, names(both)), drop = FALSE], sep = "\r"))
-  both <- both[!duplicated(k, fromLast = TRUE), , drop = FALSE]
-  utils::write.csv(both, dst, row.names = FALSE)
-}
-append_cum("all_facilities_DDF.csv", c("site", "duration", "return_period_yr"))
+append_cum <- function(src_name, key_cols, fallback_key_cols = NULL)
+  append_cum_csv(file.path(outb, src_name), file.path(prog_dir, src_name),
+                 key_cols, fallback_key_cols)
+append_cum("all_facilities_DDF.csv", c("site_id", "duration", "return_period_yr"),
+           fallback_key_cols = c("site", "duration", "return_period_yr"))
 append_cum("batch_diagnostics.csv",  c("site_id", "duration"))
-append_cum("tail_sensitivity.csv",   c("site", "duration", "dist"))
+append_cum("tail_sensitivity.csv",   c("site_id", "duration", "dist"),
+           fallback_key_cols = c("site", "duration", "dist"))
 # Fleet-wide "tables" data (see collect_fleet_tables() in R/functions.R) --
 # the small structured per-facility detail (station lists, regional
 # L-moments, GOF, growth curve) that used to only exist in the local

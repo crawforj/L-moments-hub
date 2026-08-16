@@ -147,7 +147,13 @@ run_batch <- function(config_paths, cores = NULL, prefetch = TRUE) {
            ddf = NULL, diag = NULL)
     else
       list(ok = TRUE, config = cp, site = res$cfg$site$name, message = "ok",
-           ddf = res$ddf, diag = tryCatch(facility_diagnostics(res), error = function(e) NULL),
+           # Tag the DDF with the UNIQUE facility id: dam names collide
+           # nationally (1,174 duplicates in NID), so downstream fold-ins must
+           # key on site_id, never on the name alone.
+           ddf = if (is.null(res$ddf)) NULL else
+             data.frame(site_id = res$cfg$site$id %||% NA_character_,
+                        res$ddf, stringsAsFactors = FALSE),
+           diag = tryCatch(facility_diagnostics(res), error = function(e) NULL),
            tail = tryCatch(collect_tail_sensitivity(res), error = function(e) NULL),
            fleet = tryCatch(collect_fleet_tables(res), error = function(e) NULL))
   }

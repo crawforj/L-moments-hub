@@ -615,6 +615,58 @@ collect_fleet_tables <- function(res) {
 }
 
 # ---------------------------------------------------------------------------
+# append_cum_csv(): fold one tranche/batch output CSV into a cumulative
+# (committed) CSV, de-duplicating on a natural key so a re-run never
+# double-counts. Used by run_nid_tranche.R for every data/nid_progress/ ledger.
+#
+# Keying rules (fixes the 2026-08-16 QC-proven fold-in bugs):
+#   * key_cols is the PRIMARY natural key. For per-facility tables it must
+#     lead with the unique facility id ("site_id"), never the dam NAME --
+#     1,174 NID dam names are duplicated nationally, so name-keyed dedup
+#     silently overwrites earlier same-named facilities.
+#   * Mixed-schema tolerance: historical cumulative files may predate newly
+#     added columns (e.g. all_facilities_DDF.csv gained site_id mid-fleet).
+#     The column sets are unioned (missing side filled with NA) so no column
+#     -- and no row -- is ever silently dropped by rbind subsetting.
+#   * fallback_key_cols (optional): rows whose PRIMARY id column (key_cols[1])
+#     is NA/blank -- i.e. historical rows written before that column existed --
+#     are keyed on this legacy key instead, in a prefixed key-space that can
+#     never collide with the primary one. Without this, every NA-id row would
+#     share one key and collapse to a single survivor. Forward-only by design:
+#     NA-id rows are NOT retro-attributed to facility ids (impossible -- the
+#     historical name-collision damage is documented in the QC known-issue
+#     register); they are simply preserved as-is under their legacy key.
+#   src, dst : file paths (src may not exist -> no-op)
+#   -> invisibly, the deduplicated data.frame written to dst (or NULL)
+# ---------------------------------------------------------------------------
+append_cum_csv <- function(src, dst, key_cols, fallback_key_cols = NULL) {
+  if (!file.exists(src)) return(invisible(NULL))
+  new <- utils::read.csv(src, stringsAsFactors = FALSE)
+  if (file.exists(dst)) {
+    old <- utils::read.csv(dst, stringsAsFactors = FALSE)
+    for (cn in setdiff(names(new), names(old))) old[[cn]] <- NA
+    for (cn in setdiff(names(old), names(new))) new[[cn]] <- NA
+    both <- rbind(old, new[, names(old), drop = FALSE])
+  } else both <- new
+  mk_key <- function(cols) do.call(paste,
+    c(both[, intersect(cols, names(both)), drop = FALSE], sep = "\r"))
+  k <- mk_key(key_cols)
+  if (!is.null(fallback_key_cols)) {
+    idc <- key_cols[1]
+    legacy <- if (idc %in% names(both)) {
+      v <- both[[idc]]
+      is.na(v) | !nzchar(trimws(as.character(v)))
+    } else rep(TRUE, nrow(both))
+    legacy[is.na(legacy)] <- TRUE
+    if (any(legacy))
+      k[legacy] <- paste0("\rLEGACY\r", mk_key(fallback_key_cols)[legacy])
+  }
+  both <- both[!duplicated(k, fromLast = TRUE), , drop = FALSE]
+  utils::write.csv(both, dst, row.names = FALSE)
+  invisible(both)
+}
+
+# ---------------------------------------------------------------------------
 # load_distribution_review(): read the optional EXPERT distribution-review
 # registry (config/distribution_review.csv). Each row records a reviewer's
 # chosen distribution for a facility (optionally a specific duration),
