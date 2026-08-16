@@ -41,7 +41,11 @@ What this project pulls together, end to end:
   circular-radius region, `region.method: cluster` builds the homogeneous
   region by H&amp;W (1997) sec. 9.2.3 Ward's-method clustering — and
   `compare_regions.R` shows exactly how much the choice moves the DDF curve
-  for a facility.
+  for a facility. Measured fleet-wide on the 308-dam BOR set with both
+  methods run under identical inputs (`docs/CLUSTER_FLEET_RESULTS.md`): the
+  choice moves the 10,000-yr depth by **median 15% (mean 20%)**, with half
+  of facility×duration combinations moving more than 15% — a quantified
+  uncertainty component, not a cosmetic option.
 - **ASM and ARF, exposed and applied.** The at-site mean (index flood,
   already computed) is now reported on every deliverable, and an Areal
   Reduction Factor (Leclerc &amp; Schaake 1972, swappable) is applied wherever
@@ -60,7 +64,7 @@ numbers on its own.
 |---|---|---|
 | **1. Como Dam** | 1 site (Montana), full audit trail | ✅ validated on real GHCN data |
 | **2. BOR fleet** | **308** Bureau of Reclamation dams (`run_batch.R`) | ✅ complete — **305 ok / 3 failed** (the 3 lack enough nearby gauges to form a region) |
-| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **453 done** so far, nightly sweep continuing (see batch plan below) |
+| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **~30,000 done (41%)** via a self-chaining GitHub Actions batch, 75-dam resumable tranches (see batch plan below) |
 
 **Batch plan for the full NID.** 73,303 dams is ~2 weeks of compute and many GB
 of weather data — too large for one run on an ephemeral machine. So
