@@ -116,6 +116,8 @@ For **every** analysis artifact:
 | 5 | Gauge undercatch biases mountain depths low; stationarity assumed (snow-eater work shows the direction of that error) | permanent caveat |
 | 6 | GHA timeout-era tranches (pre-fix) wasted compute but, by design, never wrote partial results | verified design; re-verify via §A2 |
 | 7 | ~15% failure rate in sparse-gauge regions (BOR-observed) — failures are *reported*, not silent | becomes analysis A1 |
+| 8 | Fold-in name-collision damage (pre-fix cohort): cumulative DDF was keyed by dam NAME with no site_id (3,728 facilities ambiguous/overwritten) and tail_sensitivity dedup dropped 2,554 facilities' rows. Fixed forward-only at fleet-branch commit `c664dd32` (2026-08-16T20:42:56Z = the cohort boundary); historical NA-site_id rows are NOT retro-attributable | fixed mid-run; affected cohort re-run at completion (see integrity-report addendum) |
+| 9 | Upstream NID coordinate defects: 8 OR dams at placeholder longitude −111.110 (OR00183, OR00567, OR00569, OR00572, OR00573, OR00574, OR00728, OR00757) + TN05102 in the Gulf of Mexico (25.202, −86.278). Not corrected locally (item 2 policy) | completion gate EXCLUDES them from spatial products; per-facility results suspect (wrong station pool) — re-run candidates if upstream fixes coordinates |
 
 ## Sequencing
 

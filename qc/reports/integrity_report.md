@@ -97,3 +97,60 @@ A2 row-count check finding zero partial facilities).
 - Fleet data: `b7207450f61518acd022204b178fdfb55fef9313` (`claude/desktop-nid-ad-hoc`)
 - Manifest: `config/nid_manifest.csv` on main (73,303 rows)
 - Attempted 31,250 / ok 31,204 / failed 46; progress.md agrees: yes
+
+## Addendum (2026-08-16): fold-in bugs FIXED mid-run -- cohort boundary
+
+The two fold-in bugs this report proved (A2 `ddf_name_collision`, A2c
+`tail_sensitivity_lost_name_collision`) are **fixed on the fleet branch** in
+commit **`c664dd322ecb01a1fe14109235e538b5190e58bd`**, committed
+**2026-08-16T20:42:56Z** (pushed between tranche rounds 15 and 16). That
+timestamp is the **cohort boundary** for the §A4 mid-run code audit: the
+GHA job in flight at push time checked out pre-fix code and keeps folding
+the old way until it ends (<= 5.5 h); every subsequent job runs the fix.
+The first tranche commit whose parent chain includes `c664dd32` is the
+first post-fix fold-in.
+
+What the fix does (all validation ALL-PASS before push: run_golden.R,
+run_tests.R 92/92 incl. a new mixed-schema fold-in regression test, plus an
+end-to-end simulated fold-in cycle):
+
+1. `all_facilities_DDF.csv` now carries a `site_id` column (tagged in
+   run_batch.R from each facility's config) and the fold-in keys on
+   `(site_id, duration, return_period_yr)`.
+2. `tail_sensitivity.csv` fold-in now keys on `(site_id, duration, dist)`
+   (the file always carried site_id; only the dedup key was wrong).
+3. The fold-in (`append_cum_csv()` in R/functions.R) handles the mixed
+   historical schema: pre-fix cumulative DDF rows have no site_id and get
+   `NA` there on read; NA-id rows are deduped on the legacy name key in a
+   separate key-space, so they neither collapse together nor get clobbered
+   by a same-named post-fix facility.
+
+**Forward-only, by explicit decision.** Historical NA-site_id rows are NOT
+retro-attributed -- the name-collision overwrites destroyed that
+attribution at fold-in time; that damage is what register item 8 carries.
+**Remediation path** for the affected cohort (3,728 `ddf_name_collision` +
+2,554 `tail_sensitivity_lost_name_collision` facilities, membership as of
+`b7207450`; refresh at completion): after the fleet completes, delete their
+rows from `data/nid_progress/completed_ids.csv` to force clean
+re-processing under the fixed code. Do **not** purge mid-run.
+
+## Addendum (2026-08-16): upstream NID coordinate defects for the spatial-product gate
+
+Nine C1-flagged facilities are upstream **NID source-data** defects, not
+pipeline errors -- coordinates are deliberately NOT edited locally
+(register item 2: the mirror is unverified as a whole). The completion
+gate must exclude them from all **spatial products** (maps, gridded/kriged
+surfaces, neighbor-consistency tests) until upstream coordinates are
+corrected:
+
+- **8 Oregon dams at placeholder longitude -111.110** (a value in Idaho,
+  repeated verbatim across all 8 -- a fill/placeholder, not a transposition):
+  `OR00183`, `OR00567`, `OR00569`, `OR00572`, `OR00573`, `OR00574`,
+  `OR00728`, `OR00757`.
+- **1 Tennessee dam plotted in the Gulf of Mexico**: `TN05102` at
+  (25.202, -86.278).
+
+Their DDF *statistics* remain conditionally usable only in non-spatial
+aggregates, with the caveat that station selection itself used the wrong
+coordinates -- so treat their per-facility results as suspect and list them
+with the completion re-run candidates. Register item 9 carries this.
