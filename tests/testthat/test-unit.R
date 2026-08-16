@@ -117,3 +117,82 @@ test_that("load_distribution_review reads rows, skips comments, NULL when empty/
   expect_null(load_distribution_review(g))
   expect_null(load_distribution_review(tempfile()))   # absent file
 })
+
+test_that("append_cum_csv: site_id-keyed fold-in survives name collisions and mixed schema", {
+  td <- tempfile(); dir.create(td)
+  src <- file.path(td, "src.csv"); dst <- file.path(td, "dst.csv")
+  keys <- c("site_id", "duration", "return_period_yr")
+  fb   <- c("site", "duration", "return_period_yr")
+
+  # -- historical cumulative file: OLD schema, NO site_id column, and two
+  #    DIFFERENT facilities that share one dam name (the national-collision case)
+  old <- data.frame(site = c("MILL POND DAM", "LAKE DAM"),
+                    duration = "24h", return_period_yr = 100,
+                    depth_mm = c(50, 60), stringsAsFactors = FALSE)
+  utils::write.csv(old, dst, row.names = FALSE)
+
+  # -- new tranche output: NEW schema WITH site_id; one facility whose NAME
+  #    collides with a historical row, plus two same-named facilities with
+  #    DISTINCT site_ids (must BOTH survive)
+  new <- data.frame(site_id = c("TX001", "GA002", "MI003"),
+                    site = c("MILL POND DAM", "MILL POND DAM", "OTTER DAM"),
+                    duration = "24h", return_period_yr = 100,
+                    depth_mm = c(70, 80, 90), stringsAsFactors = FALSE)
+  utils::write.csv(new, src, row.names = FALSE)
+
+  append_cum_csv(src, dst, keys, fallback_key_cols = fb)
+  out <- utils::read.csv(dst, stringsAsFactors = FALSE)
+
+  # No rows lost: 2 historical + 3 new = 5 (nothing collapsed across schemas)
+  expect_equal(nrow(out), 5)
+  expect_true("site_id" %in% names(out))
+  # duplicate-named facilities with distinct site_ids BOTH survive
+  expect_equal(sum(out$site == "MILL POND DAM" & !is.na(out$site_id)), 2)
+  expect_setequal(out$site_id[!is.na(out$site_id)], c("TX001", "GA002", "MI003"))
+  # historical NA-site_id rows keep their legacy name key: both survive, and
+  # the name-colliding new row did NOT overwrite the historical MILL POND DAM
+  hist <- out[is.na(out$site_id), ]
+  expect_equal(nrow(hist), 2)
+  expect_setequal(hist$site, c("MILL POND DAM", "LAKE DAM"))
+  expect_equal(hist$depth_mm[hist$site == "MILL POND DAM"], 50)
+
+  # -- idempotent: folding the SAME tranche again changes nothing
+  append_cum_csv(src, dst, keys, fallback_key_cols = fb)
+  out2 <- utils::read.csv(dst, stringsAsFactors = FALSE)
+  reord <- function(d) { d <- d[order(d$site, d$depth_mm), ]; rownames(d) <- NULL; d }
+  expect_equal(reord(out2), reord(out))
+
+  # -- re-run of one facility replaces (not duplicates) its row
+  upd <- new; upd$depth_mm[upd$site_id == "TX001"] <- 71
+  utils::write.csv(upd, src, row.names = FALSE)
+  append_cum_csv(src, dst, keys, fallback_key_cols = fb)
+  out3 <- utils::read.csv(dst, stringsAsFactors = FALSE)
+  expect_equal(nrow(out3), 5)
+  expect_equal(out3$depth_mm[!is.na(out3$site_id) & out3$site_id == "TX001"], 71)
+
+  # -- all-NA-key rows must NOT collapse together even with many of them
+  many_na <- data.frame(site = paste0("DAM_", 1:4), duration = "72h",
+                        return_period_yr = 500, depth_mm = 1:4,
+                        stringsAsFactors = FALSE)
+  dst2 <- file.path(td, "dst2.csv"); utils::write.csv(many_na, dst2, row.names = FALSE)
+  src2 <- file.path(td, "src2.csv")
+  utils::write.csv(data.frame(site_id = "Z9", site = "DAM_9", duration = "72h",
+                              return_period_yr = 500, depth_mm = 9,
+                              stringsAsFactors = FALSE), src2, row.names = FALSE)
+  append_cum_csv(src2, dst2, keys, fallback_key_cols = fb)
+  expect_equal(nrow(utils::read.csv(dst2)), 5)      # 4 legacy + 1 new, none merged
+
+  # -- primary-keyed table WITHOUT fallback (e.g. tail_sensitivity carries
+  #    site_id throughout): same-name/different-id rows both survive
+  src3 <- file.path(td, "src3.csv"); dst3 <- file.path(td, "dst3.csv")
+  utils::write.csv(data.frame(site = "MILL POND DAM", site_id = "TX001",
+                              duration = "24h", dist = "GEV", depth_mm = 1,
+                              stringsAsFactors = FALSE), dst3, row.names = FALSE)
+  utils::write.csv(data.frame(site = "MILL POND DAM", site_id = "GA002",
+                              duration = "24h", dist = "GEV", depth_mm = 2,
+                              stringsAsFactors = FALSE), src3, row.names = FALSE)
+  append_cum_csv(src3, dst3, c("site_id", "duration", "dist"),
+                 fallback_key_cols = c("site", "duration", "dist"))
+  expect_equal(nrow(utils::read.csv(dst3)), 2)
+  unlink(td, recursive = TRUE)
+})
