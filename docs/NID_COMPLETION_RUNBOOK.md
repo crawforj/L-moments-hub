@@ -91,9 +91,17 @@ At completion + gate-pass: brief note to the USBR contact (the analysis
 plan's public-safe findings only), and refresh the repo README fleet
 table (currently says ~30,000/41%).
 
+## Post-completion: NID run 2 (cluster) — DECIDED 2026-08-17
+
+The owner resolved the rebase question: **no rebase — a second full
+fleet run under the cluster method on a fresh branch, keeping both
+datasets permanently.** Full plan and prep checklist:
+`docs/NID_RUN2_CLUSTER_PLAN.md`. This runbook's steps 1–2 (gate +
+remediation) must complete FIRST, then run-1 archival (tag
+`nid-run1-circular-final` + copy to `data/nid_runs/run1_circular/`),
+then run-2 prep (73k elevation enrichment — now entailed; fold-in fix
+port; fresh branch/ledgers) and launch.
+
 ## Standing decisions still parked with the owner
 
-- Rebase the fleet branch onto main (region-method band / ASM / cluster)
-  — B3's sample quantifies the cost either way.
-- Full-NID elevation enrichment.
 - PR #10 (ensemble band + roi) review.
