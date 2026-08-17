@@ -66,6 +66,16 @@ numbers on its own.
 | **2. BOR fleet** | **308** Bureau of Reclamation dams (`run_batch.R`) | ✅ complete — **305 ok / 3 failed** (the 3 lack enough nearby gauges to form a region) |
 | **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **~30,000 done (41%)** via a self-chaining GitHub Actions batch, 75-dam resumable tranches (see batch plan below) |
 
+**First-look analyses and QC (2026-08-16, partial data).** With the fleet at
+~42%, layered QC gates (`qc/`, per `docs/NID_QAQC_PLAN.md`) and three
+first-look analyses (`docs/analysis/`: failure/gauge-desert atlas,
+tail-behavior geography, heterogeneity hot-spots) ran against the partial
+ledger. The QC pass found and same-day-fixed two live fold-in bugs (cohort
+boundary `c664dd32`; a 4,087-facility remediation re-run is queued —
+`qc/reports/rerun_cohort.csv`). Completion steps are scripted in
+`docs/NID_COMPLETION_RUNBOOK.md`; the analysis roadmap is
+`docs/NID_ANALYSIS_PLAN.md`.
+
 **Batch plan for the full NID.** 73,303 dams is ~2 weeks of compute and many GB
 of weather data — too large for one run on an ephemeral machine. So
 `run_nid_tranche.R` processes the fleet in **resumable tranches**, largest-storage
