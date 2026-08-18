@@ -60,6 +60,32 @@ One row per facility × duration.
 | `tail_max_10k_mm` | largest 10,000-yr depth across all candidates |
 | `tail_spread_pct` | `100 × (tail_max − tail_min) / depth_10k` — extreme-tail model sensitivity |
 | `needs_review` | TRUE if `H₁ ≥ 2` **or** `|Z| > 1.645` — the facility fails an automatic quality gate |
+| `region_band_pct_10k` | *(optional — present only when a region-method band table is on disk, see below)* the T=10,000-yr **region-method ensemble band**: `100 × |circular − cluster| / max` between the two region-building methods' depth estimates. This is the **regionalization-choice** uncertainty component — complementary to, and excluded from, the Monte-Carlo `depth_lo_mm`/`depth_hi_mm` bounds. `NA` where no two-method comparison exists for the facility. |
+| `region_band_review` | *(optional, paired with the above)* TRUE when `region_band_pct_10k > 15` — the region-building choice moves this facility's tail estimate by more than the fleet median, so region composition deserves expert review (see `expert_review_checklist.md`). FALSE (not `NA`) where no comparison exists. |
+
+The two `region_band_*` columns are appended by `join_region_band()`
+(`R/functions.R`) when a band table exists at
+`data/region_method_band/bor308_band.csv` (override the path with the
+`LMC_REGION_BAND_CSV` env var). No band table → columns absent, byte-identical
+pre-existing behaviour.
+
+## `data/region_method_band/bor308_band.csv` — region-method ensemble band (committed)
+
+One row per facility × duration × return period, comparing the fresh
+elevation-consistent `circular` baseline against the `cluster` fleet run
+(both 2026-08-14; see `CLUSTER_FLEET_RESULTS.md`). Rebuild with
+`Rscript data/region_method_band/build_band_table.R` (needs both runs on disk).
+
+| Column | Meaning |
+|---|---|
+| `site` | facility name (3 duplicate-name facilities excluded — unresolvable name-only join) |
+| `site_id` | facility / NID ID (the join key used by `join_region_band()`) |
+| `duration` | duration label (`24h`, `72h`) |
+| `return_period_yr` | return period `T` in years |
+| `depth_circular_mm` | point depth under `region.method: circular` |
+| `depth_cluster_mm` | point depth under `region.method: cluster` |
+| `band_pct` | `100 × |circular − cluster| / max(circular, cluster)` |
+| `band_source` | `two_method` (cluster genuinely engaged: a real two-method comparison) or `identical_fallback` (cluster internally fell back to circular, so both numbers come from the SAME region and `band_pct` = 0 **by construction**, not by agreement) |
 
 ## `batch_status.csv` — success/failure per facility
 

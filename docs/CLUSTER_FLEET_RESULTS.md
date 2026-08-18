@@ -91,6 +91,130 @@ patterns in the follow-up section below):
   facilities mean 29.5% (n=26, small), GLO 24.7% (n=116), GEV 17.6%
   (n=244), GNO 15.0% (n=42).
 
+## Ensemble band now shipped (2026-08-15)
+
+The project decision following the clean result above: since both methods
+pass homogeneity everywhere, neither is declared the winner — the two are
+treated as an **ensemble**, and the per-facility disagreement is shipped as a
+first-class uncertainty band rather than left in this document's summary
+tables.
+
+- **The band table**: `data/region_method_band/bor308_band.csv` (committed —
+  `outputs/` is gitignored, so this is the durable record). One row per
+  facility × duration × return period: `depth_circular_mm`,
+  `depth_cluster_mm`, `band_pct` = 100·|diff|/max, and `band_source`
+  distinguishing `two_method` rows (cluster genuinely engaged) from
+  `identical_fallback` rows (cluster fell back to circular, so the band is 0
+  **by construction** — same region on both sides, not two methods agreeing).
+  Rebuild with `Rscript data/region_method_band/build_band_table.R`. The 3
+  duplicate-name facilities are excluded (name-only join ambiguity, same
+  exclusion as the analysis above); the committed table covers 285 facilities
+  (T=10,000 two_method rows: n=424, median 14.9%, mean 19.9%, max 94.6%,
+  50.0% above 15% — the ~4-row delta vs. the 428-combination analysis above
+  is the log-grep vs. `fallback_outcome.json` classification difference,
+  immaterial).
+- **Pipeline wiring**: future `run_batch.R` runs annotate
+  `batch_diagnostics.csv` with `region_band_pct_10k` (the T=10,000-yr band)
+  and `region_band_review` (TRUE above 15%), joined per site_id × duration by
+  `join_region_band()` (`R/functions.R`) whenever a band table is present at
+  the default committed path (or `LMC_REGION_BAND_CSV`). No band table → a
+  graceful no-op, byte-identical previous behaviour. Columns documented in
+  `OUTPUT_DATA_DICTIONARY.md`.
+- **Band semantics** (what a reviewer should read it as): the band is the
+  **regionalization-choice component of uncertainty** — how much the answer
+  moves if you build the donor region the other defensible way. It is
+  complementary to, and **excluded from**, the Monte-Carlo `depth_lo/hi`
+  bounds, which condition on a fixed region (see
+  `ASSUMPTIONS_AND_LIMITATIONS.md`): a facility can have tight Monte-Carlo
+  bounds and still carry a 60% region-method band. Report depths as
+  *value + region-method band*, and treat `region_band_review = TRUE`
+  (>15%, the fleet median) as the trigger for the region-composition review
+  in `expert_review_checklist.md`.
+
+## The roi experiment (2026-08-15): does region-of-influence collapse the small-region spread?
+
+**Hypothesis.** The clean-data pattern above says the circular-vs-cluster
+spread concentrates in SMALL cluster regions (<18 stations: mean 26.7% vs
+>28 stations: 16.3%) — a variance failure mode where each donor station has
+outsized leverage on the growth curve. `R/region_methods.R` already
+implements a third region builder: `region.cluster.assignment: "roi"`
+(region of influence — rank the whole 600 km prefilter pool by standardized
+attribute-space distance to the site and take the nearest N, no hard cluster
+boundaries at all). If small-pool variance drives the spread, roi should
+collapse it at the worst facilities; if the disagreement persists, it is
+real climatological signal about *which stations belong*, not noise.
+
+**Design.** The 15 worst genuine-cluster facilities by T=10,000 yr band
+(from `bor308_band.csv`; Bradbury 94.6% down to Willow Creek 53.9%), each
+re-run with `region.method: cluster` + `assignment: "roi"`
+(`data/region_method_band/run_roi_experiment.R`), compared at T=10,000 yr
+against BOTH the circular baseline and the hard-cluster result. All three
+legs share the same elevation-consistent index-flood method. Results:
+`data/region_method_band/bor_roi_experiment.csv` (30 facility×duration
+rows; `roi_engaged` distinguishes real roi runs from fallbacks).
+
+**Result 1 — roi could not even run at 3 of the 15 (the low-elevation
+sites).** Bradbury (site 229 m), Lauro (370 m), and Jamestown Dam (440 m)
+all fell back to plain circular: the attribute-nearest neighborhood is
+low-elevation by construction, and the config template's
+`elevation_band_m: [600, 2600]` then removes nearly all of it (<5 members
+remain). Their rows carry `roi_engaged = FALSE` and roi ≡ circular **by
+construction — not evidence that roi "agrees with circular" there.** (It
+also flags a fleet-config issue independent of roi: for sub-600 m dams the
+template band floor sits above the site itself.)
+
+**Result 2 — region size is NOT pinned at 60.** The roi selection takes the
+nearest 60 by attribute distance, but the elevation-band re-check plus the
+pipeline's iterative heterogeneity trimming cut the final regions to
+**15–45 stations** (WA sites 15–18; UT/OR sites 37–45). roi pools also
+start strongly heterogeneous (initial H1 2.1–5.9 at several sites, e.g.
+Ochoco n=49 H1=5.9) — attribute-space nearness does not deliver
+homogeneity by itself; the trimming loop does real work on every roi run.
+
+**Result 3 — the verdict is mixed, with structure (24 engaged rows, 12
+facilities).** Median distances at T=10,000 yr: roi-vs-circular **22.2%**,
+roi-vs-cluster **38.4%**, against a circular-vs-cluster band of **53.6%**
+at these same facilities. roi lands inside the two-method band in 13/24
+rows. So roi roughly *halves* the disagreement rather than collapsing it —
+and *where* it lands splits cleanly by region:
+
+- **roi corroborates circular at the large-pool interior-West sites.**
+  East Canyon 24h (roi 0.96% from circular, 62% from cluster), BOR Wanship
+  24h (4.4%/60%), BOR Deer Creek 24h (1.6%/47%), Anderson-Rose 24h
+  (2.3%/54%), Willow Creek 72h (3.4%/45%). These facilities' hard-cluster
+  regions were small; given a 37–45-station roi pool the answer returns to
+  the circular baseline — **the small-cluster variance hypothesis is
+  confirmed for this group**, and their huge bands read as cluster-side
+  small-pool noise.
+- **roi corroborates cluster at the Washington sites.** Roza Diversion 72h
+  (roi 17.9% from cluster, 54.5% from circular), French Canyon 72h
+  (5.9%/57.9%), French Canyon Dam 72h (0.3%/60.4%), and both 24h rows
+  (5–10% from cluster). roi's attribute-space neighborhood is *itself*
+  small there (15–18 stations survive) and lands on the cluster answer —
+  **the circular region is the outlier**: mixing across the Cascades'
+  climate transition, exactly the H&W concern. The band at these sites is
+  real climatological signal, not noise. (French Canyon / French Canyon
+  Dam are two manifest entries for the same structure and replicate each
+  other within ~6% — a free internal consistency check.)
+- **roi sometimes disagrees with BOTH.** Ochoco 72h sits mid-band (36–42%
+  from each side); Marys Lake Dike No. 1 72h lands *outside* a small band
+  entirely (35–40% from both sides of an 8.3% band) — roi is a third
+  estimate with its own variance, not an arbiter. Several facilities also
+  flip by duration (East Canyon: roi = circular at 24h, mid-band at 72h).
+
+**Bottom line.** roi does **not** become the recommended cluster variant:
+it fails outright at low-elevation sites under the fleet config, its
+regions are not the pinned-60 stable pools the construction suggests, and
+it collapses the spread only where the spread was small-pool noise to begin
+with. Its real value is **diagnostic**: run roi at a high-band facility and
+see which side it lands on — circular-side (band was cluster noise; lean
+circular), cluster-side (band is real signal; the circular region needs
+scrutiny, as in WA), or neither (all three regionalizations are unstable;
+this facility needs the expert review regardless). That triage reading is
+consistent with keeping the two-method ensemble band as the shipped
+uncertainty measure, with roi as a per-facility tiebreaker probe — not a
+third fleet-wide method.
+
 The two sections below are retained as the honest record of how this result
 was first computed wrong, caught, and fixed — read them for provenance, not
 for numbers.
