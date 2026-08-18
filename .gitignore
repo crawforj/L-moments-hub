@@ -28,3 +28,11 @@ tests/testthat/testthat-problems.rds
 # NID tranche temp manifest (regenerated each run)
 data/nid_progress/_tranche_current.csv
 data/nid_progress/*.log
+
+# 2026-08-17: cumulative fleet tables left git entirely (LFS cost fix) --
+# they are published as gzipped assets on the `nid-run1-data` release by
+# .github/workflows/nid-batch.yml (main). Only the small plain-text ledger
+# stays tracked. This ignore also stops any stale desktop loop's
+# `git add data/nid_progress/` from re-adding ~950MB per round.
+data/nid_progress/*.csv
+!data/nid_progress/completed_ids.csv

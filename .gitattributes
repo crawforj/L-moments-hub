@@ -1,1 +1,9 @@
-data/nid_progress/*.csv filter=lfs diff=lfs merge=lfs -text
+# 2026-08-17: Git LFS retired for this repo (cost/continuity fix).
+# data/nid_progress/*.csv briefly lived in LFS (2026-08-13) once the
+# cumulative fleet tables crossed GitHub's 50MB push soft-limit -- but the
+# fleet rewrites ~950MB of them every ~17-min round and LFS stores every
+# version in full (~75GB/day against a 10GiB free quota). The big tables
+# now live as gzipped assets on the `nid-run1-data` release; only the small
+# plain-text ledger (completed_ids.csv, progress.md) stays in git.
+# Historical LFS objects remain referenced by old commits on this branch
+# until post-run pruning (see docs/NID_COMPLETION_RUNBOOK.md on main).
