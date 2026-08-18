@@ -46,6 +46,13 @@ What this project pulls together, end to end:
   choice moves the 10,000-yr depth by **median 15% (mean 20%)**, with half
   of facility×duration combinations moving more than 15% — a quantified
   uncertainty component, not a cosmetic option.
+- **Uncertainty you can read per facility.** Because the region-building
+  choice moves the tail that much, the pipeline ships a per-facility
+  **region-method band** (`region_band_pct_10k` plus a review flag) alongside
+  the depths — the regionalization component the Monte-Carlo bounds
+  deliberately exclude. A region-of-influence assignment variant removes most
+  of the extreme disagreements, which turn out to be small-donor-pool
+  sampling variance rather than climate signal.
 - **ASM and ARF, exposed and applied.** The at-site mean (index flood,
   already computed) is now reported on every deliverable, and an Areal
   Reduction Factor (Leclerc &amp; Schaake 1972, swappable) is applied wherever
@@ -64,7 +71,7 @@ numbers on its own.
 |---|---|---|
 | **1. Como Dam** | 1 site (Montana), full audit trail | ✅ validated on real GHCN data |
 | **2. BOR fleet** | **308** Bureau of Reclamation dams (`run_batch.R`) | ✅ complete — **305 ok / 3 failed** (the 3 lack enough nearby gauges to form a region) |
-| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **~30,000 done (41%)** via a self-chaining GitHub Actions batch, 75-dam resumable tranches (see batch plan below) |
+| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **45,200 done (62%)**, 50 genuine failures, via a self-chaining GitHub Actions batch in 75-dam resumable tranches (see batch plan below). A **second full run under the cluster method** follows, keeping both datasets: [`docs/NID_RUN2_CLUSTER_PLAN.md`](docs/NID_RUN2_CLUSTER_PLAN.md) |
 
 **First-look analyses and QC (2026-08-16, partial data).** With the fleet at
 ~42%, layered QC gates (`qc/`, per `docs/NID_QAQC_PLAN.md`) and three
@@ -83,11 +90,18 @@ dams first, recording every attempted facility in a **committed ledger**
 (`data/nid_progress/`) so no dam is ever computed twice and each night's run
 continues exactly where the last stopped:
 
-- an initial small tranche is running now;
-- a **nightly job** then works down the fleet automatically, committing results
-  after every tranche;
+- a **self-chaining GitHub Actions job** works down the fleet automatically —
+  each run spends its time budget on ~75-dam tranches, then dispatches its own
+  successor, so the fleet advances unattended;
 - live tally: [`data/nid_progress/progress.md`](data/nid_progress/progress.md);
-  cumulative results accumulate in `data/nid_progress/`.
+  the small resume ledger stays in git, while the **large cumulative tables are
+  published as compressed release assets** (tag `nid-run1-data`) that each job
+  restores before its first tranche and re-uploads after every round. That
+  replaced Git LFS in-flight on 2026-08-17: per-tranche LFS churn was
+  accumulating ~75 GB/day, and GitHub degrades over-quota LFS *downloads* to
+  pointer files — which would have broken the chain, not just billed for it.
+  A consistency manifest (`nid_state.json`) fails a job loudly if the ledger
+  and the assets ever disagree.
 
 Every input — the GHCN-Daily weather **and** the NID dam inventory — is
 **UNVERIFIED** and requires expert review before any engineering use. See
@@ -212,6 +226,17 @@ Rscript run_nid_tranche.R                            # next tranche of the full 
 - **[`docs/OUTPUT_DATA_DICTIONARY.md`](docs/OUTPUT_DATA_DICTIONARY.md)** — column definitions for every output CSV
 - **[`docs/atlas14_comparison.md`](docs/atlas14_comparison.md)** — protocol for the external NOAA Atlas 14 cross-check (`compare_atlas14.R`)
 - **[`DATA_SOURCES.md`](DATA_SOURCES.md)** — data provenance and review requirements
+
+**Region-method work** (Reclamation reviewer feedback, quantified):
+- **[`docs/REGION_METHOD_SENSITIVITY.md`](docs/REGION_METHOD_SENSITIVITY.md)** — per-facility circular-vs-cluster comparisons (Como, Hoover)
+- **[`docs/CLUSTER_FLEET_RESULTS.md`](docs/CLUSTER_FLEET_RESULTS.md)** — the clean fleet-wide measurement, its confound, and how the confound was caught and eliminated
+
+**NID fleet operations** (the 73,303-dam national run):
+- **[`docs/NID_QAQC_PLAN.md`](docs/NID_QAQC_PLAN.md)** — the QC gates every result passes before analysis, and the known-issue register
+- **[`docs/NID_ANALYSIS_PLAN.md`](docs/NID_ANALYSIS_PLAN.md)** — what to learn from the output, phased, with the public/private publication boundary
+- **[`docs/NID_COMPLETION_RUNBOOK.md`](docs/NID_COMPLETION_RUNBOOK.md)** — the ordered procedure for finishing run 1 (self-contained; anyone can execute it)
+- **[`docs/NID_RUN2_CLUSTER_PLAN.md`](docs/NID_RUN2_CLUSTER_PLAN.md)** — the second national run under the cluster method, and why both datasets are kept
+- **[`docs/analysis/`](docs/analysis/)** — first-look national findings (failure atlas, tail geography, heterogeneity hot-spots), partial data pending completion
 - **[`docs/PLAN.md`](docs/PLAN.md)** — full design · **[`docs/users_guide.md`](docs/users_guide.md)** — how to run · **[`docs/audit_guide.md`](docs/audit_guide.md)** — audit procedure
 
 ## License
