@@ -38,6 +38,13 @@ observed rates). The fixed fold-in replaces their cumulative rows by
 site_id key. Then **re-run step 1** — the re-run cohort must come back
 clean and the name-collision flags must clear.
 
+**Also requeue every ok=FALSE ledger row** (49 as of 2026-08-18; use the
+final count) in the same edit: most non-AK failures are pre-band-fix
+legacy misclassifications (proven via Quabbin live re-run -- see
+`docs/analysis/failure_atlas.md`); genuine gauge deserts will re-fail
+honestly under current code, converting the failure list from
+mixed-vintage to clean single-vintage.
+
 Consider folding in (same re-run, zero extra cost if desired): the 643
 narrow-elevation-band and 650 old-manifest-vintage cohort facilities
 (integrity_flags.csv) — **optional**, decide explicitly, they are

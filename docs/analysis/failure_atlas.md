@@ -63,6 +63,17 @@ Reading (at this commit):
   modest elevation, not a hot spot. The BOR-subset concentration now looks like
   small-N coincidence amplified by the BOR manifest's OK exposure rather than a
   dramatic regional data gap; re-test at completion.
+- **RESOLVED (2026-08-18): the New England cluster was a legacy
+  misclassification, not a real pattern.** Live re-run of Quabbin Spillway
+  (MA00589) under current fleet code: 60 candidates, H1 = -0.06/-0.99,
+  clean success. These failures (ledger positions 74-617) predate the
+  2026-08-11 elevation-band fix (`603224c3`); that fix requeued only
+  zero-candidate victims, while dams that scraped 3-4 mountain-fringe
+  stations under the old [600,2600] band were misclassified "genuine
+  sparse" and never requeued. The same applies to most TN/OK/KY/AL/NC
+  legacy failures. Remediation: all ok=FALSE rows are requeued at
+  completion (runbook step 2); genuinely sparse basins (AK) will re-fail
+  honestly under the wide band.
 - **An unexpected New England cluster** (12 failures across NH/MA/CT and
   neighbors) sits in a region that is NOT gauge-sparse on the support map --
   candidate explanations are the 20-yr 72h-completeness screen thinning dense

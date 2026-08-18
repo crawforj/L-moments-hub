@@ -32,6 +32,11 @@ than either alone.
      ONLY; run 2's branch must carry it from day one (cut run 2's
      branch from current `main` + cherry-pick/merge the fix, then verify
      with the existing mixed-schema regression test).
+   - **Template elevation band verified wide on main** (fixed 2026-08-18:
+     main's como.yml still carried the pre-`603224c3` Montana band
+     [600,2600] that zeroed candidate pools for ~87% of the country --
+     caught during failure-cohort diagnosis, ported before it could
+     poison run 2's branch cut).
    - **Fresh branch + fresh ledgers**: new branch (e.g.
      `claude/nid-run2-cluster`) from main (which has cluster, band, ASM,
      ARF); ledger dir starts empty (`data/nid_progress/` on that branch)

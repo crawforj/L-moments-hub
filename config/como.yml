@@ -24,7 +24,7 @@ region:
   search_radius_km: 175         # candidate stations within this radius of the site
                                  # (circular: the selection rule; other methods: outer
                                  # sanity bound only, drawn faint on the region map)
-  elevation_band_m: [600, 2600] # keep stations within this elevation range
+  elevation_band_m: [-100, 6200] # WIDENED (ported from fleet-branch fix 603224c3, 2026-08-18): the old [600,2600] Como-specific band silently zeroed candidate pools for low-elevation facilities when this file is used as the fleet template; real homogeneity gating happens downstream via Di/H1, not this prefilter
   min_record_years: 20          # drop stations with fewer valid annual maxima
   min_year_completeness: 0.90   # fraction of in-season days required per year
   max_stations: 60              # cap nearest GHCN stations pulled (bounds download)
