@@ -54,14 +54,84 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
-          lfs: true   # data/nid_progress/*.csv moved to LFS (2026-08-13) once
-                      # the cumulative fleet tables crossed GitHub's 50MB
-                      # soft-limit and started failing pushes -- without this,
-                      # checkout only fetches pointer files and the batch
-                      # would silently corrupt them on the next commit.
+          # NO lfs:true anymore (2026-08-17 cost fix). The cumulative fleet
+          # tables briefly lived in LFS (2026-08-13, after they crossed the
+          # 50MB push soft-limit), but every ~17-min round rewrites ~950MB of
+          # CSVs and LFS stores each version IN FULL: ~20 rounds/job x ~4
+          # jobs/day ~= 75GB/day of new LFS storage against a 10GiB free
+          # quota, plus ~950MB of LFS bandwidth per lfs:true checkout. Once
+          # over the storage quota GitHub blocks new LFS uploads and serves
+          # only pointer files -- which would corrupt-and-kill this chain.
+          # The big tables now live as gzipped assets on the fixed release
+          # tag `nid-run1-data` (free storage, no LFS involved); only the
+          # small ledger (completed_ids.csv, progress.md) stays in git as
+          # plain text. Nothing else in the job needs LFS content (the GHCN
+          # cache data/ghcn_prcp_cache/*.csv.gz is regular git).
 
-      - name: Configure git-lfs
-        run: git lfs install --local
+      - name: Restore cumulative fleet tables from release assets
+        # Replaces the old lfs:true checkout as the source of the big
+        # cumulative tables. Consistency invariant (see the upload half in
+        # the tranche loop): assets >= state manifest >= committed ledger,
+        # always. append_cum_csv() de-dups on the natural key, so tables
+        # AHEAD of the ledger merely re-fold a few facilities harmlessly;
+        # a ledger AHEAD of the tables would silently orphan completed
+        # facilities -- that direction is a hard failure here, and the
+        # chain step below refuses to dispatch a successor when this step
+        # fails, so a bad state pauses the fleet instead of looping on it.
+        id: restore
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=nid-run1-data
+          BIG="all_facilities_DDF batch_diagnostics gof growth_curve regional_lmoments stations_removed stations_used tail_sensitivity"
+          # Transition guard: if the ledger branch still LFS-tracks these
+          # paths, this plain checkout produced pointer files and a run
+          # would corrupt the ledger. Fail loudly; push the untracking
+          # commit to the fleet branch first.
+          if git check-attr filter -- data/nid_progress/completed_ids.csv | grep -q 'lfs'; then
+            echo "::error::Fleet branch still LFS-tracks data/nid_progress -- push the untracking commit before running this workflow."
+            exit 1
+          fi
+          if head -c 200 data/nid_progress/completed_ids.csv 2>/dev/null | grep -q 'git-lfs'; then
+            echo "::error::completed_ids.csv is an LFS pointer file in this checkout -- refusing to run."
+            exit 1
+          fi
+          if ! gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            if [ -s data/nid_progress/completed_ids.csv ]; then
+              echo "::error::Release $TAG does not exist but completed_ids.csv is non-empty -- the cumulative tables would restart empty and silently orphan every completed facility. Seed the release first (see docs/NID_COMPLETION_RUNBOOK.md)."
+              exit 1
+            fi
+            echo "No $TAG release and an empty ledger -- true first run, starting fresh."
+            exit 0
+          fi
+          rm -rf /tmp/nid_assets && mkdir -p /tmp/nid_assets
+          for attempt in 1 2 3; do
+            gh release download "$TAG" --repo "${{ github.repository }}" --dir /tmp/nid_assets --clobber && break
+            if [ "$attempt" = 3 ]; then
+              echo "::error::Failed to download $TAG assets after 3 attempts."
+              exit 1
+            fi
+            sleep 20
+          done
+          for name in $BIG; do
+            if [ ! -f "/tmp/nid_assets/$name.csv.gz" ]; then
+              echo "::error::Release $TAG is missing asset $name.csv.gz -- inconsistent seed, refusing to run."
+              exit 1
+            fi
+            gunzip -c "/tmp/nid_assets/$name.csv.gz" > "data/nid_progress/$name.csv"
+          done
+          if [ ! -f /tmp/nid_assets/nid_state.json ]; then
+            echo "::error::Release $TAG has no nid_state.json manifest -- cannot prove the tables cover the ledger, refusing to run."
+            exit 1
+          fi
+          LEDGER_ROWS=$(wc -l < data/nid_progress/completed_ids.csv 2>/dev/null || echo 0)
+          MAN_ROWS=$(jq -r '.completed_rows' /tmp/nid_assets/nid_state.json)
+          echo "Ledger rows in checkout: $LEDGER_ROWS | rows covered by release assets: $MAN_ROWS"
+          if [ "$LEDGER_ROWS" -gt "$MAN_ROWS" ]; then
+            echo "::error::Committed ledger ($LEDGER_ROWS rows) is AHEAD of the release assets ($MAN_ROWS rows) -- running now would orphan completed facilities. Re-upload assets from a checkout matching the ledger, then re-dispatch."
+            exit 1
+          fi
+          ls -la data/nid_progress/
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
@@ -130,10 +200,13 @@ jobs:
       - name: Run NID tranches until the time budget is spent
         env:
           LMC_TRANCHE: ${{ inputs.tranche_size }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BUDGET_SECONDS=$(( ${{ inputs.budget_minutes }} * 60 ))
           START=$(date +%s)
           ROUND=0
+          TAG=nid-run1-data
+          BIG="all_facilities_DDF batch_diagnostics gof growth_curve regional_lmoments stations_removed stations_used tail_sensitivity"
           while true; do
             ROUND=$((ROUND+1))
             NOW=$(date +%s)
@@ -145,12 +218,52 @@ jobs:
             echo "===== Round $ROUND (elapsed ${ELAPSED}s / budget ${BUDGET_SECONDS}s) ====="
             Rscript run_nid_tranche.R || echo "::warning::run_nid_tranche.R exited non-zero this round; continuing to next round."
 
-            git add data/nid_progress/ data/ghcn_prcp_cache/
+            # Only the small ledger goes to git (plain text, delta-compresses
+            # fine). The ~950MB of cumulative tables go to release assets --
+            # NEVER `git add data/nid_progress/` wholesale again (that is what
+            # was burning ~75GB/day of LFS storage).
+            git add data/nid_progress/completed_ids.csv data/nid_progress/progress.md data/ghcn_prcp_cache/
             if ! git diff --cached --quiet; then
+              # ---- publish cumulative tables as release assets (replaces LFS) ----
+              # Order is the crash-consistency invariant: (1) csv.gz assets,
+              # (2) nid_state.json manifest, (3) git push of the ledger. A
+              # failure at any point leaves origin's ledger <= manifest <=
+              # assets, which the restore step accepts (append_cum_csv
+              # de-dups on the natural key, so re-folding already-published
+              # facilities is harmless). The reverse order could publish a
+              # ledger whose facilities are missing from the tables --
+              # silent, permanent data loss. So an upload failure must abort
+              # this job BEFORE the ledger push (set -e does that), costing
+              # at most this round; the chained successor resumes from the
+              # last consistent state.
+              rm -rf /tmp/nid_assets_up && mkdir -p /tmp/nid_assets_up
+              for name in $BIG; do
+                f="data/nid_progress/$name.csv"
+                if [ -f "$f" ]; then
+                  gzip -3 -c "$f" > "/tmp/nid_assets_up/$name.csv.gz"
+                fi
+              done
+              ROWS=$(wc -l < data/nid_progress/completed_ids.csv)
+              printf '{"completed_rows": %s, "commit": "%s", "uploaded_at": "%s"}\n' \
+                "$ROWS" "$(git rev-parse HEAD)" "$(date -u +%FT%TZ)" > /tmp/nid_assets_up/nid_state.json
+              UPLOADED=0
+              for attempt in 1 2 3; do
+                if gh release upload "$TAG" /tmp/nid_assets_up/*.csv.gz --clobber --repo "${{ github.repository }}" \
+                   && gh release upload "$TAG" /tmp/nid_assets_up/nid_state.json --clobber --repo "${{ github.repository }}"; then
+                  UPLOADED=1
+                  break
+                fi
+                sleep 20
+              done
+              if [ "$UPLOADED" != 1 ]; then
+                echo "::error::Release asset upload failed 3x -- aborting before the ledger push so the tables can never fall behind the ledger. This round will be re-attempted by the successor."
+                exit 1
+              fi
+
               SUMMARY=$(grep 'Facilities attempted' data/nid_progress/progress.md || echo 'progress updated')
               git commit -q -m "NID GH-Actions tranche (round $ROUND): $SUMMARY"
               git push -q origin HEAD:"${{ inputs.branch }}"
-              echo "Committed and pushed round $ROUND."
+              echo "Committed and pushed round $ROUND (ledger to git, tables to release $TAG)."
             else
               echo "No changes to commit this round."
             fi
@@ -179,7 +292,14 @@ jobs:
         # everywhere else in this pipeline) -- an unfinished round just means
         # the next run re-attempts those same not-yet-completed facilities,
         # same as the ledger's normal resumability.
-        if: always()
+        #
+        # EXCEPT when the restore step failed: that means the release-asset
+        # state and the committed ledger disagree (or the branch is still
+        # LFS-tracked mid-transition), and every successor would fail the
+        # same way -- chaining would just be a ~2-min dispatch loop burning
+        # Actions minutes until someone notices. Pause instead; fix the
+        # assets/branch and re-dispatch by hand.
+        if: always() && steps.restore.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
