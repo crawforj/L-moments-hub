@@ -42,6 +42,10 @@ run_analysis <- function(config_path = "config/como.yml") {
   used_any <- character(0)
   last_regdata <- NULL
 
+  # PHASE A -- region building and goodness-of-fit, per duration. Split out
+  # from estimation so the distribution family can optionally be resolved
+  # ACROSS durations before any depth is estimated (see phase A/B note below).
+  phaseA <- list()
   for (dur in cfg$durations) {
     lab <- dur$label
     audit_log(sprintf("--- Duration %s ---", lab))
@@ -55,6 +59,62 @@ run_analysis <- function(config_path = "config/como.yml") {
 
     dsel <- step05_distribution(hom$tst, cfg, duration_label = lab,
                                 review = cfg$distribution_review)
+
+    phaseA[[lab]] <- list(dur = dur, ams_list = ams_list, scr = scr, hom = hom,
+                          rd_final = rd_final, dsel = dsel)
+  }
+
+  # ---- optional: ONE distribution family across all durations -------------
+  # Independent per-duration selection lets the 24-h and 72-h growth curves
+  # cross in the extrapolated tail (72-h depth below 24-h depth, which is
+  # physically impossible). See choose_single_family() in R/05_distribution.R
+  # for the mechanism, the evidence, and why the aggregation is minimax.
+  # Config-gated and OFF by default, so run 1, the golden fixture and the BOR
+  # sets are bit-for-bit unaffected.
+  if (isTRUE(as.logical(cfg$distribution_single_family %||% FALSE)) &&
+      length(phaseA) > 1) {
+    # An explicit human/config decision still wins: if any duration resolved
+    # via expert review or a config override, that is a deliberate choice and
+    # the consistency rule must not silently overrule it.
+    forced <- Filter(function(p) !identical(p$dsel$source, "auto"), phaseA)
+    if (length(forced)) {
+      audit_log(sprintf(
+        "Single-family: NOT applied -- %s resolved via %s, which takes precedence.",
+        paste(names(forced), collapse = ", "),
+        paste(unique(vapply(forced, function(p) p$dsel$source, character(1))), collapse = "/")))
+    } else {
+      sf <- choose_single_family(lapply(phaseA, function(p) p$dsel$Z),
+                                 cfg$distributions)
+      if (is.null(sf)) {
+        audit_log("Single-family: no candidate has a finite |Z| at every duration; keeping per-duration selection.")
+      } else {
+        was <- vapply(phaseA, function(p) toupper(p$dsel$chosen), character(1))
+        audit_log(sprintf(
+          "Single-family: %s across all durations (minimax |Z|=%.3f; per-duration |Z| %s). Per-duration picks were %s.",
+          toupper(sf$chosen), sf$score,
+          paste(sprintf("%s=%.3f", names(sf$per_duration_absZ),
+                        sf$per_duration_absZ), collapse = ", "),
+          paste(sprintf("%s=%s", names(was), was), collapse = ", ")))
+        for (lab in names(phaseA)) {
+          Z <- phaseA[[lab]]$dsel$Z
+          phaseA[[lab]]$dsel$chosen <- sf$chosen
+          phaseA[[lab]]$dsel$acceptable <- isTRUE(abs(Z[sf$chosen]) <= 1.64)
+          phaseA[[lab]]$dsel$source <- "single_family"
+          phaseA[[lab]]$dsel$single_family <- sf$table
+        }
+      }
+    }
+  }
+
+  # PHASE B -- estimation, uncertainty, plots and tables, per duration.
+  for (lab in names(phaseA)) {
+    pa       <- phaseA[[lab]]
+    dur      <- pa$dur
+    ams_list <- pa$ams_list
+    scr      <- pa$scr
+    hom      <- pa$hom
+    rd_final <- pa$rd_final
+    dsel     <- pa$dsel
 
     used_ids  <- rd_final$name
     used_meta <- meta_all[match(used_ids, meta_all$station_id), ]

@@ -196,3 +196,61 @@ test_that("append_cum_csv: site_id-keyed fold-in survives name collisions and mi
   expect_equal(nrow(utils::read.csv(dst3)), 2)
   unlink(td, recursive = TRUE)
 })
+
+test_that("choose_single_family picks the minimax-|Z| family across durations", {
+  cand <- c("glo", "gev", "gno", "pe3", "gpa")
+  # GLO fits 24h best (0.20) but badly at 72h (3.00); GEV is second at 24h
+  # (0.50) and good at 72h (0.60). Minimax must prefer GEV: its WORST duration
+  # (0.60) beats GLO's worst (3.00). A sum/mean of |Z| would also pick GEV
+  # here, so make the discriminating case explicit below.
+  z <- list("24h" = c(glo = 0.20, gev = 0.50, gno = 1.10, pe3 = 1.90, gpa = 2.50),
+            "72h" = c(glo = 3.00, gev = 0.60, gno = 0.90, pe3 = 1.20, gpa = 2.10))
+  sf <- choose_single_family(z, cand)
+  expect_equal(sf$chosen, "gev")
+  expect_equal(unname(sf$score), 0.60)             # the max across durations
+  expect_true(sf$table$dist[1] == "gev")           # table sorted best-first
+
+  # Discriminating case: MINIMAX and SUM disagree, and minimax is the one that
+  # keeps the |Z| <= 1.64 acceptance rule meaningful.
+  #   glo: |Z| 0.05 and 3.20 -> sum 3.25, max 3.20 (FAILS 72h outright)
+  #   gno: |Z| 1.50 and 1.60 -> sum 3.10, max 1.60 (acceptable at BOTH)
+  # Sum would rank them nearly level and could pick the family that fails a
+  # duration; minimax picks gno.
+  z2 <- list("24h" = c(glo = 0.05, gev = 2.00, gno = 1.50, pe3 = 2.20, gpa = 2.60),
+             "72h" = c(glo = 3.20, gev = 1.90, gno = 1.60, pe3 = 1.70, gpa = 2.40))
+  sf2 <- choose_single_family(z2, cand)
+  expect_equal(sf2$chosen, "gno")
+  expect_true(sf2$score <= 1.64)                   # acceptable at EVERY duration
+
+  # A family that is unusable (NA/non-finite) at any duration can never win.
+  z3 <- list("24h" = c(glo = 0.01, gev = 0.80, gno = 0.90, pe3 = 1.0, gpa = 1.1),
+             "72h" = c(glo = NA,   gev = 0.85, gno = 0.95, pe3 = 1.1, gpa = 1.2))
+  expect_equal(choose_single_family(z3, cand)$chosen, "gev")
+
+  # No candidate finite everywhere -> NULL, so the caller keeps per-duration
+  # selection rather than inventing a choice.
+  z4 <- list("24h" = setNames(rep(NA_real_, 5), cand),
+             "72h" = setNames(rep(NA_real_, 5), cand))
+  expect_null(choose_single_family(z4, cand))
+
+  # Deterministic tie-break: equal max |Z| resolves on mean, then on the
+  # candidate order in cfg$distributions.
+  z5 <- list("24h" = c(glo = 1.00, gev = 0.50, gno = 1.00, pe3 = 2.0, gpa = 2.1),
+             "72h" = c(glo = 0.50, gev = 1.00, gno = 1.00, pe3 = 2.0, gpa = 2.1))
+  sf5 <- choose_single_family(z5, cand)
+  expect_equal(unname(sf5$score), 1.00)
+  expect_equal(sf5$chosen, "glo")                  # equal max+mean -> first in cand order
+})
+
+test_that("distribution_single_family defaults OFF so existing runs are unaffected", {
+  # test_dir() runs from tests/testthat and another test file may have cleared
+  # lmc.root, so resolve the repo root defensively.
+  root <- getOption("lmc.root")
+  if (is.null(root) || !file.exists(file.path(root, "config", "como.yml")))
+    root <- normalizePath(file.path(getwd(), "..", ".."), mustWork = FALSE)
+  cfg_path <- file.path(root, "config", "como.yml")
+  skip_if_not(file.exists(cfg_path), "config/como.yml not locatable from the test dir")
+  cfg <- yaml::read_yaml(cfg_path)
+  expect_false(isTRUE(as.logical(cfg$distribution_single_family)))
+  expect_equal(cfg$region$method, "circular")      # template default, per the run-2 plan
+})
