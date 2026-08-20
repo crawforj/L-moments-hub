@@ -33,6 +33,14 @@ on:
         description: 'Wall-clock budget for this job (kept under the 360-min GH Actions hard limit)'
         required: false
         default: '330'
+      release_tag:
+        description: 'Release tag holding this run''s cumulative fleet tables (run 1: nid-run1-data, run 2: nid-run2-data)'
+        required: false
+        # Defaults to run 1 so the in-flight run-1 chain is completely
+        # unaffected by this input existing. NOTE: the default is NOT what
+        # protects the archives -- the branch/tag binding table in the
+        # "Resolve release tag" step below is. See the long comment there.
+        default: 'nid-run1-data'
 
 permissions:
   contents: write
@@ -62,11 +70,73 @@ jobs:
           # quota, plus ~950MB of LFS bandwidth per lfs:true checkout. Once
           # over the storage quota GitHub blocks new LFS uploads and serves
           # only pointer files -- which would corrupt-and-kill this chain.
-          # The big tables now live as gzipped assets on the fixed release
-          # tag `nid-run1-data` (free storage, no LFS involved); only the
+          # The big tables now live as gzipped assets on a per-run release
+          # tag (run 1: `nid-run1-data`, run 2: `nid-run2-data`; resolved by
+          # the "Resolve release tag" step below, which binds the tag to the
+          # branch so two runs can never overwrite each other's archive) --
+          # free storage, no LFS involved; only the
           # small ledger (completed_ids.csv, progress.md) stays in git as
           # plain text. Nothing else in the job needs LFS content (the GHCN
           # cache data/ghcn_prcp_cache/*.csv.gz is regular git).
+
+      - name: Resolve release tag (branch/tag binding guard)
+        # THE run-isolation control. Each fleet run keeps its ~950MB of
+        # cumulative tables on its own release tag, and a run writing another
+        # run's tag would overwrite that run's archived dataset with
+        # --clobber -- silent, permanent, unrecoverable loss of a multi-week
+        # fleet run. So the tag is NOT simply trusted from the dispatch input.
+        #
+        # Why an input default alone is not enough: the chain step at the end
+        # of this job deliberately propagates only `branch` (see the comment
+        # there -- propagating tuning knobs made them impossible to change).
+        # Any input it does not pass therefore reverts to the DEFAULT in every
+        # chained successor. With a plain `release_tag` input defaulting to
+        # nid-run1-data, run 2's very first chained successor would silently
+        # start writing run 1's tag. Two fixes, both applied:
+        #   (a) the chain step below now explicitly propagates the resolved
+        #       tag, so successors inherit it instead of the default;
+        #   (b) this binding table makes the tag a function of the BRANCH, so
+        #       even a hand dispatch that forgets -f release_tag cannot cross
+        #       the streams.
+        # (b) is the real guarantee; (a) is what keeps the chain autonomous.
+        id: tag
+        run: |
+          BRANCH="${{ inputs.branch }}"
+          REQUESTED="${{ inputs.release_tag }}"
+          case "$BRANCH" in
+            claude/desktop-nid-ad-hoc) BOUND=nid-run1-data ;;   # run 1, circular
+            claude/nid-run2-cluster)   BOUND=nid-run2-data ;;   # run 2, cluster
+            *)                         BOUND="" ;;
+          esac
+          if [ -n "$BOUND" ]; then
+            if [ "$REQUESTED" != "$BOUND" ]; then
+              if [ -z "$REQUESTED" ] || [ "$REQUESTED" = "nid-run1-data" ]; then
+                # The input default leaked through, or the input was absent
+                # entirely (a hand dispatch without -f release_tag, or an
+                # in-flight successor dispatched by a run that predates this
+                # input existing). Correct it to the branch's own tag rather
+                # than writing run 1's archive from another run's branch.
+                echo "::warning::release_tag was '$REQUESTED' (input default/absent) but branch '$BRANCH' is bound to '$BOUND' -- using '$BOUND'."
+                TAG="$BOUND"
+              else
+                echo "::error::release_tag '$REQUESTED' contradicts branch '$BRANCH', which is bound to '$BOUND'. Refusing to run -- a wrong tag would overwrite another run's archived fleet tables."
+                exit 1
+              fi
+            else
+              TAG="$BOUND"
+            fi
+          else
+            # An unbound/experimental branch may use its own tag, but must
+            # never write a reserved archive.
+            case "$REQUESTED" in
+              nid-run1-data|nid-run2-data)
+                echo "::error::Branch '$BRANCH' is not in the run-binding table, so it may not write the reserved archive tag '$REQUESTED'. Add the branch to the table in .github/workflows/nid-batch.yml first."
+                exit 1 ;;
+            esac
+            TAG="$REQUESTED"
+          fi
+          echo "Branch '$BRANCH' -> release tag '$TAG'."
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Restore cumulative fleet tables from release assets
         # Replaces the old lfs:true checkout as the source of the big
@@ -82,7 +152,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG=nid-run1-data
+          TAG="$RELEASE_TAG"   # resolved+guarded by the "Resolve release tag" step
+          if [ -z "$TAG" ]; then
+            echo "::error::RELEASE_TAG is empty -- the resolve step did not run. Refusing to touch release assets."
+            exit 1
+          fi
           BIG="all_facilities_DDF batch_diagnostics gof growth_curve regional_lmoments stations_removed stations_used tail_sensitivity"
           # Transition guard: if the ledger branch still LFS-tracks these
           # paths, this plain checkout produced pointer files and a run
@@ -213,7 +287,11 @@ jobs:
           BUDGET_SECONDS=$(( ${{ inputs.budget_minutes }} * 60 ))
           START=$(date +%s)
           ROUND=0
-          TAG=nid-run1-data
+          TAG="$RELEASE_TAG"   # resolved+guarded by the "Resolve release tag" step
+          if [ -z "$TAG" ]; then
+            echo "::error::RELEASE_TAG is empty -- the resolve step did not run. Refusing to touch release assets."
+            exit 1
+          fi
           BIG="all_facilities_DDF batch_diagnostics gof growth_curve regional_lmoments stations_removed stations_used tail_sensitivity"
           while true; do
             ROUND=$((ROUND+1))
@@ -323,6 +401,15 @@ jobs:
             # the 400->75 tranche default took multiple generations to
             # actually land because each cancel spawned a successor pinned
             # to the old explicit input, beating the manual fix every time).
+            #
+            # release_tag IS propagated, unlike the tuning knobs above: it is
+            # an identity, not a knob. It must stay fixed for the whole life
+            # of a run, and letting it fall back to the input default would
+            # point run 2's successors at run 1's archive (see the
+            # "Resolve release tag" step). The binding table there would
+            # catch that anyway; propagating it means the chain never even
+            # relies on the correction.
             gh workflow run nid-batch.yml --repo "${{ github.repository }}" \
-              -f branch="${{ inputs.branch }}"
+              -f branch="${{ inputs.branch }}" \
+              -f release_tag="$RELEASE_TAG"
           fi
