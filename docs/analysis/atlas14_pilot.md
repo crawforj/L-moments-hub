@@ -51,11 +51,12 @@ GET https://hdsc.nws.noaa.gov/cgi-bin/new/fe_text_mean.csv
 | `units` | `english` (inches), `metric` (millimetres) | this project requests `english` and converts with 25.4 |
 | `series` | `pds`, `ams` | see §3 |
 
-**The path moved.** `compare_atlas14.R` and NOAA's own (commented-out) JS still use
+**The path moved.** NOAA's own (commented-out) JS still uses
 `/cgi-bin/hdsc/new/`; that now answers **301 Moved Permanently** to
-`/cgi-bin/new/`. `readLines()` in R follows the redirect, so the R tool still
-works — but the sampler requests the current path directly and records the
-contract here so the next person does not have to rediscover it.
+`/cgi-bin/new/` (re-verified live 2026-08-20). `readLines()` in R follows the
+redirect, so `compare_atlas14.R` kept working on the stale path — but it now
+requests the current path directly, as the sampler always did, and the contract
+is recorded here so the next person does not have to rediscover it.
 
 **No coverage is an HTTP 200, not a 404.** Outside every Atlas 14 project area
 the server returns status 200 with the body:
