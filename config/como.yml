@@ -63,6 +63,19 @@ season:
 # The one with the smallest |Z| (<= 1.64) is chosen unless overridden below.
 distributions: ["glo", "gev", "gno", "pe3", "gpa"]
 distribution_override: null     # e.g. "gev" to force a choice; null = automatic
+# Choose ONE family per facility across ALL durations instead of selecting
+# independently per duration. Independent selection lets the 24-h and 72-h
+# growth curves cross in the extrapolated tail (72-h depth below 24-h depth --
+# impossible, since a 72-h window contains its worst 24 h); ~15% of the fleet
+# crosses at T>=200, and the mechanism is strictly the 24-h fit picking a
+# heavier-tailed family than the 72-h fit. See
+# docs/analysis/cross_duration_consistency.md and choose_single_family() in
+# R/05_distribution.R (aggregation is minimax |Z|, justified there). NOAA
+# adopted the same policy for Atlas 14 (Vol. 2 / Vol. 9 sec. 4.6.3).
+# FALSE here on purpose: run 1, the golden fixture and the BOR sets must be
+# unaffected. NID run 2 turns it on per-row via the manifest's
+# `single_family` column (see run_batch.R's gen_configs_from_manifest()).
+distribution_single_family: false
 
 # Return periods (years) for the depth-duration-frequency output. 10000 -> AEP 1e-4.
 return_periods: [2, 5, 10, 25, 50, 100, 200, 500, 1000, 2000, 5000, 10000]

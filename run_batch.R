@@ -72,6 +72,15 @@ gen_configs_from_manifest <- function(manifest_csv,
     # R/region_methods.R. Absent column/blank cell -> template default.
     if (!is.null(m$region_method) && !is.na(m$region_method[i]) && nzchar(m$region_method[i]))
       cfg$region$method <- m$region_method[i]
+    # Optional per-facility "one distribution family across all durations"
+    # override, same mechanism as region_method. Absent column/blank cell ->
+    # template default (FALSE). NID run 2 sets it TRUE fleet-wide to stop the
+    # 72h-below-24h tail crossings; see R/05_distribution.R's
+    # choose_single_family() and docs/analysis/cross_duration_consistency.md.
+    if (!is.null(m$single_family) && !is.na(m$single_family[i]) &&
+        nzchar(as.character(m$single_family[i])))
+      cfg$distribution_single_family <-
+        isTRUE(as.logical(m$single_family[i]))
     p <- file.path(out_dir, paste0(m$facility_id[i], ".yml"))
     yaml::write_yaml(cfg, p)
     paths <- c(paths, p)
