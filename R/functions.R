@@ -515,6 +515,78 @@ elevatr_lookup <- function(lat, lon) {
 }
 
 # ---------------------------------------------------------------------------
+# chunked_elevatr_lookup(): fleet-scale DEM elevation lookup (metres), built for
+# the 73,303-row NID manifest where the plain elevatr_lookup() above is both too
+# coarse and too fragile.
+#
+# Two defects in elevatr_lookup() that this function exists to fix:
+#
+#  1. RESOLUTION. elevatr::get_elev_point(src = "aws") defaults to `z = 5`
+#     (see elevatr:::get_aws_points) -- roughly 4 km/pixel. Benchmarked against
+#     14 dams of independently known elevation, z = 5 gives a median error of
+#     29 m and a MAXIMUM of 294 m (Taylor Park, CO); z >= 8 converges to ~5 m
+#     median. Since `region.method: cluster` clusters partly ON elevation, a
+#     294 m error is a real mis-clustering risk, so this function pins an
+#     explicit, recorded zoom (default 10).
+#  2. BATCH NONDETERMINISM. get_elev_raster() mosaics the tiles covering the
+#     bounding box of ALL points in one call, then reprojects to the points'
+#     CRS -- so the resampling, and hence the value returned for a given point,
+#     depends on which other points shared its call. Passing the whole fleet in
+#     one call also implies a continent-sized bbox. This function removes the
+#     dependence by binning points onto a FIXED lat/lon grid (default 1 degree)
+#     and issuing one call per occupied cell: a point's cell -- and therefore
+#     its bbox, zoom, and value -- is a property of its own coordinates alone,
+#     independent of the rest of the manifest and of how the work is sharded
+#     across processes. Re-running with the same (cell_deg, zoom) reproduces
+#     the same numbers.
+#
+# It also drops elevatr_lookup()'s `warning = function(w) NULL` handler, which
+# turns any single warning into an all-NA result for the entire batch -- at
+# fleet scale that silently discards thousands of good rows. Here a cell that
+# errors is retried with backoff, and only that cell degrades to NA.
+#
+#   lat, lon   : numeric vectors of equal length.
+#   zoom       : Terrain Tiles zoom passed to get_elev_point (default 10).
+#   cell_deg   : grid bin size in degrees for chunking (default 1).
+#   retries    : attempts per cell before giving up (default 3).
+#   progress   : function(done_cells, total_cells, filled, n) called per cell.
+#   -> numeric vector of metres, NA where the lookup failed.
+# ---------------------------------------------------------------------------
+chunked_elevatr_lookup <- function(lat, lon, zoom = 10, cell_deg = 1,
+                                   retries = 3, progress = NULL) {
+  n <- length(lat)
+  out <- rep(NA_real_, n)
+  if (!requireNamespace("elevatr", quietly = TRUE) ||
+      !requireNamespace("sf", quietly = TRUE)) return(out)
+  lat <- as.numeric(lat); lon <- as.numeric(lon)
+  ok <- is.finite(lat) & is.finite(lon) & abs(lat) <= 90 & abs(lon) <= 180
+  # Deterministic cell key from the point's own coordinates only.
+  key <- paste(floor(lat / cell_deg), floor(lon / cell_deg))
+  key[!ok] <- NA_character_
+  cells <- sort(unique(key[ok]))
+  for (ci in seq_along(cells)) {
+    idx <- which(key == cells[ci])
+    pts <- data.frame(x = lon[idx], y = lat[idx])
+    v <- NULL
+    for (attempt in seq_len(retries)) {
+      v <- tryCatch(
+        elevatr::get_elev_point(pts, prj = "EPSG:4326", src = "aws", z = zoom),
+        error = function(err) NULL)
+      if (!is.null(v) && !is.null(v$elevation)) break
+      v <- NULL
+      if (attempt < retries) Sys.sleep(2 * attempt)   # linear backoff
+    }
+    if (!is.null(v)) {
+      e <- suppressWarnings(as.numeric(v$elevation))
+      if (length(e) == length(idx)) out[idx] <- e
+    }
+    if (is.function(progress))
+      progress(ci, length(cells), sum(!is.na(out[idx])), length(idx))
+  }
+  out
+}
+
+# ---------------------------------------------------------------------------
 # enrich_elevations(): fill MISSING elevation_m in a facilities manifest from a
 # DEM, so the regression index-flood method can use the site elevation (the NID
 # dam-inventory mirror carries none — see DATA_SOURCES.md). Existing values are
