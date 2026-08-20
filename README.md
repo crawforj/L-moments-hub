@@ -71,7 +71,7 @@ numbers on its own.
 |---|---|---|
 | **1. Como Dam** | 1 site (Montana), full audit trail | ✅ validated on real GHCN data |
 | **2. BOR fleet** | **308** Bureau of Reclamation dams (`run_batch.R`) | ✅ complete — **305 ok / 3 failed** (the 3 lack enough nearby gauges to form a region) |
-| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **45,200 done (62%)**, 50 genuine failures, via a self-chaining GitHub Actions batch in 75-dam resumable tranches (see batch plan below). A **second full run under the cluster method** follows, keeping both datasets: [`docs/NID_RUN2_CLUSTER_PLAN.md`](docs/NID_RUN2_CLUSTER_PLAN.md) |
+| **3. Full NID** | **73,303 dams** — the entire National Inventory of Dams (`run_nid_tranche.R`) | 🔄 underway — **50,750 done (69%)**, 50 genuine failures, via a self-chaining GitHub Actions batch in 75-dam resumable tranches (see batch plan below). Run 2, a **second full pass under the cluster method** keeping both datasets, is **prepped and ready to launch** on branch `claude/nid-run2-cluster`: [`docs/NID_RUN2_CLUSTER_PLAN.md`](docs/NID_RUN2_CLUSTER_PLAN.md) |
 
 **First-look analyses and QC (2026-08-16, partial data).** With the fleet at
 ~42%, layered QC gates (`qc/`, per `docs/NID_QAQC_PLAN.md`) and three
@@ -236,7 +236,12 @@ Rscript run_nid_tranche.R                            # next tranche of the full 
 - **[`docs/NID_ANALYSIS_PLAN.md`](docs/NID_ANALYSIS_PLAN.md)** — what to learn from the output, phased, with the public/private publication boundary
 - **[`docs/NID_COMPLETION_RUNBOOK.md`](docs/NID_COMPLETION_RUNBOOK.md)** — the ordered procedure for finishing run 1 (self-contained; anyone can execute it)
 - **[`docs/NID_RUN2_CLUSTER_PLAN.md`](docs/NID_RUN2_CLUSTER_PLAN.md)** — the second national run under the cluster method, and why both datasets are kept
-- **[`docs/analysis/`](docs/analysis/)** — first-look national findings (failure atlas, tail geography, heterogeneity hot-spots), partial data pending completion
+**Findings and validation** (`docs/analysis/`, all pinned to a fleet commit):
+- **[`failure_atlas.md`](docs/analysis/failure_atlas.md)** · **[`tail_geography.md`](docs/analysis/tail_geography.md)** · **[`method_diagnostics.md`](docs/analysis/method_diagnostics.md)** — first-look national patterns (gauge deserts, extreme-rain tail geography, heterogeneity hot-spots), partial data pending completion
+- **[`bor_nid_reproducibility.md`](docs/analysis/bor_nid_reproducibility.md)** — the same dams through two pipelines months apart: **99% byte-identical** under matched inputs; every disagreement traced to a dated config change
+- **[`atlas14_pilot.md`](docs/analysis/atlas14_pilot.md)** — external validation against NOAA Atlas 14: endpoint contract, a 3,762-value ground-truthing pass with zero mismatches, and the finding that **Oregon and Washington have no Atlas 14 at all** (1,602 dams still governed by 1973 Atlas 2)
+- **[`cross_duration_consistency.md`](docs/analysis/cross_duration_consistency.md)** — why ~15% of facilities show 72-h depths below 24-h depths in the far tail, the exact mechanism (directional distribution-family selection), and what NOAA does about it
+- **[`nid_coordinate_defects.md`](docs/analysis/nid_coordinate_defects.md)** — 12 apparent coordinate errors that turned out to be **stale in our mirror, correct upstream**; results unaffected
 - **[`docs/PLAN.md`](docs/PLAN.md)** — full design · **[`docs/users_guide.md`](docs/users_guide.md)** — how to run · **[`docs/audit_guide.md`](docs/audit_guide.md)** — audit procedure
 
 ## License
