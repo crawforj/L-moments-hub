@@ -1,0 +1,31 @@
+facility_id,lat,lon,series,method,n_values_compared,n_mismatch,max_abs_reldiff_pct,csv_24h_100yr_in,ref_24h_100yr_in,verdict,detail,checked_utc
+MT01692,46.0175,-105.3557,ams,cgi_readH5,171,0,0.00000,4.330,4.330,MATCH,19x9 matrix; worst 0.0000% (); vol=12 region=Interior Northwest,2026-08-20T04:21:05+00:00
+CT00092,41.3150,-73.1583,ams,cgi_readH5,171,0,0.00000,8.720,8.720,MATCH,19x9 matrix; worst 0.0000% (); vol=10 region=Northeastern States,2026-08-20T04:21:05+00:00
+OK02134,35.6103,-96.8148,ams,cgi_readH5,171,0,0.00000,9.000,9.000,MATCH,19x9 matrix; worst 0.0000% (); vol=8 region=Midwestern States,2026-08-20T04:21:05+00:00
+OH00038,40.2800,-81.9200,ams,cgi_readH5,171,0,0.00000,5.960,5.960,MATCH,19x9 matrix; worst 0.0000% (); vol=2 region=Ohio River Basin,2026-08-20T04:21:05+00:00
+NM00451,35.1387,-103.5885,ams,cgi_readH5,171,0,0.00000,5.350,5.350,MATCH,19x9 matrix; worst 0.0000% (); vol=1 region=Southwest,2026-08-20T04:21:05+00:00
+TX01262,32.2522,-96.9867,ams,cgi_readH5,171,0,0.00000,9.860,9.860,MATCH,19x9 matrix; worst 0.0000% (); vol=11 region=Texas,2026-08-20T04:21:05+00:00
+MT01415,45.8425,-109.9344,ams,cgi_readH5,171,0,0.00000,4.260,4.260,MATCH,19x9 matrix; worst 0.0000% (); vol=12 region=Interior Northwest,2026-08-20T04:21:05+00:00
+MD00040,39.6282,-76.5302,ams,cgi_readH5,171,0,0.00000,8.450,8.450,MATCH,19x9 matrix; worst 0.0000% (); vol=2 region=Ohio River Basin,2026-08-20T04:21:05+00:00
+TX00608,33.2105,-97.1697,ams,cgi_readH5,171,0,0.00000,9.050,9.050,MATCH,19x9 matrix; worst 0.0000% (); vol=11 region=Texas,2026-08-20T04:21:05+00:00
+CA00214,34.2789,-114.2226,ams,cgi_readH5,171,0,0.00000,3.820,3.820,MATCH,19x9 matrix; worst 0.0000% (); vol=6 region=Southwest,2026-08-20T04:21:05+00:00
+AL01075,33.6417,-86.0617,ams,cgi_readH5,171,0,0.00000,8.570,8.570,MATCH,19x9 matrix; worst 0.0000% (); vol=9 region=Southeastern States,2026-08-20T04:21:05+00:00
+AK00027,61.0900,-146.3017,ams,cgi_readH5,171,0,0.00000,5.910,5.910,MATCH,19x9 matrix; worst 0.0000% (); vol=7 region=Alaska,2026-08-20T04:21:05+00:00
+WY01382,44.6716,-108.9097,ams,cgi_readH5,171,0,0.00000,2.790,2.790,MATCH,19x9 matrix; worst 0.0000% (); vol=12 region=Interior Northwest,2026-08-20T04:21:05+00:00
+NV21132,40.0083,-119.7875,ams,cgi_readH5,171,0,0.00000,5.530,5.530,MATCH,19x9 matrix; worst 0.0000% (); vol=1 region=Southwest,2026-08-20T04:21:05+00:00
+SD01503,44.1466,-101.3983,ams,cgi_readH5,171,0,0.00000,4.820,4.820,MATCH,19x9 matrix; worst 0.0000% (); vol=8 region=Midwestern States,2026-08-20T04:21:05+00:00
+CA10164,34.4542,-119.7272,ams,cgi_readH5,171,0,0.00000,9.440,9.440,MATCH,19x9 matrix; worst 0.0000% (); vol=6 region=Southwest,2026-08-20T04:21:05+00:00
+UT00315,40.6716,-110.9716,ams,cgi_readH5,171,0,0.00000,4.780,4.780,MATCH,19x9 matrix; worst 0.0000% (); vol=1 region=Southwest,2026-08-20T04:21:05+00:00
+CA10170,38.5130,-122.1030,ams,cgi_readH5,171,0,0.00000,7.720,7.720,MATCH,19x9 matrix; worst 0.0000% (); vol=6 region=Southwest,2026-08-20T04:21:05+00:00
+TX02641,31.9884,-96.6749,ams,cgi_readH5,171,0,0.00000,10.200,10.200,MATCH,19x9 matrix; worst 0.0000% (); vol=11 region=Texas,2026-08-20T04:21:05+00:00
+HI00102,21.9000,-159.5345,ams,cgi_readH5,171,0,0.00000,11.000,11.000,MATCH,19x9 matrix; worst 0.0000% (); vol=4 region=Hawaiian Islands,2026-08-20T04:21:05+00:00
+PA00177,41.6355,-80.1327,ams,cgi_readH5,171,0,0.00000,5.200,5.200,MATCH,19x9 matrix; worst 0.0000% (); vol=2 region=Ohio River Basin,2026-08-20T04:21:05+00:00
+MA00676,42.3133,-71.9576,ams,cgi_readH5,171,0,0.00000,7.480,7.480,MATCH,19x9 matrix; worst 0.0000% (); vol=10 region=Northeastern States,2026-08-20T04:21:05+00:00
+MT01692,46.0175,-105.3557,ams,published_grid:inw100yr24ha_ams,1,0,0.0213,4.330,4.329,MATCH,nearest 30-arcsec cell of inw100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:05+00:00
+MT01415,45.8425,-109.9344,ams,published_grid:inw100yr24ha_ams,1,0,0.0198,4.260,4.259,MATCH,nearest 30-arcsec cell of inw100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:05+00:00
+OK02134,35.6103,-96.8148,ams,published_grid:mw100yr24ha_ams,1,0,0.1778,9.000,8.984,MATCH,nearest 30-arcsec cell of mw100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:06+00:00
+SD01503,44.1466,-101.3983,ams,published_grid:mw100yr24ha_ams,1,0,0.1851,4.820,4.829,MATCH,nearest 30-arcsec cell of mw100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:06+00:00
+OH00038,40.2800,-81.9200,ams,published_grid:orb100yr24ha_ams,1,0,0.0194,5.960,5.961,MATCH,nearest 30-arcsec cell of orb100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:06+00:00
+MD00040,39.6282,-76.5302,ams,published_grid:orb100yr24ha_ams,1,0,0.1657,8.450,8.436,MATCH,nearest 30-arcsec cell of orb100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:06+00:00
+TX01262,32.2522,-96.9867,ams,published_grid:tx100yr24ha_ams,1,0,0.1100,9.860,9.849,MATCH,nearest 30-arcsec cell of tx100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:06+00:00
+TX00608,33.2105,-97.1697,ams,published_grid:tx100yr24ha_ams,1,0,0.0331,9.050,9.053,MATCH,nearest 30-arcsec cell of tx100yr24ha_ams.asc (thousandths of an inch),2026-08-20T04:21:06+00:00

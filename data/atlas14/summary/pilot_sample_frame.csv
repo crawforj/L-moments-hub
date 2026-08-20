@@ -1,0 +1,41 @@
+facility_id,name,state,latitude,longitude,coverage,climate_region,elev_proxy_m,elev_band,stratum,is_bor,join_via,draw_reason
+OR00544,FROG LAKE DAM A,OR,45.093774,-122.044136,"NONE (NOAA Atlas 2, 1973)",Northwest,341.4,300-900 m,"NONE (NOAA Atlas 2, 1973) | Northwest | 300-900 m",False,unique_name,pilot: coverage-class breadth
+OR00581,EMIGRANT,OR,42.1442,-122.6237,"NONE (NOAA Atlas 2, 1973)",Northwest,934.8,900-1800 m,"NONE (NOAA Atlas 2, 1973) | Northwest | 900-1800 m",True,unique_name,pilot: BOR-overlap subsample
+OR01340,CARROLL RESERVOIR,OR,43.99328994,-123.3851166,"NONE (NOAA Atlas 2, 1973)",Northwest,131.7,lowland <300 m,"NONE (NOAA Atlas 2, 1973) | Northwest | lowland <300 m",False,unique_name,pilot: coverage-class breadth
+WA00433,FRENCH CANYON DAM,WA,46.7117,-120.7921,"NONE (NOAA Atlas 2, 1973)",Northwest,554.1,300-900 m,"NONE (NOAA Atlas 2, 1973) | Northwest | 300-900 m",True,unique_name,pilot: BOR-overlap subsample
+WA00443,HORSE SPRING COULEE DAM,WA,48.786899,-119.564103,"NONE (NOAA Atlas 2, 1973)",Northwest,399.3,300-900 m,"NONE (NOAA Atlas 2, 1973) | Northwest | 300-900 m",False,unique_name,pilot: coverage-class breadth
+AZ00160,HOWARD,AZ,32.89278,-109.76389,Vol 1 Semiarid Southwest,Southwest,871.7,300-900 m,Vol 1 Semiarid Southwest | Southwest | 300-900 m,False,site_id,pilot: coverage-class breadth
+NM00451,HITTSON CREEK DAM,NM,35.13921,-103.58793,Vol 1 Semiarid Southwest,Southwest,121.3,lowland <300 m,Vol 1 Semiarid Southwest | Southwest | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+NV21132,SPANISH FLAT,NV,40.0083,-119.7875,Vol 1 Semiarid Southwest,West,1188.7,900-1800 m,Vol 1 Semiarid Southwest | West | 900-1800 m,False,unique_name,pilot: coverage-class breadth
+UT00315,BOR WASHINGTON LAKE,UT,40.6765,-110.9636,Vol 1 Semiarid Southwest,Southwest,3045.6,montane >=1800 m,Vol 1 Semiarid Southwest | Southwest | montane >=1800 m,True,unique_name,pilot: BOR-overlap subsample
+CT00092,MEANS BROOK RESERVOIR,CT,41.316171,-73.15713,Vol 10 Northeastern States,Northeast,143.6,lowland <300 m,Vol 10 Northeastern States | Northeast | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+MA00676,EAMES MILL POND DAM,MA,42.31334645,-71.95762506,Vol 10 Northeastern States,Northeast,264.6,lowland <300 m,Vol 10 Northeastern States | Northeast | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+ME00010,JAY,ME,44.503135,-70.221354,Vol 10 Northeastern States,Northeast,115.8,lowland <300 m,Vol 10 Northeastern States | Northeast | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+TX00608,RAYZOR LAKE DAM,TX,33.210588,-97.169735,Vol 11 Texas,South,206.3,lowland <300 m,Vol 11 Texas | South | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+TX01262,CHAMBERS CREEK WS SCS SITE 79B DAM,TX,32.252292,-96.986704,Vol 11 Texas,South,186.5,lowland <300 m,Vol 11 Texas | South | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+TX02641,RICHLAND CREEK WS SCS SITE 126 DAM,TX,31.988409,-96.674907,Vol 11 Texas,South,138.4,lowland <300 m,Vol 11 Texas | South | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+MT01034,TAYLOR RESERVOIR (FERGUS),MT,47.4118,-109.1602,Vol 12 Interior Northwest,Northern Rockies & Plains,1187.2,900-1800 m,Vol 12 Interior Northwest | Northern Rockies & Plains | 900-1800 m,False,unique_name,pilot: coverage-class breadth
+MT01415,BIG TIMBER SEWAGE LAGOON,MT,45.84250722,-109.93443499,Vol 12 Interior Northwest,Northern Rockies & Plains,1244.8,900-1800 m,Vol 12 Interior Northwest | Northern Rockies & Plains | 900-1800 m,False,unique_name,pilot: coverage-class breadth
+MT01692,ROBINSON #7,MT,46.0175,-105.3557,Vol 12 Interior Northwest,Northern Rockies & Plains,807.7,300-900 m,Vol 12 Interior Northwest | Northern Rockies & Plains | 300-900 m,False,site_id,pilot: coverage-class breadth
+WY01382,WILLWOOD DIVERSION,WY,44.6716,-108.9097,Vol 12 Interior Northwest,Northern Rockies & Plains,1451.8,900-1800 m,Vol 12 Interior Northwest | Northern Rockies & Plains | 900-1800 m,True,unique_name,pilot: BOR-overlap subsample
+MD00040,LITTLE DEER CREEK SITE 3,MD,39.6282,-76.5302,Vol 2 Ohio River Basin,Northeast,185.9,lowland <300 m,Vol 2 Ohio River Basin | Northeast | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+OH00038,SUNSET LAKE DAM,OH,40.28,-81.92222222,Vol 2 Ohio River Basin,Ohio Valley,228.9,lowland <300 m,Vol 2 Ohio River Basin | Ohio Valley | lowland <300 m,False,site_id,pilot: coverage-class breadth
+PA00177,RAINBOW (PA-460),PA,41.63555556,-80.13277778,Vol 2 Ohio River Basin,Northeast,384.4,300-900 m,Vol 2 Ohio River Basin | Northeast | 300-900 m,False,unique_name,pilot: coverage-class breadth
+PR00002,PRIETO DAM,PR,18.1858258,-66.8638102,Vol 3 Puerto Rico / USVI,Caribbean,792.5,300-900 m,Vol 3 Puerto Rico / USVI | Caribbean | 300-900 m,False,unique_name,pilot: coverage-class breadth
+PR00023,PATILLAS DAM,PR,18.0190612,-66.0216612,Vol 3 Puerto Rico / USVI,Caribbean,73.2,lowland <300 m,Vol 3 Puerto Rico / USVI | Caribbean | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+HI00015,KANEHA RESERVOIR,HI,22.131118,-159.371343,Vol 4 Hawaiian Islands,Hawaii,246.9,lowland <300 m,Vol 4 Hawaiian Islands | Hawaii | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+HI00102,IOLEAU RESERVOIR,HI,21.900026,-159.534513,Vol 4 Hawaiian Islands,Hawaii,160.3,lowland <300 m,Vol 4 Hawaiian Islands | Hawaii | lowland <300 m,False,site_id,pilot: coverage-class breadth
+HI00124,KANEOHE DAM,HI,21.391227,-157.804756,Vol 4 Hawaiian Islands,Hawaii,81.7,lowland <300 m,Vol 4 Hawaiian Islands | Hawaii | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+CA00214,COPPER BASIN,CA,34.279,-114.2227,Vol 6 California,West,224.9,lowland <300 m,Vol 6 California | West | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+CA00742,LINDERO,CA,34.1475,-118.7875,Vol 6 California,West,325.5,300-900 m,Vol 6 California | West | 300-900 m,False,site_id,pilot: coverage-class breadth
+CA10164,LAURO,CA,34.4542,-119.7272,Vol 6 California,West,247.2,lowland <300 m,Vol 6 California | West | lowland <300 m,True,unique_name,pilot: BOR-overlap subsample
+CA10170,MONTICELLO,CA,38.5134,-122.1043,Vol 6 California,West,156.1,lowland <300 m,Vol 6 California | West | lowland <300 m,True,unique_name,pilot: BOR-overlap subsample
+CA10174,NIMBUS,CA,38.6362,-121.2197,Vol 6 California,West,59.1,lowland <300 m,Vol 6 California | West | lowland <300 m,True,unique_name,pilot: BOR-overlap subsample
+AK00027,SOLOMON GULCH,AK,61.073407,-146.302609,Vol 7 Alaska,Alaska,167.6,lowland <300 m,Vol 7 Alaska | Alaska | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+AK00189,LOWER FIRE LAKE DAM,AK,61.3505,-149.551,Vol 7 Alaska,Alaska,78.0,lowland <300 m,Vol 7 Alaska | Alaska | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+MI00495,ALBION DAM,MI,42.239132,-84.749374,Vol 8 Midwestern States,Upper Midwest,285.0,lowland <300 m,Vol 8 Midwestern States | Upper Midwest | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+OK02134,SCS-QUAPAW CREEK SITE-01,OK,35.610382,-96.814879,Vol 8 Midwestern States,South,290.8,lowland <300 m,Vol 8 Midwestern States | South | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+SD01139,PACTOLA DAM,SD,44.0772,-103.4896,Vol 8 Midwestern States,Northern Rockies & Plains,1438.7,900-1800 m,Vol 8 Midwestern States | Northern Rockies & Plains | 900-1800 m,True,unique_name,pilot: BOR-overlap subsample
+SD01503,SD NONAME 247,SD,44.148784,-101.395877,Vol 8 Midwestern States,Northern Rockies & Plains,641.0,300-900 m,Vol 8 Midwestern States | Northern Rockies & Plains | 300-900 m,False,unique_name,pilot: coverage-class breadth
+AL00040,LAKE TANNER DAM,AL,31.81,-86.54167,Vol 9 Southeastern States,Southeast,104.2,lowland <300 m,Vol 9 Southeastern States | Southeast | lowland <300 m,False,unique_name,pilot: coverage-class breadth
+AL01075,BLUE EYE CREEK W/S DAM SITE 1,AL,33.6417,-86.0617,Vol 9 Southeastern States,Southeast,155.4,lowland <300 m,Vol 9 Southeastern States | Southeast | lowland <300 m,False,unique_name,pilot: coverage-class breadth

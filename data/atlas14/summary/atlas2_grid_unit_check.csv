@@ -1,0 +1,6 @@
+grid,min_in,max_in,median_in,cellsize_deg,note
+na2_or_100yr24hr.asc,1.7000000000000002,14.500000000000002,2.8959,0.004166666667,
+na2_wa_100yr24hr.asc,1.725,16.5,3.45,0.004166666667,
+border check 42.5N,2.479,3.32,0.747,0.004166666667,OR Atlas 2 @-117.10 = 2.48 in vs ID Atlas 14 V12 @-116.90 = 3.32 in; ratio 0.75
+border check 43.5N,2.254,1.96,1.15,0.004166666667,OR Atlas 2 @-117.10 = 2.25 in vs ID Atlas 14 V12 @-116.90 = 1.96 in; ratio 1.15
+border check 44.5N,,3.39,,0.004166666667,OR Atlas 2 @-117.10 = nan in vs ID Atlas 14 V12 @-116.90 = 3.39 in; ratio nan
