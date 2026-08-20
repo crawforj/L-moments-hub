@@ -1,0 +1,5 @@
+# Run 2's cumulative ledger starts EMPTY on purpose: no completed_ids.csv and no
+# cumulative tables inherited from run 1 or from main's stale desktop-run ledger.
+# The file is deliberately ABSENT rather than zero-byte -- run_nid_tranche.R guards
+# on file.exists(), but read.csv() on a 0-byte file errors ('no lines available in
+# input'), so a truncated ledger would crash round 1. See docs/NID_RUN2_CLUSTER_PLAN.md.
