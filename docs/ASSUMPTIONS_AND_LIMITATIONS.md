@@ -189,10 +189,21 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
     model-dependent estimates with wide, partly unquantified uncertainty. For
     context, compare against PMP-based methods (HMR / site-specific), which are
     the usual basis for extreme dam-safety hydrology.
+12. **Durations are fitted independently, so the tail can cross.** Each duration
+    gets its own regional L-moments, distribution choice and growth curve, with
+    no cross-duration constraint — so in the far tail a fitted 72-h depth can
+    fall **below** the 24-h depth, which is physically impossible (the 72-h
+    window contains the 24-h one). Measured on the NID fleet: ~15% of facilities,
+    **only at T ≥ 200** (median deficit 7.2%, max 44%); 24-h products and all
+    estimates at T ≤ 100 are unaffected. Affected values carry a hard
+    `dur72_lt_dur24` QC flag; do not use a flagged 72-h depth at T ≥ 200.
+    Measurement, cause, field practice (NOAA Atlas 14/15 correct this post hoc)
+    and the options are in
+    [`analysis/cross_duration_consistency.md`](analysis/cross_duration_consistency.md).
 
 ## D. What the uncertainty bounds do and do not include
 
-12. The Monte-Carlo 90% bounds capture **sampling/parameter uncertainty of the
+13. The Monte-Carlo 90% bounds capture **sampling/parameter uncertainty of the
     fitted regional model** only. They do **not** include: distribution-selection
     uncertainty (use the **tail-sensitivity** table), regionalization error
     (wrong/heterogeneous region), input-data error (bad coordinate, gauge
@@ -201,13 +212,13 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
 
 ## E. Scope / engineering-use limitations
 
-13. **Not a substitute for NOAA Atlas 14** where Atlas 14 exists, nor for a
+14. **Not a substitute for NOAA Atlas 14** where Atlas 14 exists, nor for a
     site-specific study. Atlas 14 is the U.S. authoritative point-precipitation-
     frequency standard; this tool's estimates should be **cross-checked against
     Atlas 14** (see [`VALIDATION.md`](VALIDATION.md) §"recommended expert step"
     and `compare_atlas14.R`).
-14. **No PMP.** This is frequency analysis, not Probable Maximum Precipitation.
-15. **Season default is full-year.** Correct for annual-maximum dam-safety work;
+15. **No PMP.** This is frequency analysis, not Probable Maximum Precipitation.
+16. **Season default is full-year.** Correct for annual-maximum dam-safety work;
     a season-restricted run biases estimates low and is only for season-specific
     studies.
 
