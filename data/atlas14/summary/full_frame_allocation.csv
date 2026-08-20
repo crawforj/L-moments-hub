@@ -1,0 +1,62 @@
+coverage,climate_region,elev_band,n,n_bor
+"NONE (NOAA Atlas 2, 1973)",Northwest,300-900 m,74,26
+"NONE (NOAA Atlas 2, 1973)",Northwest,900-1800 m,75,22
+"NONE (NOAA Atlas 2, 1973)",Northwest,lowland <300 m,72,7
+"NONE (NOAA Atlas 2, 1973)",Northwest,montane >=1800 m,14,2
+Vol 1 Semiarid Southwest,Southwest,300-900 m,34,8
+Vol 1 Semiarid Southwest,Southwest,900-1800 m,85,18
+Vol 1 Semiarid Southwest,Southwest,lowland <300 m,10,2
+Vol 1 Semiarid Southwest,Southwest,montane >=1800 m,79,17
+Vol 1 Semiarid Southwest,West,900-1800 m,15,2
+Vol 1 Semiarid Southwest,West,montane >=1800 m,3,0
+Vol 10 Northeastern States,Northeast,300-900 m,90,0
+Vol 10 Northeastern States,Northeast,900-1800 m,3,0
+Vol 10 Northeastern States,Northeast,lowland <300 m,159,0
+Vol 10 Northeastern States,Northeast,montane >=1800 m,2,0
+Vol 11 Texas,South,300-900 m,128,0
+Vol 11 Texas,South,900-1800 m,47,0
+Vol 11 Texas,South,lowland <300 m,196,3
+Vol 12 Interior Northwest,Northern Rockies & Plains,300-900 m,96,2
+Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,150,29
+Vol 12 Interior Northwest,Northern Rockies & Plains,montane >=1800 m,73,8
+Vol 12 Interior Northwest,Northwest,300-900 m,27,3
+Vol 12 Interior Northwest,Northwest,900-1800 m,41,2
+Vol 12 Interior Northwest,Northwest,montane >=1800 m,23,1
+Vol 2 Ohio River Basin,Northeast,300-900 m,73,0
+Vol 2 Ohio River Basin,Northeast,lowland <300 m,90,0
+Vol 2 Ohio River Basin,Ohio Valley,300-900 m,84,0
+Vol 2 Ohio River Basin,Ohio Valley,900-1800 m,15,0
+Vol 2 Ohio River Basin,Ohio Valley,lowland <300 m,157,4
+Vol 2 Ohio River Basin,Southeast,300-900 m,52,0
+Vol 2 Ohio River Basin,Southeast,900-1800 m,13,0
+Vol 2 Ohio River Basin,Southeast,lowland <300 m,145,0
+Vol 3 Puerto Rico / USVI,Caribbean,300-900 m,10,0
+Vol 3 Puerto Rico / USVI,Caribbean,900-1800 m,1,0
+Vol 3 Puerto Rico / USVI,Caribbean,lowland <300 m,16,0
+Vol 4 Hawaiian Islands,Hawaii,300-900 m,12,0
+Vol 4 Hawaiian Islands,Hawaii,900-1800 m,6,0
+Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,26,0
+Vol 6 California,West,300-900 m,63,8
+Vol 6 California,West,900-1800 m,53,3
+Vol 6 California,West,lowland <300 m,89,26
+Vol 6 California,West,montane >=1800 m,29,2
+Vol 7 Alaska,Alaska,300-900 m,4,0
+Vol 7 Alaska,Alaska,lowland <300 m,19,0
+Vol 8 Midwestern States,Northern Rockies & Plains,300-900 m,183,13
+Vol 8 Midwestern States,Northern Rockies & Plains,900-1800 m,72,9
+Vol 8 Midwestern States,Northern Rockies & Plains,lowland <300 m,25,0
+Vol 8 Midwestern States,Northern Rockies & Plains,montane >=1800 m,4,0
+Vol 8 Midwestern States,Ohio Valley,300-900 m,68,0
+Vol 8 Midwestern States,Ohio Valley,lowland <300 m,151,0
+Vol 8 Midwestern States,South,300-900 m,196,9
+Vol 8 Midwestern States,South,900-1800 m,25,0
+Vol 8 Midwestern States,South,lowland <300 m,138,1
+Vol 8 Midwestern States,Southwest,900-1800 m,73,8
+Vol 8 Midwestern States,Southwest,montane >=1800 m,108,20
+Vol 8 Midwestern States,Upper Midwest,300-900 m,152,0
+Vol 8 Midwestern States,Upper Midwest,lowland <300 m,124,0
+Vol 9 Southeastern States,South,300-900 m,23,0
+Vol 9 Southeastern States,South,lowland <300 m,163,0
+Vol 9 Southeastern States,Southeast,300-900 m,73,0
+Vol 9 Southeastern States,Southeast,900-1800 m,7,0
+Vol 9 Southeastern States,Southeast,lowland <300 m,202,0

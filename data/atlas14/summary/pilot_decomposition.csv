@@ -1,0 +1,4 @@
+variable,label,n,spearman_vs_abs_diff,perm_p_abs,spearman_vs_signed_diff,perm_p_signed
+H1,heterogeneity H1 (24h),35,0.532,0.0009,0.131,0.4552
+n_stations,station support (24h),35,-0.279,0.1043,-0.207,0.2283
+elev_proxy_m,elevation proxy (m),35,0.279,0.1037,-0.199,0.2467

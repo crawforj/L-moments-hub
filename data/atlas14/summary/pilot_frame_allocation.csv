@@ -1,0 +1,26 @@
+coverage,climate_region,elev_band,n,n_bor
+"NONE (NOAA Atlas 2, 1973)",Northwest,300-900 m,3,1
+"NONE (NOAA Atlas 2, 1973)",Northwest,900-1800 m,1,1
+"NONE (NOAA Atlas 2, 1973)",Northwest,lowland <300 m,1,0
+Vol 1 Semiarid Southwest,Southwest,300-900 m,1,0
+Vol 1 Semiarid Southwest,Southwest,lowland <300 m,1,0
+Vol 1 Semiarid Southwest,Southwest,montane >=1800 m,1,1
+Vol 1 Semiarid Southwest,West,900-1800 m,1,0
+Vol 10 Northeastern States,Northeast,lowland <300 m,3,0
+Vol 11 Texas,South,lowland <300 m,3,0
+Vol 12 Interior Northwest,Northern Rockies & Plains,300-900 m,1,0
+Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,3,1
+Vol 2 Ohio River Basin,Northeast,300-900 m,1,0
+Vol 2 Ohio River Basin,Northeast,lowland <300 m,1,0
+Vol 2 Ohio River Basin,Ohio Valley,lowland <300 m,1,0
+Vol 3 Puerto Rico / USVI,Caribbean,300-900 m,1,0
+Vol 3 Puerto Rico / USVI,Caribbean,lowland <300 m,1,0
+Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,3,0
+Vol 6 California,West,300-900 m,1,0
+Vol 6 California,West,lowland <300 m,4,3
+Vol 7 Alaska,Alaska,lowland <300 m,2,0
+Vol 8 Midwestern States,Northern Rockies & Plains,300-900 m,1,0
+Vol 8 Midwestern States,Northern Rockies & Plains,900-1800 m,1,1
+Vol 8 Midwestern States,South,lowland <300 m,1,0
+Vol 8 Midwestern States,Upper Midwest,lowland <300 m,1,0
+Vol 9 Southeastern States,Southeast,lowland <300 m,2,0

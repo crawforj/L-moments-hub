@@ -1,0 +1,106 @@
+facility_id,name,state,coverage,climate_region,elev_band,is_bor,volume,version,project_area,duration,return_period_yr,ours_mm,atlas14_mm,pct_diff,n_stations,H1
+AZ00160,HOWARD,AZ,Vol 1 Semiarid Southwest,Southwest,300-900 m,False,1,5,Southwest,24h,100,99.84,78.74,26.8,46,0.274
+AZ00160,HOWARD,AZ,Vol 1 Semiarid Southwest,Southwest,300-900 m,False,1,5,Southwest,24h,1000,153.43,105.66,45.21,46,0.274
+AZ00160,HOWARD,AZ,Vol 1 Semiarid Southwest,Southwest,300-900 m,False,1,5,Southwest,72h,100,130.21,86.36,50.78,46,0.274
+NM00451,HITTSON CREEK DAM,NM,Vol 1 Semiarid Southwest,Southwest,lowland <300 m,False,1,5,Southwest,24h,100,135.63,135.89,-0.19,42,0.566
+NM00451,HITTSON CREEK DAM,NM,Vol 1 Semiarid Southwest,Southwest,lowland <300 m,False,1,5,Southwest,24h,1000,194.72,196.34,-0.83,42,0.566
+NM00451,HITTSON CREEK DAM,NM,Vol 1 Semiarid Southwest,Southwest,lowland <300 m,False,1,5,Southwest,72h,100,177.69,165.86,7.13,42,0.566
+NV21132,SPANISH FLAT,NV,Vol 1 Semiarid Southwest,West,900-1800 m,False,1,5,Southwest,24h,100,161.42,140.46,14.92,37,1.106
+NV21132,SPANISH FLAT,NV,Vol 1 Semiarid Southwest,West,900-1800 m,False,1,5,Southwest,24h,1000,225.65,205.74,9.68,37,1.106
+NV21132,SPANISH FLAT,NV,Vol 1 Semiarid Southwest,West,900-1800 m,False,1,5,Southwest,72h,100,295.68,222.76,32.73,37,1.106
+UT00315,BOR WASHINGTON LAKE,UT,Vol 1 Semiarid Southwest,Southwest,montane >=1800 m,True,1,5,Southwest,24h,100,88.89,121.41,-26.79,43,0.918
+UT00315,BOR WASHINGTON LAKE,UT,Vol 1 Semiarid Southwest,Southwest,montane >=1800 m,True,1,5,Southwest,24h,1000,133.47,174.5,-23.51,43,0.918
+UT00315,BOR WASHINGTON LAKE,UT,Vol 1 Semiarid Southwest,Southwest,montane >=1800 m,True,1,5,Southwest,72h,100,126.04,173.99,-27.56,43,0.918
+CT00092,MEANS BROOK RESERVOIR,CT,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,24h,100,211.25,221.49,-4.62,47,-1.841
+CT00092,MEANS BROOK RESERVOIR,CT,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,24h,1000,314.62,337.82,-6.87,47,-1.841
+CT00092,MEANS BROOK RESERVOIR,CT,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,72h,100,273.06,289.56,-5.7,47,-1.841
+MA00676,EAMES MILL POND DAM,MA,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,24h,100,197.7,189.99,4.06,50,-0.85
+MA00676,EAMES MILL POND DAM,MA,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,24h,1000,347.48,292.1,18.96,50,-0.85
+MA00676,EAMES MILL POND DAM,MA,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,72h,100,231.51,241.3,-4.06,50,-0.85
+ME00010,JAY,ME,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,24h,100,167.19,165.86,0.8,50,0.863
+ME00010,JAY,ME,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,24h,1000,231.28,232.16,-0.38,50,0.863
+ME00010,JAY,ME,Vol 10 Northeastern States,Northeast,lowland <300 m,False,10,3,Northeastern States,72h,100,194.42,214.12,-9.2,50,0.863
+TX00608,RAYZOR LAKE DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,24h,100,228.21,229.87,-0.72,46,-1.643
+TX00608,RAYZOR LAKE DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,24h,1000,326.6,332.74,-1.85,46,-1.643
+TX00608,RAYZOR LAKE DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,72h,100,272.72,287.02,-4.98,46,-1.643
+TX01262,CHAMBERS CREEK WS SCS SITE 79B DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,24h,100,241.62,250.44,-3.52,48,-2.004
+TX01262,CHAMBERS CREEK WS SCS SITE 79B DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,24h,1000,355.98,381.0,-6.57,48,-2.004
+TX01262,CHAMBERS CREEK WS SCS SITE 79B DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,72h,100,295.44,307.34,-3.87,48,-2.004
+TX02641,RICHLAND CREEK WS SCS SITE 126 DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,24h,100,247.28,259.08,-4.55,49,-1.584
+TX02641,RICHLAND CREEK WS SCS SITE 126 DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,24h,1000,369.33,408.94,-9.69,49,-1.584
+TX02641,RICHLAND CREEK WS SCS SITE 126 DAM,TX,Vol 11 Texas,South,lowland <300 m,False,11,2,Texas,72h,100,294.85,314.96,-6.38,49,-1.584
+MT01034,TAYLOR RESERVOIR (FERGUS),MT,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,False,12,2,Interior Northwest,24h,100,113.02,107.19,5.44,47,0.106
+MT01034,TAYLOR RESERVOIR (FERGUS),MT,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,False,12,2,Interior Northwest,24h,1000,172.74,160.78,7.44,47,0.106
+MT01034,TAYLOR RESERVOIR (FERGUS),MT,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,False,12,2,Interior Northwest,72h,100,136.17,135.89,0.21,47,0.106
+MT01415,BIG TIMBER SEWAGE LAGOON,MT,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,False,12,2,Interior Northwest,24h,100,95.45,108.2,-11.78,44,0.757
+MT01415,BIG TIMBER SEWAGE LAGOON,MT,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,False,12,2,Interior Northwest,24h,1000,135.04,160.27,-15.74,44,0.757
+MT01415,BIG TIMBER SEWAGE LAGOON,MT,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,False,12,2,Interior Northwest,72h,100,123.63,134.62,-8.16,44,0.757
+MT01692,ROBINSON #7,MT,Vol 12 Interior Northwest,Northern Rockies & Plains,300-900 m,False,12,2,Interior Northwest,24h,100,100.52,109.98,-8.6,45,-0.712
+MT01692,ROBINSON #7,MT,Vol 12 Interior Northwest,Northern Rockies & Plains,300-900 m,False,12,2,Interior Northwest,24h,1000,138.32,156.21,-11.45,45,-0.712
+MT01692,ROBINSON #7,MT,Vol 12 Interior Northwest,Northern Rockies & Plains,300-900 m,False,12,2,Interior Northwest,72h,100,121.3,133.6,-9.21,45,-0.712
+WY01382,WILLWOOD DIVERSION,WY,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,True,12,2,Interior Northwest,24h,100,89.28,70.87,25.98,33,2.028
+WY01382,WILLWOOD DIVERSION,WY,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,True,12,2,Interior Northwest,24h,1000,148.38,102.11,45.31,33,2.028
+WY01382,WILLWOOD DIVERSION,WY,Vol 12 Interior Northwest,Northern Rockies & Plains,900-1800 m,True,12,2,Interior Northwest,72h,100,112.29,87.63,28.14,33,2.028
+MD00040,LITTLE DEER CREEK SITE 3,MD,Vol 2 Ohio River Basin,Northeast,lowland <300 m,False,2,3,Ohio River Basin,24h,100,205.65,214.63,-4.18,41,0.775
+MD00040,LITTLE DEER CREEK SITE 3,MD,Vol 2 Ohio River Basin,Northeast,lowland <300 m,False,2,3,Ohio River Basin,24h,1000,314.45,353.06,-10.94,41,0.775
+MD00040,LITTLE DEER CREEK SITE 3,MD,Vol 2 Ohio River Basin,Northeast,lowland <300 m,False,2,3,Ohio River Basin,72h,100,258.85,252.98,2.32,41,0.775
+OH00038,SUNSET LAKE DAM,OH,Vol 2 Ohio River Basin,Ohio Valley,lowland <300 m,False,2,3,Ohio River Basin,24h,100,149.42,151.38,-1.29,48,-1.368
+OH00038,SUNSET LAKE DAM,OH,Vol 2 Ohio River Basin,Ohio Valley,lowland <300 m,False,2,3,Ohio River Basin,24h,1000,250.77,234.95,6.73,48,-1.368
+OH00038,SUNSET LAKE DAM,OH,Vol 2 Ohio River Basin,Ohio Valley,lowland <300 m,False,2,3,Ohio River Basin,72h,100,169.23,173.74,-2.6,48,-1.368
+PA00177,RAINBOW (PA-460),PA,Vol 2 Ohio River Basin,Northeast,300-900 m,False,2,3,Ohio River Basin,24h,100,137.8,132.08,4.33,43,-1.276
+PA00177,RAINBOW (PA-460),PA,Vol 2 Ohio River Basin,Northeast,300-900 m,False,2,3,Ohio River Basin,24h,1000,198.51,184.15,7.8,43,-1.276
+PA00177,RAINBOW (PA-460),PA,Vol 2 Ohio River Basin,Northeast,300-900 m,False,2,3,Ohio River Basin,72h,100,152.14,154.69,-1.65,43,-1.276
+PR00002,PRIETO DAM,PR,Vol 3 Puerto Rico / USVI,Caribbean,300-900 m,False,3,4,Puerto Rico and U.S. Virgin Islands,24h,100,358.4,523.24,-31.5,35,0.676
+PR00002,PRIETO DAM,PR,Vol 3 Puerto Rico / USVI,Caribbean,300-900 m,False,3,4,Puerto Rico and U.S. Virgin Islands,24h,1000,560.65,929.64,-39.69,35,0.676
+PR00002,PRIETO DAM,PR,Vol 3 Puerto Rico / USVI,Caribbean,300-900 m,False,3,4,Puerto Rico and U.S. Virgin Islands,72h,100,467.56,652.78,-28.37,35,0.676
+PR00023,PATILLAS DAM,PR,Vol 3 Puerto Rico / USVI,Caribbean,lowland <300 m,False,3,4,Puerto Rico and U.S. Virgin Islands,24h,100,380.06,401.32,-5.3,41,0.246
+PR00023,PATILLAS DAM,PR,Vol 3 Puerto Rico / USVI,Caribbean,lowland <300 m,False,3,4,Puerto Rico and U.S. Virgin Islands,24h,1000,573.13,629.92,-9.02,41,0.246
+PR00023,PATILLAS DAM,PR,Vol 3 Puerto Rico / USVI,Caribbean,lowland <300 m,False,3,4,Puerto Rico and U.S. Virgin Islands,72h,100,505.49,581.66,-13.1,41,0.246
+HI00015,KANEHA RESERVOIR,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,24h,100,305.13,411.48,-25.85,29,0.781
+HI00015,KANEHA RESERVOIR,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,24h,1000,402.32,589.28,-31.73,29,0.781
+HI00015,KANEHA RESERVOIR,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,72h,100,424.29,624.84,-32.1,29,0.781
+HI00102,IOLEAU RESERVOIR,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,24h,100,307.78,279.4,10.16,29,0.831
+HI00102,IOLEAU RESERVOIR,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,24h,1000,408.88,391.16,4.53,29,0.831
+HI00102,IOLEAU RESERVOIR,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,72h,100,426.73,363.22,17.49,29,0.831
+HI00124,KANEOHE DAM,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,24h,100,347.12,386.08,-10.09,35,0.598
+HI00124,KANEOHE DAM,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,24h,1000,484.71,508.0,-4.58,35,0.598
+HI00124,KANEOHE DAM,HI,Vol 4 Hawaiian Islands,Hawaii,lowland <300 m,False,4,3,Hawaiian Islands,72h,100,427.64,528.32,-19.06,35,0.598
+CA00214,COPPER BASIN,CA,Vol 6 California,West,lowland <300 m,False,6,2,Southwest,24h,100,105.48,97.03,8.71,38,2.463
+CA00214,COPPER BASIN,CA,Vol 6 California,West,lowland <300 m,False,6,2,Southwest,24h,1000,175.74,147.83,18.88,38,2.463
+CA00214,COPPER BASIN,CA,Vol 6 California,West,lowland <300 m,False,6,2,Southwest,72h,100,117.68,118.11,-0.36,38,2.463
+CA00742,LINDERO,CA,Vol 6 California,West,300-900 m,False,6,2,Southwest,24h,100,209.25,234.7,-10.84,56,-0.419
+CA00742,LINDERO,CA,Vol 6 California,West,300-900 m,False,6,2,Southwest,24h,1000,277.82,335.28,-17.14,56,-0.419
+CA00742,LINDERO,CA,Vol 6 California,West,300-900 m,False,6,2,Southwest,72h,100,274.36,363.22,-24.46,56,-0.419
+CA10164,LAURO,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,24h,100,169.03,239.78,-29.51,46,0.841
+CA10164,LAURO,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,24h,1000,232.01,314.96,-26.34,46,0.841
+CA10164,LAURO,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,72h,100,247.51,365.76,-32.33,46,0.841
+CA10170,MONTICELLO,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,24h,100,258.39,196.09,31.77,39,0.516
+CA10170,MONTICELLO,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,24h,1000,352.06,254.0,38.61,39,0.516
+CA10170,MONTICELLO,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,72h,100,472.4,307.34,53.71,39,0.516
+CA10174,NIMBUS,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,24h,100,153.3,129.03,18.81,53,0.499
+CA10174,NIMBUS,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,24h,1000,201.35,185.42,8.59,53,0.499
+CA10174,NIMBUS,CA,Vol 6 California,West,lowland <300 m,True,6,2,Southwest,72h,100,249.76,202.69,23.22,53,0.499
+AK00027,SOLOMON GULCH,AK,Vol 7 Alaska,Alaska,lowland <300 m,False,7,2,Alaska,24h,100,163.2,150.11,8.72,31,0.949
+AK00027,SOLOMON GULCH,AK,Vol 7 Alaska,Alaska,lowland <300 m,False,7,2,Alaska,24h,1000,255.4,214.63,19.0,31,0.949
+AK00027,SOLOMON GULCH,AK,Vol 7 Alaska,Alaska,lowland <300 m,False,7,2,Alaska,72h,100,250.23,234.19,6.85,31,0.949
+AK00189,LOWER FIRE LAKE DAM,AK,Vol 7 Alaska,Alaska,lowland <300 m,False,7,2,Alaska,24h,100,119.1,71.63,66.27,37,0.887
+AK00189,LOWER FIRE LAKE DAM,AK,Vol 7 Alaska,Alaska,lowland <300 m,False,7,2,Alaska,24h,1000,165.67,100.58,64.71,37,0.887
+AK00189,LOWER FIRE LAKE DAM,AK,Vol 7 Alaska,Alaska,lowland <300 m,False,7,2,Alaska,72h,100,194.44,96.52,101.45,37,0.887
+MI00495,ALBION DAM,MI,Vol 8 Midwestern States,Upper Midwest,lowland <300 m,False,8,2,Midwestern States,24h,100,142.02,139.19,2.03,40,-1.633
+MI00495,ALBION DAM,MI,Vol 8 Midwestern States,Upper Midwest,lowland <300 m,False,8,2,Midwestern States,24h,1000,228.15,206.76,10.35,40,-1.633
+MI00495,ALBION DAM,MI,Vol 8 Midwestern States,Upper Midwest,lowland <300 m,False,8,2,Midwestern States,72h,100,157.7,172.21,-8.43,40,-1.633
+OK02134,SCS-QUAPAW CREEK SITE-01,OK,Vol 8 Midwestern States,South,lowland <300 m,False,8,2,Midwestern States,24h,100,215.82,228.6,-5.59,50,-0.81
+OK02134,SCS-QUAPAW CREEK SITE-01,OK,Vol 8 Midwestern States,South,lowland <300 m,False,8,2,Midwestern States,24h,1000,300.39,332.74,-9.72,50,-0.81
+OK02134,SCS-QUAPAW CREEK SITE-01,OK,Vol 8 Midwestern States,South,lowland <300 m,False,8,2,Midwestern States,72h,100,263.58,274.32,-3.92,50,-0.81
+SD01139,PACTOLA DAM,SD,Vol 8 Midwestern States,Northern Rockies & Plains,900-1800 m,True,8,2,Midwestern States,24h,100,116.51,170.69,-31.74,48,0.374
+SD01139,PACTOLA DAM,SD,Vol 8 Midwestern States,Northern Rockies & Plains,900-1800 m,True,8,2,Midwestern States,24h,1000,162.86,294.64,-44.73,48,0.374
+SD01139,PACTOLA DAM,SD,Vol 8 Midwestern States,Northern Rockies & Plains,900-1800 m,True,8,2,Midwestern States,72h,100,139.53,215.9,-35.37,48,0.374
+SD01503,SD NONAME 247,SD,Vol 8 Midwestern States,Northern Rockies & Plains,300-900 m,False,8,2,Midwestern States,24h,100,116.5,122.43,-4.84,44,0.717
+SD01503,SD NONAME 247,SD,Vol 8 Midwestern States,Northern Rockies & Plains,300-900 m,False,8,2,Midwestern States,24h,1000,155.0,176.53,-12.2,44,0.717
+SD01503,SD NONAME 247,SD,Vol 8 Midwestern States,Northern Rockies & Plains,300-900 m,False,8,2,Midwestern States,72h,100,139.56,145.54,-4.11,44,0.717
+AL00040,LAKE TANNER DAM,AL,Vol 9 Southeastern States,Southeast,lowland <300 m,False,9,2,Southeastern States,24h,100,278.39,309.88,-10.16,49,0.482
+AL00040,LAKE TANNER DAM,AL,Vol 9 Southeastern States,Southeast,lowland <300 m,False,9,2,Southeastern States,24h,1000,419.92,500.38,-16.08,49,0.482
+AL00040,LAKE TANNER DAM,AL,Vol 9 Southeastern States,Southeast,lowland <300 m,False,9,2,Southeastern States,72h,100,354.83,386.08,-8.09,49,0.482
+AL01075,BLUE EYE CREEK W/S DAM SITE 1,AL,Vol 9 Southeastern States,Southeast,lowland <300 m,False,9,2,Southeastern States,24h,100,213.85,217.68,-1.76,40,-1.035
+AL01075,BLUE EYE CREEK W/S DAM SITE 1,AL,Vol 9 Southeastern States,Southeast,lowland <300 m,False,9,2,Southeastern States,24h,1000,288.38,309.88,-6.94,40,-1.035
+AL01075,BLUE EYE CREEK W/S DAM SITE 1,AL,Vol 9 Southeastern States,Southeast,lowland <300 m,False,9,2,Southeastern States,72h,100,264.43,274.32,-3.61,40,-1.035

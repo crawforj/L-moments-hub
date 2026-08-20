@@ -1,0 +1,123 @@
+state,facility_id,lat,lon,covered,atlas,volume,version,project_area,series_type,units,n_durations,durations
+AK,AK00024,59.433334,-151.6999,True,14.0,7.0,2.0,Alaska,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+AK,AK00304,64.4516,-144.892,True,14.0,7.0,2.0,Alaska,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+AL,AL00868,32.19667,-85.185,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+AL,AL00500,32.03,-86.175,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+AR,AR00485,36.41027778,-90.28888889,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+AR,AR01114,36.30666667,-91.765,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+AZ,AZ10427,33.9097,-109.7371,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+AZ,AZ11000,33.3473,-109.805,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+CA,CA01116,40.0737,-122.5873,True,14.0,6.0,2.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+CA,CA00059,34.1943,-118.2984,True,14.0,6.0,2.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+CO,CO01739,38.938332,-108.132226,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+CO,CO00109,39.04501,-108.017231,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+CT,CT00624,41.724341,-72.360528,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+CT,CT00516,41.974104,-73.266791,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+DE,DE00039,38.9814,-75.52952,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+DE,DE00029,39.23949,-75.61747,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+FL,FL00018,30.919952,-86.272337,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+FL,FL18003,28.950001,-82.330002,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+GA,GA06893,33.4,-82.693611,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+GA,GA04576,33.203056,-83.323611,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+HI,HI00077,20.815454,-156.368052,True,14.0,4.0,3.0,Hawaiian Islands,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+HI,HI00019,21.5744,-158.038,True,14.0,4.0,3.0,Hawaiian Islands,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+IA,IA01775,42.3069,-95.988,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+IA,IA02218,40.9711,-95.6805,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+ID,ID83075,42.5244,-114.037,True,14.0,12.0,2.0,Interior Northwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+ID,ID83074,42.7675,-114.9247,True,14.0,12.0,2.0,Interior Northwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+IL,IL00516,41.13351,-90.79611,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+IL,IL40092,39.297145,-90.091437,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+IN,IN00035,38.45596417,-86.79531462,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+IN,IN00030,38.2219,-86.1194,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+KS,KS03447,39.57891,-99.089616,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+KS,KS01728,39.745471,-99.127576,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+KY,KY00409,38.557919,-83.652335,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+KY,KY01157,36.757636,-85.18055556,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+LA,LA00369,32.665,-92.673,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+LA,LA00131,30.53737,-90.11039,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MA,MA01105,42.4008,-71.2916,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MA,MA01337,42.60997841,-70.70182406,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MD,MD00028,38.2519,-76.5344,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MD,MD00351,39.1045,-76.804,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+ME,ME00129,45.2184,-70.4755,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+ME,ME00225,46.51839,-67.866471,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MI,MI00117,42.79138889,-83.84166667,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MI,MI00284,44.16833333,-84.02666667,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MN,MN00438,44.225,-92.525,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MN,MN00814,47.2792,-92.2213,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MO,MO10383,39.11685373,-92.07736057,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MO,MO50840,40.34900121,-94.70847938,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MS,MS03069,34.757669,-89.40212,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MS,MS03598,32.1864189,-90.28418166,True,14.0,9.0,2.0,Southeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MT,MT82919,45.13,-112.7406,True,14.0,12.0,2.0,Interior Northwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+MT,MT01617,46.5333,-105.7468,True,14.0,12.0,2.0,Interior Northwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NC,NC83017,35.7718,-82.619,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NC,NC04856,36.3421,-80.3416,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+ND,ND00385,48.28697,-97.36516,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+ND,ND00160,47.193138,-100.928929,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NE,NE02263,42.89916582,-102.9148954,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NE,NE01796,41.30791907,-98.28664317,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NH,NH00303,43.1147,-72.1955,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NH,NH00160,43.597794,-71.717513,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NJ,NJ00320,41.01976667,-74.40286667,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NJ,NJ00166,40.9931,-74.96773333,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NM,NM00472,35.0994,-106.7415,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NM,NM00407,35.0446,-106.76537,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NV,NV20130,39.7197,-119.4036,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NV,NV20101,40.405,-115.864,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NY,NY00991,41.85666667,-74.79833333,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+NY,NY00081,42.0629416,-74.1744971,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+OH,OH00126,40.16027778,-80.76222222,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+OH,OH00133,40.23222222,-80.99666667,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+OK,OK10041,35.508227,-96.446919,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+OK,OK21997,36.76288073,-95.17211258,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+OR,OR00656,45.6034317,-123.1420517,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR00320,43.23889923,-123.1112976,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+PA,PA01542,41.29611111,-78.64805556,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+PA,PA00446,40.89888889,-78.20888889,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+PR,PR00014,18.1000541,-66.4890139,True,14.0,3.0,4.0,Puerto Rico and U.S. Virgin Islands,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+PR,PR00018,18.2614979,-66.2063811,True,14.0,3.0,4.0,Puerto Rico and U.S. Virgin Islands,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+RI,RI01802,41.543808,-71.18989559,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+RI,RI01001,41.83885956,-71.36876679,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+SC,SC00170,33.9233,-81.235,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+SC,SC01329,34.9683,-80.835,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+SD,SD01067,43.978094,-103.165923,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+SD,SD00035,45.462438,-102.397194,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+TN,TN02315,35.492222,-88.583889,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+TN,TN05321,36.009722,-88.698056,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+TX,TX01653,31.228901,-99.120553,True,14.0,11.0,2.0,Texas,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+TX,TX05113,31.521931,-96.178296,True,14.0,11.0,2.0,Texas,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+UT,UT00647,40.75202215,-111.80733259,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+UT,UT00290,40.8485251,-109.9973737,True,14.0,1.0,5.0,Southwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+VA,VA14350,37.1016,-79.2733,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+VA,VA11308,38.3,-78.1916,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+VT,VT00325,44.152,-72.0542,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+VT,VT00113,43.82410049,-72.48368073,True,14.0,10.0,3.0,Northeastern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+WA,WA00610,48.79256869,-122.4463392,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00324,48.617783,-119.665448,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WI,WI00800,44.835761,-88.625816,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+WI,WI00296,42.6694,-89.0316,True,14.0,8.0,2.0,Midwestern States,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+WV,WV06902,40.07722,-80.53305556,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+WV,WV00706,38.73167,-80.59527778,True,14.0,2.0,3.0,Ohio River Basin,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+WY,WY83004,41.9675,-110.6583,True,14.0,12.0,2.0,Interior Northwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+WY,WY01143,44.948889,-109.153056,True,14.0,12.0,2.0,Interior Northwest,Partial duration,inches,19,5-min|10-min|15-min|30-min|60-min|2-hr|3-hr|6-hr|12-hr|24-hr|2-day|3-day|4-day|7-day|10-day|20-day|30-day|45-day|60-day
+OR,OR00266,44.81483078,-123.0326309,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR00417,44.90885925,-122.7760162,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR01730,45.6349,-121.2249,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR01925,45.0437088,-123.09832763,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR03772,42.80165863,-124.4847183,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR02408,44.168,-119.8958,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR00652,45.5601387,-117.9392166,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR00395,42.37558,-122.624594,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR00731,44.45743942,-118.775238,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+OR,OR00256,43.27951812,-117.606102,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00480,46.7215,-119.0344,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00423,47.238839,-122.163482,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00355,45.732924,-121.755418,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00618,47.467583,-122.317944,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00294,46.70515368,-122.812207,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00721,48.14800401,-117.2220107,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA01017,47.308518,-120.314486,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00583,46.279131,-119.685641,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00645,47.122666,-119.161144,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,
+WA,WA00291,48.5592,-119.7456,False,,,,"NONE (NOAA Atlas 2, 1973)",,,0,

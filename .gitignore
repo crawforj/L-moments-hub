@@ -34,3 +34,9 @@ data/nid_progress/*.log
 # QC data cache (read-only extracts of the fleet branch, keyed by commit)
 qc/_cache/
 __pycache__/
+
+# B1 Atlas 14 sampler: raw PFDS responses, ledgers, fleet/grid extracts
+# (analysis/b1_atlas14_sampler.py). Committed summaries live in summary/.
+data/atlas14/*
+!data/atlas14/summary/
+data/atlas14/summary/full_sample_frame.csv
