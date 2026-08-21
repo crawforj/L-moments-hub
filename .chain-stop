@@ -1,0 +1,2 @@
+Marker file: ends the self-chaining nid-batch loop for THIS branch.
+See .github/workflows/nid-batch.yml (main), step "Honor per-branch chain kill-switch".
