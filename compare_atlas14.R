@@ -93,7 +93,7 @@ dur_key <- function(x) {
 
 # ---- live fetch (network) --------------------------------------------------
 fetch_atlas14 <- function(lat, lon) {
-  url <- sprintf(paste0("https://hdsc.nws.noaa.gov/cgi-bin/hdsc/new/",
+  url <- sprintf(paste0("https://hdsc.nws.noaa.gov/cgi-bin/new/",
                         "fe_text_mean.csv?lat=%s&lon=%s&data=depth&units=english&series=pds"),
                  lat, lon)
   txt <- tryCatch(paste(readLines(url, warn = FALSE), collapse = "\n"),
