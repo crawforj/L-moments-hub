@@ -15,7 +15,13 @@ data/external/
 data/synthetic/
 data/raw/
 data/processed/
-data/ghcn_prcp_cache/
+# NOTE: data/ghcn_prcp_cache/ is deliberately NOT ignored on this branch.
+# .github/workflows/nid-batch.yml does `git add data/ghcn_prcp_cache/`
+# every round to persist the downloaded station cache. Ignoring it made
+# that add fail (exit 1) AFTER the facilities were computed but BEFORE
+# the ledger commit, so the chain looped forever banking nothing
+# (runs 32436607457, 32439091324 each did 75 facilities and committed 0).
+# The run-1 branch does not ignore it, which is why run 1 works.
 data/cluster_cache/
 
 # Per-facility configs generated from the manifest by run_batch.R
