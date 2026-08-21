@@ -150,8 +150,27 @@ build_station_clusters <- function(inv, cfg, refresh = FALSE) {
 
   radius <- cc$prefilter_radius_km %||% 600
   min_pool <- cc$min_pool_stations %||% 15L
-  inv$distance_km <- haversine_km(cfg$site$latitude, cfg$site$longitude, inv$lat, inv$lon)
-  pool <- inv[inv$distance_km <= radius &
+  # REPRODUCIBILITY FIX (2026-08-21). The pool must be a deterministic
+  # function of the CACHE KEY (the grid cell), never of the facility. The
+  # original code pooled stations within `radius` of THE SITE but cached the
+  # partition per CELL, so whichever facility in a cell ran first defined the
+  # partition every later facility inherited -- and under mclapply, facilities
+  # in the same cell raced the cache (the same key was observed built 4x in
+  # one run with pools 1947..2416). Results depended on processing order and
+  # parallel scheduling: two runs over the same manifest with identical
+  # station data agreed on only ~27% of facility-durations (GitHub-vs-local
+  # comparison, 2026-08-21; join validated; shared-station stats identical).
+  # Pool is now stations within `radius` of the CELL, taken as distance to
+  # the cell centre padded by the cell half-diagonal. Slightly larger than
+  # any single facility needs, which is harmless: the facility still uses
+  # only its nearest cluster, and members are re-ranked by true facility
+  # distance downstream.
+  cell_deg <- max(1, radius / 111)
+  cx <- (floor(cfg$site$longitude / cell_deg) + 0.5) * cell_deg
+  cy <- (floor(cfg$site$latitude  / cell_deg) + 0.5) * cell_deg
+  half_diag_km <- sqrt(2) / 2 * cell_deg * 111
+  inv$distance_km <- haversine_km(cy, cx, inv$lat, inv$lon)
+  pool <- inv[inv$distance_km <= radius + half_diag_km &
               inv$n_years_avail >= cfg$region$min_record_years, ]
   pool <- pool[!is.na(pool$elev_m), ]
 
@@ -159,7 +178,8 @@ build_station_clusters <- function(inv, cfg, refresh = FALSE) {
     audit_log(sprintf(
       "Cluster region: only %d stations in the %g km prefilter pool (< %d minimum); caching NULL (fallback).",
       nrow(pool), radius, min_pool))
-    saveRDS(NULL, cache_path)
+    tmp <- paste0(cache_path, ".", Sys.getpid(), ".tmp")
+    saveRDS(NULL, tmp); file.rename(tmp, cache_path)
     return(NULL)
   }
 
@@ -192,7 +212,13 @@ build_station_clusters <- function(inv, cfg, refresh = FALSE) {
   out <- list(pool = pool, centroids = centroids, attrs = attrs,
              means = am$means, sds = am$sds, weights = am$weights,
              n_clusters = length(unique(assign)))
-  saveRDS(out, cache_path)
+  # Atomic write: parallel workers in the same cell race this cache. With the
+  # deterministic pool above every racer now computes the SAME partition, but
+  # a torn concurrent write could still corrupt the .rds -- write to a
+  # worker-unique temp file and rename into place.
+  tmp <- paste0(cache_path, ".", Sys.getpid(), ".tmp")
+  saveRDS(out, tmp)
+  file.rename(tmp, cache_path)
   audit_log(sprintf("Cluster region: built %d clusters from %d stations (pool key %s), sizes %s.",
                     out$n_clusters, nrow(pool), key,
                     paste(table(assign), collapse = ",")))
