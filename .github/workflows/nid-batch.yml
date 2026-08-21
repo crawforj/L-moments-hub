@@ -79,6 +79,26 @@ jobs:
           # plain text. Nothing else in the job needs LFS content (the GHCN
           # cache data/ghcn_prcp_cache/*.csv.gz is regular git).
 
+      - name: Honor per-branch chain kill-switch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A file named .chain-stop committed to the TARGET BRANCH ends that
+          # branch's self-chaining fleet loop. This run cancels ITSELF, which
+          # both stops the job before any tranche work and falsifies the
+          # dispatch guard (`steps.restore.outcome == 'success'`), so no
+          # successor is spawned. The dispatch step also re-checks the marker
+          # on the remote as belt-and-suspenders for generations already in
+          # flight when the marker lands. Scoped per branch on purpose --
+          # stopping run 2 must never touch run 1. Remove the file from the
+          # branch to allow chaining again.
+          if [ -f .chain-stop ]; then
+            echo "chain-stop marker present on ${{ inputs.branch }} -- cancelling this run to end the chain."
+            gh run cancel "$GITHUB_RUN_ID" --repo "${{ github.repository }}" || true
+            sleep 120
+            exit 1
+          fi
+
       - name: Resolve release tag (branch/tag binding guard)
         # THE run-isolation control. Each fleet run keeps its ~950MB of
         # cumulative tables on its own release tag, and a run writing another
@@ -409,6 +429,11 @@ jobs:
             # "Resolve release tag" step). The binding table there would
             # catch that anyway; propagating it means the chain never even
             # relies on the correction.
+            git fetch --depth 1 origin "${{ inputs.branch }}" 2>/dev/null || true
+            if git cat-file -e FETCH_HEAD:.chain-stop 2>/dev/null; then
+              echo "chain-stop marker present on the remote branch -- not re-dispatching."
+              exit 0
+            fi
             gh workflow run nid-batch.yml --repo "${{ github.repository }}" \
               -f branch="${{ inputs.branch }}" \
               -f release_tag="$RELEASE_TAG"
