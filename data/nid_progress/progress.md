@@ -1,7 +1,7 @@
 # NID fleet progress
 
-- Facilities attempted: **69050 / 73303** (94.2%)
-- Succeeded: 68993 | failed (too-few-stations etc.): 57
+- Facilities attempted: **69125 / 73303** (94.3%)
+- Succeeded: 69068 | failed (too-few-stations etc.): 57
 - Cache stations now: 18275
 - Last tranche: 75 facilities
 
