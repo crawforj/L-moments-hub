@@ -1,8 +1,8 @@
 # NID fleet progress
 
-- Facilities attempted: **72875 / 73303** (99.4%)
-- Succeeded: 72815 | failed (too-few-stations etc.): 60
-- Cache stations now: 18285
+- Facilities attempted: **72950 / 73303** (99.5%)
+- Succeeded: 72890 | failed (too-few-stations etc.): 60
+- Cache stations now: 18286
 - Last tranche: 75 facilities
 
 Resumable: each run does the next tranche (largest remaining dams first) and
