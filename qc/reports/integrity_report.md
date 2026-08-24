@@ -1,8 +1,8 @@
 # NID fleet -- integrity report (QAQC plan section A)
 
-_Generated 2026-08-16 20:31 UTC by `qc/nid_qc_integrity.py`._
+_Generated 2026-08-23 14:35 UTC by `qc/nid_qc_integrity.py`._
 
-**Partial data.** Input pinned to fleet-branch commit `b7207450f61518acd022204b178fdfb55fef9313` (`claude/desktop-nid-ad-hoc`), N = 31,250 of 73,303 facilities attempted (42.6%). The fleet runs largest-storage-first, so this partial sample over-represents large dams; refresh every artifact at fleet completion before treating any number here as final.
+**Partial data.** Input pinned to fleet-branch commit `74db38c0574e2f15d3caecfa5d299f989f12b74c` (`claude/desktop-nid-ad-hoc`), N = 73,303 of 73,303 facilities attempted (100.0%). The fleet runs largest-storage-first, so this partial sample over-represents large dams; refresh every artifact at fleet completion before treating any number here as final.
 
 This layer is the mechanical completion gate: it re-runs incrementally against
 any newer fleet-branch commit and must pass in full before the analysis plan's
@@ -13,32 +13,33 @@ Phase B artifacts are produced from completed data.
 | Check | Verdict | Detail |
 |---|---|---|
 | A5 LFS/parse/truncation | **PASS** | all LFS pointers resolved; all CSVs parse end-to-end with a trailing newline and no embedded duplicate header rows |
-| A6 schema stability | **PASS** | all column sets match the expected schema; no embedded mid-file header changes (any tranche-level schema drift would surface as duplicate-header or ragged rows in the cumulative append-only files -- none found) |
-| A1 ledger<->manifest | **PASS** | 31,250 attempted = 31,204 ok + 46 failed (exact); 0 ids missing from manifest; 0 duplicates |
-| A2 orphans + DDF row-count | **PASS** | diag: 0 missing / 0 orphan / 0 bad-duration; DDF: 0 sites with row-count != 24, T-set matches, durations ['24h', '72h']; 0 ok names missing from DDF, 0 orphan DDF names; 3728 ok facilities (1174 names) have name collisions (DDF has no site_id column -- attribution ambiguous for those) |
-| A2c tail_sensitivity coverage | **PASS** | 2,554 ok facilities lack tail_sensitivity rows; 2,554 are exactly the non-surviving members of name-collision groups (the fold-in dedupes this file by site NAME despite it carrying site_id -- exactly 1 member per collided name retains rows; fold-in bug to fix before completion); 0 unexplained |
+| A6 schema stability | **FAIL** | mismatches: [('all_facilities_DDF.csv', ['site', 'duration', 'return_period_yr', 'AEP', 'depth_mm', 'depth_lo_mm', 'depth_hi_mm', 'rel_rmse', 'site_id'])] |
+| A1 ledger<->manifest | **PASS** | 73,303 attempted = 73,240 ok + 63 failed (exact); 0 ids missing from manifest; 0 duplicates |
+| A2 orphans + DDF row-count | **FAIL** | diag: 0 missing / 0 orphan / 0 bad-duration; DDF: 2751 sites with row-count != 24, T-set matches, durations ['24h', '72h']; 0 ok names missing from DDF, 0 orphan DDF names; 14724 ok facilities (3379 names) have name collisions (DDF has no site_id column -- attribution ambiguous for those) |
+| A2c tail_sensitivity coverage | **PASS** | 2,585 ok facilities lack tail_sensitivity rows; 2,585 are exactly the non-surviving members of name-collision groups (the fold-in dedupes this file by site NAME despite it carrying site_id -- exactly 1 member per collided name retains rows; fold-in bug to fix before completion); 0 unexplained |
 | A2b aux-table coverage | **PASS** | 519 ok facilities lack growth_curve/gof/stations rows; 517 are the pre-centralization cohort (completed before af7775cd), 2 completed in the transition-window tranche (e594ba02) -- 0 unexplained. gof coverage matches growth_curve: True |
 | A3 synthetic-incident purge audit | **PASS** | purge diff reproduced from history: 99 ids removed at f36fc328 (expected 99); of those, 99 re-attempted post-fix (99 ok), 0 still pending re-attempt; 545 pre-fix results survive in the current ledger, of which 394 are the cloud-cohort (retroactively unauditable, flagged WARN) and 151 were audited clean locally; use_local_fallback=false in all 2 post-fix versions of config/como.yml: True |
-| A4 code-version uniformity | **WARN** | 5 non-tranche commits touched code/config/workflow inside the run window; 3 are ANALYSIS-RELEVANT fixes (aeff8601 synthetic guard, 603224c3 elevation band, a85ef3d2 manifest refresh) -- affected cohorts flagged per-facility (643 narrow-band, 650 old-manifest, 394 cloud-unauditable); zero pipeline-code changes after the first GHA tranche (04b849d6, 2026-08-12) other than storage/tooling; 0 unclassified: [] |
+| A4 code-version uniformity | **FAIL** | 6 non-tranche commits touched code/config/workflow inside the run window; 3 are ANALYSIS-RELEVANT fixes (aeff8601 synthetic guard, 603224c3 elevation band, a85ef3d2 manifest refresh) -- affected cohorts flagged per-facility (643 narrow-band, 650 old-manifest, 394 cloud-unauditable); zero pipeline-code changes after the first GHA tranche (04b849d6, 2026-08-12) other than storage/tooling; 1 unclassified: [('c664dd32', '2026-08-16T14:42:56-06:00', 'Fix fleet fold-in: key cumulative per-facility ledgers by site_id, not dam name')] |
 
 ## Facility-level flags
 
-Machine-readable copy: `qc/reports/integrity_flags.csv` (8,738 rows).
+Machine-readable copy: `qc/reports/integrity_flags.csv` (32,983 rows).
 
 | Flag | Severity | Facilities |
 |---|---|---|
+| `ddf_rowcount_bad` | FAIL | 13,218 |
 | `aux_missing_transition_window` | WARN | 2 |
-| `ddf_name_collision` | WARN | 3,728 |
+| `ddf_name_collision` | WARN | 14,724 |
 | `narrow_elevation_band` | WARN | 643 |
 | `synthetic_cloud_unauditable` | WARN | 394 |
-| `tail_sensitivity_lost_name_collision` | WARN | 2,554 |
+| `tail_sensitivity_lost_name_collision` | WARN | 2,585 |
 | `old_manifest_vintage` | INFO | 650 |
 | `pre_centralization_no_aux` | INFO | 517 |
 | `synthetic_prefix_audited_clean` | INFO | 151 |
 | `synthetic_purged_rerun_ok` | INFO | 99 |
 
-**Hard-fail facilities: 0** -- excluded from all analyses.
-**Warn facilities: 4,310** -- usable with the caveat attached to their flag;
+**Hard-fail facilities: 13,218** -- excluded from all analyses.
+**Warn facilities: 2,059** -- usable with the caveat attached to their flag;
 Phase-A analyses report their handling explicitly.
 
 ## Synthetic-incident audit trail (section A3)
@@ -50,7 +51,7 @@ reproducible byte-for-byte):
 1. Ledger membership was reconstructed at four historical commits: the cloud-cohort
    tranche `ccdeabde` (453 attempted), the last pre-fix tranche
    `27587ac8` (753), the purge `f36fc328`
-   (654), and the pinned data commit `b7207450` (31,250).
+   (654), and the pinned data commit `74db38c0` (73,303).
 2. The set difference (last pre-fix tranche) - (purge) reproduces exactly the
    **99 purged facility_ids** the purge commit message claims (99).
 3. Of the 99, **99 have since been re-attempted post-fix**
@@ -71,6 +72,7 @@ reproducible byte-for-byte):
 
 | Commit | Date (UTC) | Classification | Subject |
 |---|---|---|---|
+| `c664dd32` | 2026-08-16 | UNCLASSIFIED | Fix fleet fold-in: key cumulative per-facility ledgers by site_id, not dam name |
 | `19d87743` | 2026-08-13 | NOT analysis-relevant | Add GHCN-Daily vs GHCN-Monthly reconciliation tool + document the gap |
 | `a85ef3d2` | 2026-08-11 | ANALYSIS-RELEVANT (input vintage) | Refresh dam manifests from the LIVE current NID; add prefetch progress heartbeat |
 | `603224c3` | 2026-08-11 | ANALYSIS-RELEVANT (fix) | Fix elevation_band_m: was silently zeroing candidate stations for ~87% of the country |
@@ -94,63 +96,6 @@ A2 row-count check finding zero partial facilities).
 
 ## Pinned inputs
 
-- Fleet data: `b7207450f61518acd022204b178fdfb55fef9313` (`claude/desktop-nid-ad-hoc`)
+- Fleet data: `74db38c0574e2f15d3caecfa5d299f989f12b74c` (`claude/desktop-nid-ad-hoc`)
 - Manifest: `config/nid_manifest.csv` on main (73,303 rows)
-- Attempted 31,250 / ok 31,204 / failed 46; progress.md agrees: yes
-
-## Addendum (2026-08-16): fold-in bugs FIXED mid-run -- cohort boundary
-
-The two fold-in bugs this report proved (A2 `ddf_name_collision`, A2c
-`tail_sensitivity_lost_name_collision`) are **fixed on the fleet branch** in
-commit **`c664dd322ecb01a1fe14109235e538b5190e58bd`**, committed
-**2026-08-16T20:42:56Z** (pushed between tranche rounds 15 and 16). That
-timestamp is the **cohort boundary** for the §A4 mid-run code audit: the
-GHA job in flight at push time checked out pre-fix code and keeps folding
-the old way until it ends (<= 5.5 h); every subsequent job runs the fix.
-The first tranche commit whose parent chain includes `c664dd32` is the
-first post-fix fold-in.
-
-What the fix does (all validation ALL-PASS before push: run_golden.R,
-run_tests.R 92/92 incl. a new mixed-schema fold-in regression test, plus an
-end-to-end simulated fold-in cycle):
-
-1. `all_facilities_DDF.csv` now carries a `site_id` column (tagged in
-   run_batch.R from each facility's config) and the fold-in keys on
-   `(site_id, duration, return_period_yr)`.
-2. `tail_sensitivity.csv` fold-in now keys on `(site_id, duration, dist)`
-   (the file always carried site_id; only the dedup key was wrong).
-3. The fold-in (`append_cum_csv()` in R/functions.R) handles the mixed
-   historical schema: pre-fix cumulative DDF rows have no site_id and get
-   `NA` there on read; NA-id rows are deduped on the legacy name key in a
-   separate key-space, so they neither collapse together nor get clobbered
-   by a same-named post-fix facility.
-
-**Forward-only, by explicit decision.** Historical NA-site_id rows are NOT
-retro-attributed -- the name-collision overwrites destroyed that
-attribution at fold-in time; that damage is what register item 8 carries.
-**Remediation path** for the affected cohort (3,728 `ddf_name_collision` +
-2,554 `tail_sensitivity_lost_name_collision` facilities, membership as of
-`b7207450`; refresh at completion): after the fleet completes, delete their
-rows from `data/nid_progress/completed_ids.csv` to force clean
-re-processing under the fixed code. Do **not** purge mid-run.
-
-## Addendum (2026-08-16): upstream NID coordinate defects for the spatial-product gate
-
-Nine C1-flagged facilities are upstream **NID source-data** defects, not
-pipeline errors -- coordinates are deliberately NOT edited locally
-(register item 2: the mirror is unverified as a whole). The completion
-gate must exclude them from all **spatial products** (maps, gridded/kriged
-surfaces, neighbor-consistency tests) until upstream coordinates are
-corrected:
-
-- **8 Oregon dams at placeholder longitude -111.110** (a value in Idaho,
-  repeated verbatim across all 8 -- a fill/placeholder, not a transposition):
-  `OR00183`, `OR00567`, `OR00569`, `OR00572`, `OR00573`, `OR00574`,
-  `OR00728`, `OR00757`.
-- **1 Tennessee dam plotted in the Gulf of Mexico**: `TN05102` at
-  (25.202, -86.278).
-
-Their DDF *statistics* remain conditionally usable only in non-spatial
-aggregates, with the caveat that station selection itself used the wrong
-coordinates -- so treat their per-facility results as suspect and list them
-with the completion re-run candidates. Register item 9 carries this.
+- Attempted 73,303 / ok 73,240 / failed 63; progress.md agrees: yes
