@@ -39,7 +39,7 @@ Candidate gauges are selected around the site and screened:
 | Control | Default | Meaning |
 |---|---|---|
 | `search_radius_km` | 175 | gauges within this great-circle radius of the dam |
-| `elevation_band_m` | [600, 2600] | keep gauges within this elevation range |
+| `elevation_band_m` | [-100, 6200] | keep gauges within this elevation range (widened from the original [600, 2600] at fleet commit `603224c3`, 2026-08-11 — the narrow band was tuned for Montana and wrongly excluded most gauges in low-lying regions; 643 facilities processed under the narrow band are flagged `narrow_elevation_band` in the QC register) |
 | `min_record_years` | 20 | drop gauges with fewer valid annual maxima |
 | `min_year_completeness` | 0.90 | fraction of in-season days a year must have to count |
 | `max_stations` | 60 | cap on nearest gauges pulled (bounds download / region size) |

@@ -20,11 +20,21 @@ the region (see [`expert_review_checklist.md`](expert_review_checklist.md)).
    third-party ~2013 mirror of the NID (see `DATA_SOURCES.md`). A wrong
    coordinate silently analyses the wrong location. **Verify each dam's
    coordinates against an authoritative source before use.**
-2. **No ground elevation.** The NID gives structure heights, not site MSL
-   elevation, so `elevation_m` is blank fleet-wide. The fleet therefore uses
-   `index_flood.method: "nearest"` (no elevation dependence). The
-   elevation-regression transfer is only meaningful where a real site elevation
-   is supplied (e.g. Como).
+2. **No ground elevation in run 1.** The NID gives structure heights, not
+   site MSL elevation, so run 1's manifest had `elevation_m` blank
+   fleet-wide. The config nominally requests `index_flood.method:
+   "regression"`, but `estimate_index_flood()` (`R/functions.R`) **silently
+   degrades to the plain regional mean of the donor gauges' at-site means**
+   whenever the site elevation is not finite — so that degraded transfer is
+   what every run-1 facility actually used. (An earlier version of this
+   paragraph said the fleet uses `"nearest"`; that was wrong — corrected
+   2026-08-24 after verifying against the code. Measured on identical
+   regions nationally, regression-vs-regional-mean moves depths by a median
+   of only ~1.4%, but p90 ~8% and worst cases far more.) Run 2's manifest
+   carries DEM-derived elevations (elevatr z=10) and gets the real
+   regression; the two runs therefore differ in index-flood method as well
+   as region method — see `docs/CLUSTER_FLEET_RESULTS.md` for why that
+   confound matters.
 3. **Weather data is unverified GHCN-Daily.** QFLAG-failed observations are
    removed, but station siting, gaps, undercatch (especially snow), and station
    moves are not individually reviewed. Gauge undercatch tends to bias depths

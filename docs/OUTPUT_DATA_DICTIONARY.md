@@ -15,6 +15,18 @@ Fleet runs write these to `outputs/batch/` (single run) and accumulate them in
 
 One row per facility × duration × return period.
 
+> **⚠️ Schema varies by run vintage.** The national **run 1** fleet file has
+> only the first nine columns below (`site` … `rel_rmse`, plus `site_id`) —
+> it was produced before the ASM/ARF reporting landed on `main`, so
+> `index_flood_asm_mm`, `index_flood_method`, `depth_areal_mm`,
+> `arf_factor`, `arf_area_km2` and `arf_method` **do not exist in run-1
+> output**. Run 2 and all later runs carry the full schema. Additionally,
+> run-1 rows produced before commit `c664dd32` (2026-08-16) have
+> `site_id = NA` — join those tables on `site_id` only where present, never
+> on `site` (1,174 dam names are duplicated nationally); the affected
+> facilities are being recomputed (see `docs/NID_QAQC_PLAN.md`, known-issue
+> register).
+
 | Column | Meaning |
 |---|---|
 | `site` | facility name |
