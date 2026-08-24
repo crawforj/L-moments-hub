@@ -26,10 +26,11 @@ measured quantity — is the research output that the first two make credible
 
 ## 1. Gate
 
-Nothing below runs until the post-completion remediation is finished (ledger
-back at 73,303 with a fresh integrity pass showing zero name-collision
-facilities). 15,340 facilities carry ambiguous attribution until then; any
-comparison drawn early would be contaminated and would have to be retracted.
+Nothing below runs until the post-completion remediation is finished (the
+current manifest fully processed, with a fresh integrity pass showing zero
+name-collision facilities). Facilities under recomputation carry ambiguous
+attribution until then; any comparison drawn early would be contaminated
+and would have to be retracted.
 
 ## 2. Tier 1 — full stratified Atlas 14 sample
 
