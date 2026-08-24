@@ -123,3 +123,59 @@ Screening-grade evidence for routing dams to expert review — never
 engineering determinations. No per-dam public rankings. Corrections stay in
 the record. Every reported number cites the ledger commit and release-asset
 checksum it was computed from.
+
+---
+
+## Addendum A — reviewer-requested additions (2026-08-24)
+
+Added after Reclamation TSC review of the tier design (A. Stone, P.E.,
+2026-08-24) and **before the gate opened or any comparison ran**. These are
+additions of analyses; the frozen thresholds in §3 are untouched.
+
+### A.1 The 1,000-year readout is co-primary
+
+The frozen expectations table already carries T = 1000; this addendum
+elevates it: all Tier 1 headline tables report the 100-yr and 1,000-yr
+comparisons side by side, with the divergence-vs-rarity profile (T = 2 →
+1000) as a first-class figure, not a supplement.
+
+### A.2 The attribution decomposition ("chicken or egg")
+
+Reviewer question, verbatim: *"did the L-moments analysis choose the wrong
+distribution or is the NA14 distribution inappropriate for more extreme
+events?"*
+
+Design: for every compared site, the fleet output already stores each
+candidate distribution's fitted tail (`tail_sensitivity`, `gof`,
+`regional_lmoments`). At sites where |difference| grows with rarity, we
+additionally refit **our** estimate under the Atlas-14-consistent family
+(GEV) from the stored regional L-moments — no re-run required — and report
+the **gap-closure fraction**: how much of the 1,000-yr divergence
+disappears when the distribution family is forced to agree.
+
+- Closure ≈ 1: the divergence was our family choice (our side of the egg).
+- Closure ≈ 0: the divergence lies elsewhere (regionalization, data
+  vintage, index flood — or the reference's own tail behaviour).
+- Stratified by our goodness-of-fit margin (`z_margin` < 0.5 vs ≥ 0.5):
+  where the top two candidates are statistically indistinguishable —
+  ~39% of facility-durations in interim data — the honest answer to the
+  reviewer's question is that **the observational record cannot
+  adjudicate it**, and that indeterminacy is itself a finding.
+
+Declared limitation: this tests only *our* side. Atlas 14 does not publish
+per-region L-moments sufficient to refit *its* estimates under alternative
+families, so any statement about the reference's tail behaviour remains
+inferential.
+
+### A.3 Geographic independence of the tiers (noted, not changed)
+
+The reviewer observes Washington has no Atlas 14 values. Correct — and it
+makes Tiers 1 and 2 geographically disjoint by construction: no site
+participates in both, so the two validations are independent axes rather
+than two views of the same comparison. Recorded here as a design property.
+The Tier 2 reference study's authors (Schaefer, Barker) also developed
+SEFM, the stochastic event flood model in growing use among dam owners —
+strengthening the practical relevance of reproducing their precipitation
+work. Reclamation TSC has offered to identify further non-CUI reference
+studies; any adopted will be added as dated addenda before their
+comparisons run.
