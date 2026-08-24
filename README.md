@@ -12,7 +12,7 @@ called **regional frequency analysis with L-moments** (Hosking & Wallis,
 atlas.
 
 This project runs that method, uniformly and from a single codebase, at
-**every dam in the National Inventory of Dams** — about 73,000 facilities —
+**every dam in the National Inventory of Dams** — about 92,000 facilities —
 for 24-hour and 72-hour storms, out to the 1-in-10,000-year event. For
 each dam it produces the estimate, the uncertainty around it, a map and
 list of every rain gauge used or rejected (with reasons), and a full audit
@@ -113,10 +113,9 @@ reported and actual uncertainty is the scientific core of the project.
 |---|---|---|
 | 1. Single dam (Como Dam, MT) | full audit trail, portable config | ✅ validated on real data |
 | 2. Bureau of Reclamation fleet | 308 dams, both region methods | ✅ complete |
-| 3. **National run 1** (circular regions) | 73,303 dams | ✅ **completed 2026-08-23** (73,240 ok / 63 lacked enough gauges); a post-completion QC gate found ~15,000 early results filed under ambiguous dam *names* (many dams share names) — those are being recomputed, keyed by ID |
-| 4. **National run 2** (cluster regions) | same 73,303 dams, second method | 🔄 ~90%, finishing now — kept as a full independent dataset for the Tier 3 comparison |
-| 5. Inventory refresh | roster update to the current NID (**91,816** dams; the original list came from a 2013 snapshot and under-covered the Southeast) | manifest built and verified; runs extend automatically on completion |
-| 6. External validation | Tiers 1–2 above | armed; fires when stage 3's recomputation lands |
+| 3. **National run 1** (circular regions) | the full National Inventory of Dams (~92,000 dams) | 🔄 initial pass complete; a post-completion QC gate found early results filed under ambiguous dam *names* (many dams share names) — those are being recomputed, keyed by ID, as the run extends across the full inventory |
+| 4. **National run 2** (cluster regions) | same inventory, second method | 🔄 finishing — kept as a full independent dataset for the Tier 3 comparison |
+| 5. External validation | Tiers 1–2 above | armed; fires when stage 3's recomputation lands |
 
 Live tally: [`progress.md` on the fleet branch](https://github.com/crawforj/L-moments-hub/blob/claude/desktop-nid-ad-hoc/data/nid_progress/progress.md).
 Operational detail: [`docs/NID_COMPLETION_RUNBOOK.md`](docs/NID_COMPLETION_RUNBOOK.md),
