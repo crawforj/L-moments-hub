@@ -25,9 +25,9 @@ ENDPOINT CONTRACT (verified live 2026-08-20; see docs/analysis/atlas14_pilot.md)
                       ?lat=&lon=&data=depth&units=english&series={pds|ams}
   web-UI backend  GET https://hdsc.nws.noaa.gov/cgi-bin/new/cgi_readH5.py
                       ?lat=&lon=&type=pf&data=depth&units=english&series=...
-  NOTE the path moved: `/cgi-bin/hdsc/new/` (still used by compare_atlas14.R and
-  by NOAA's own commented-out JS) now 301-redirects to `/cgi-bin/new/`. Both
-  work; this tool requests the current path directly.
+  NOTE the path moved: `/cgi-bin/hdsc/new/` (still used by NOAA's own
+  commented-out JS) now 301-redirects to `/cgi-bin/new/`. Both work; this tool
+  and compare_atlas14.R both request the current path directly.
   No-coverage is served as **HTTP 200** with a body of
   `result = 'none'; ErrorMsg = 'Error 3.0: Selected location is not within a
   project area';` -- it is NOT a 404, and it must never be conflated with a
