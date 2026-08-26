@@ -198,18 +198,37 @@ def git_show_bytes(commit: str, path: str) -> bytes:
 FLEET_RELEASE_TAG = "nid-run1-data"
 
 
+# Assets that have a repaired variant published alongside the original. The
+# repaired file is preferred; the canonical name is the fallback. Collapse
+# this map once the canonical asset itself is swapped to the repaired bytes.
+REPAIRED_ASSETS = {
+    "all_facilities_DDF.csv": "all_facilities_DDF.repaired.csv",
+}
+
+
 def _release_asset_bytes(name: str) -> bytes:
-    """Download <name>.gz from the fleet release and return decompressed bytes."""
+    """Download <name>.gz from the fleet release and return decompressed bytes.
+
+    Prefers the repaired variant where one exists (see REPAIRED_ASSETS)."""
     import gzip
     import tempfile
-    with tempfile.TemporaryDirectory() as td:
-        subprocess.run(
-            ["gh", "release", "download", FLEET_RELEASE_TAG,
-             "--repo", "crawforj/L-moments-hub",
-             "--pattern", f"{name}.gz", "--dir", td, "--clobber"],
-            capture_output=True, check=True,
-        )
-        return gzip.decompress((Path(td) / f"{name}.gz").read_bytes())
+    candidates = ([REPAIRED_ASSETS[name], name] if name in REPAIRED_ASSETS else [name])
+    last_err: Exception | None = None
+    for cand in candidates:
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                subprocess.run(
+                    ["gh", "release", "download", FLEET_RELEASE_TAG,
+                     "--repo", "crawforj/L-moments-hub",
+                     "--pattern", f"{cand}.gz", "--dir", td, "--clobber"],
+                    capture_output=True, check=True,
+                )
+                if cand != name:
+                    print(f"  ({name}: using repaired asset {cand}.gz)", file=sys.stderr)
+                return gzip.decompress((Path(td) / f"{cand}.gz").read_bytes())
+            except subprocess.CalledProcessError as e:
+                last_err = e
+    raise last_err
 
 
 def materialize(ref: str = FLEET_REF_DEFAULT, files: list[str] | None = None) -> tuple[str, Path]:
