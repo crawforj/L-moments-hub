@@ -63,6 +63,11 @@ RUN_WINDOW_COMMIT_CLASSIFICATION = {
     "19d87743": ("tooling", "NOT analysis-relevant",
                  "Adds standalone GHCN-D vs GHCN-M reconciliation tool (qc_ghcnm_crosscheck.R); "
                  "not on the tranche execution path."),
+    "c664dd32": ("code", "ANALYSIS-RELEVANT (fix)",
+                 "Fold-in fix: keys cumulative per-facility ledgers by site_id instead of dam "
+                 "name (1,174 duplicated names nationally were silently overwriting each other). "
+                 "Cohort boundary for the 15,340-facility name-collision remediation; legacy "
+                 "pre-fix DDF rows repaired 2026-08-26 by qc/nid_qc_repair_ddf.py."),
 }
 
 
@@ -172,42 +177,71 @@ def main() -> int:
     for fid, d in bad_durs.items():
         flag(fid, "diagnostics_durations_bad", "FAIL", f"durations present: {d}")
 
-    # DDF is keyed by site NAME only (no site_id) -- name collisions make those
-    # facilities' DDF rows unattributable. This is a real pipeline finding.
+    # DDF keying is vintage-dependent. Post-repair (2026-08-26,
+    # qc/nid_qc_repair_ddf.py) every row carries site_id and attribution is
+    # exact, so key by id. Pre-repair snapshots still have NA-site_id legacy
+    # rows; for those, fall back to the historical name-keyed logic, under
+    # which name collisions genuinely made rows unattributable.
+    ddf_sid = ddf["site_id"].astype(str).str.strip() if "site_id" in ddf.columns else None
+    ddf_id_keyed = ddf_sid is not None and (~ddf_sid.isin(("", "NA", "nan"))).all()
+
     name_counts = ok_led.groupby("name")["facility_id"].nunique()
     collided_names = set(name_counts[name_counts > 1].index)
-    collided_facs = ok_led[ok_led.name.isin(collided_names)]
-    for _, r in collided_facs.iterrows():
-        flag(r.facility_id, "ddf_name_collision", "WARN",
-             f"site name '{r['name']}' shared by {name_counts[r['name']]} ok facilities; "
-             "all_facilities_DDF.csv rows for this name cannot be attributed to a single facility")
+    if ddf_id_keyed:
+        ddf_ids = set(ddf_sid)
+        ddf_missing_ids = cur_ok - ddf_ids
+        for fid in sorted(ddf_missing_ids):
+            flag(fid, "ddf_missing", "FAIL", "ok in ledger but no DDF rows (by site_id)")
+        for fid in sorted(ddf_ids - cur_ok):
+            flag(fid, "ddf_orphan", "FAIL", "DDF rows but not ok in ledger (by site_id)")
+        rc = ddf.groupby(ddf_sid).size()
+        bad_rc = rc[rc != C.ROWS_PER_FACILITY_DDF]
+        for fid, k in bad_rc.items():
+            flag(fid, "ddf_rowcount_bad", "FAIL", f"{k} rows (expected {C.ROWS_PER_FACILITY_DDF})")
+        ddf_missing_names: set[str] = set()  # id-keyed: name sets not used downstream
+        collided_facs = ok_led[ok_led.name.isin(collided_names)]
+    else:
+        collided_facs = ok_led[ok_led.name.isin(collided_names)]
+        for _, r in collided_facs.iterrows():
+            flag(r.facility_id, "ddf_name_collision", "WARN",
+                 f"site name '{r['name']}' shared by {name_counts[r['name']]} ok facilities; "
+                 "all_facilities_DDF.csv rows for this name cannot be attributed to a single facility")
 
-    ddf_names = set(ddf.site)
-    ok_names = set(ok_led.name)
-    ddf_missing_names = ok_names - ddf_names
-    ddf_orphan_names = ddf_names - ok_names
-    for n in sorted(ddf_missing_names):
-        for fid in ok_led.loc[ok_led.name == n, "facility_id"]:
-            flag(fid, "ddf_missing", "FAIL", f"no DDF rows for site name '{n}'")
+        ddf_names = set(ddf.site)
+        ok_names = set(ok_led.name)
+        ddf_missing_names = ok_names - ddf_names
+        for n in sorted(ddf_missing_names):
+            for fid in ok_led.loc[ok_led.name == n, "facility_id"]:
+                flag(fid, "ddf_missing", "FAIL", f"no DDF rows for site name '{n}'")
 
-    rc = ddf.groupby("site").size()
-    bad_rc = rc[rc != C.ROWS_PER_FACILITY_DDF]
+        rc = ddf.groupby("site").size()
+        bad_rc = rc[rc != C.ROWS_PER_FACILITY_DDF]
+        for n, k in bad_rc.items():
+            for fid in ok_led.loc[ok_led.name == n, "facility_id"]:
+                flag(fid, "ddf_rowcount_bad", "FAIL", f"{k} rows (expected {C.ROWS_PER_FACILITY_DDF})")
     t_seen = sorted(ddf.return_period_yr.dropna().unique().astype(int).tolist())
     d_seen = sorted(ddf.duration.unique().tolist())
-    for n, k in bad_rc.items():
-        for fid in ok_led.loc[ok_led.name == n, "facility_id"]:
-            flag(fid, "ddf_rowcount_bad", "FAIL", f"{k} rows (expected {C.ROWS_PER_FACILITY_DDF})")
-    ddf_ok = (not diag_missing and not diag_orphan and len(bad_durs) == 0
-              and not ddf_missing_names and not ddf_orphan_names and len(bad_rc) == 0
-              and t_seen == C.EXPECTED_T and d_seen == C.EXPECTED_DURATIONS)
+    if ddf_id_keyed:
+        ddf_detail = (f"DDF fully site_id-keyed (post-repair): {len(ddf_missing_ids)} ok facilities "
+                      f"missing rows, {len(bad_rc)} with row-count != 24; "
+                      f"{len(collided_facs)} facilities share a name with another "
+                      f"({len(collided_names)} names) but attribution is exact by id")
+        ddf_ok = (not diag_missing and not diag_orphan and len(bad_durs) == 0
+                  and not ddf_missing_ids and len(bad_rc) == 0
+                  and t_seen == C.EXPECTED_T and d_seen == C.EXPECTED_DURATIONS)
+    else:
+        ddf_detail = (f"{len(ddf_missing_names)} ok names missing from DDF, "
+                      f"{len(ddf_orphan_names)} orphan DDF names; "
+                      f"{len(collided_facs)} ok facilities ({len(collided_names)} names) have name collisions "
+                      f"(legacy NA-site_id rows present -- attribution ambiguous for those)")
+        ddf_ok = (not diag_missing and not diag_orphan and len(bad_durs) == 0
+                  and not ddf_missing_names and not ddf_orphan_names and len(bad_rc) == 0
+                  and t_seen == C.EXPECTED_T and d_seen == C.EXPECTED_DURATIONS)
     result("A2 orphans + DDF row-count",
            "PASS" if ddf_ok else ("WARN" if not (diag_missing or diag_orphan or len(bad_durs) or len(bad_rc)) else "FAIL"),
            f"diag: {len(diag_missing)} missing / {len(diag_orphan)} orphan / {len(bad_durs)} bad-duration; "
            f"DDF: {len(bad_rc)} sites with row-count != 24, T-set {'matches' if t_seen == C.EXPECTED_T else t_seen}, "
-           f"durations {d_seen}; {len(ddf_missing_names)} ok names missing from DDF, "
-           f"{len(ddf_orphan_names)} orphan DDF names; "
-           f"{len(collided_facs)} ok facilities ({len(collided_names)} names) have name collisions "
-           f"(DDF has no site_id column -- attribution ambiguous for those)")
+           f"durations {d_seen}; " + ddf_detail)
 
     # tail_sensitivity coverage. FINDING: although tail_sensitivity.csv carries
     # site_id, the cumulative fold-in dedupes it by site NAME (like the DDF), so
