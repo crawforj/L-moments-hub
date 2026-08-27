@@ -482,19 +482,11 @@ def _fleet_asset(asset: str) -> Path:
     dest = FLEET_CACHE / asset
     if dest.exists() and dest.stat().st_size > 0:
         return dest
-    # Prefer the repaired DDF variant (qc/nid_qc_repair_ddf.py, 2026-08-26):
-    # attribution is exact there. Falls back to the canonical asset name.
-    repaired = {"all_facilities_DDF.csv.gz": "all_facilities_DDF.repaired.csv.gz"}
-    for cand in ([repaired[asset], asset] if asset in repaired else [asset]):
-        print(f"  downloading {cand} from release {FLEET_RELEASE_TAG} ...", file=sys.stderr)
-        rc = subprocess.run(["gh", "release", "download", FLEET_RELEASE_TAG, "-R", FLEET_REPO,
-                             "-p", cand, "-D", str(FLEET_CACHE), "--clobber"]).returncode
-        if rc == 0:
-            got = FLEET_CACHE / cand
-            if got != dest:
-                got.replace(dest)
-            return dest
-    raise RuntimeError(f"could not download {asset} (or repaired variant) from {FLEET_RELEASE_TAG}")
+    # The canonical asset carries the repaired table since 2026-08-27.
+    print(f"  downloading {asset} from release {FLEET_RELEASE_TAG} ...", file=sys.stderr)
+    subprocess.run(["gh", "release", "download", FLEET_RELEASE_TAG, "-R", FLEET_REPO,
+                    "-p", asset, "-D", str(FLEET_CACHE), "--clobber"], check=True)
+    return dest
 
 
 def load_fleet_diag() -> pd.DataFrame:

@@ -1,6 +1,6 @@
 # NID fleet -- integrity report (QAQC plan section A)
 
-_Generated 2026-08-26 13:48 UTC by `qc/nid_qc_integrity.py`._
+_Generated 2026-08-27 19:44 UTC by `qc/nid_qc_integrity.py`._
 
 **Partial data.** Input pinned to fleet-branch commit `7c323846bc7d074eb5f37c2c835b9ef4ae7ebfea` (`claude/desktop-nid-ad-hoc`), N = 73,303 of 73,303 facilities attempted (100.0%). The fleet runs largest-storage-first, so this partial sample over-represents large dams; refresh every artifact at fleet completion before treating any number here as final.
 
