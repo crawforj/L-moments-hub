@@ -1,0 +1,11 @@
+Chain stopped 2026-08-27.
+
+The fleet ledger reached 73,303/73,303 (100%) at 01:49 MDT on 2026-08-27 when
+remediation completed. The self-chaining workflow nevertheless kept dispatching
+successors -- four further rounds at ~5h32m of runner time each -- with no work
+left to do. That consumption is what took GitHub Actions to 90% of the billing
+cycle.
+
+All remaining compute is local: the controlled circular leg runs in Docker on
+the workstation. Remove this file only to deliberately restart the GitHub
+chain, and only after confirming the ledger is NOT already complete.
