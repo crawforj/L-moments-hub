@@ -442,11 +442,32 @@ def _append_ledger(path: Path, rows: list[dict], cols: list[str]) -> None:
     pd.concat([prev, new], ignore_index=True).to_csv(path, index=False)
 
 
+# Statuses that represent a real ANSWER from the reference and are therefore
+# genuinely done. Anything else (notably `fetch_error`, i.e. the server was
+# briefly unavailable) must return to the worklist so it retries.
+_TERMINAL_STATUSES = {"ok", "no_coverage"}
+
+
 def _done_keys(path: Path, cols: list[str]) -> set[tuple[str, str]]:
+    """Keys that need no further fetching.
+
+    A transient failure is NOT an answer. Before 2026-08-27 this returned every
+    ledger row regardless of status, so a burst of HTTP 503s became permanent
+    holes: 101 pairs, ALL Virginia, were silently dropped from a stratified
+    sample and would never have been retried. In a stratified design a hole
+    with that geography biases the stratum -- it is not random attrition.
+    Rows whose status is not terminal are now excluded here, so the next fetch
+    round picks them up. Re-fetching an already-answered pair is cheap; losing
+    one silently is not.
+    """
     led = _read_ledger(path, cols)
     if led.empty:
         return set()
     key = "method" if "method" in cols and path == VERIFY_LEDGER else "series"
+    if "status" in led.columns:
+        led = led[led["status"].astype(str).str.strip().isin(_TERMINAL_STATUSES)]
+        if led.empty:
+            return set()
     return set(zip(led.facility_id, led[key]))
 
 
@@ -461,6 +482,7 @@ def _fleet_asset(asset: str) -> Path:
     dest = FLEET_CACHE / asset
     if dest.exists() and dest.stat().st_size > 0:
         return dest
+    # The canonical asset carries the repaired table since 2026-08-27.
     print(f"  downloading {asset} from release {FLEET_RELEASE_TAG} ...", file=sys.stderr)
     subprocess.run(["gh", "release", "download", FLEET_RELEASE_TAG, "-R", FLEET_REPO,
                     "-p", asset, "-D", str(FLEET_CACHE), "--clobber"], check=True)

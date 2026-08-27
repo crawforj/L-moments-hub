@@ -89,9 +89,11 @@ ROWS_PER_FACILITY_DDF = len(EXPECTED_T) * len(EXPECTED_DURATIONS)  # 24
 
 EXPECTED_SCHEMAS = {
     "completed_ids.csv": ["facility_id", "name", "ok"],
+    # site_id appended 2026-08-16 by the fold-in fix (c664dd32); made universal
+    # by the 2026-08-26 legacy-row repair (qc/nid_qc_repair_ddf.py).
     "all_facilities_DDF.csv": [
         "site", "duration", "return_period_yr", "AEP", "depth_mm",
-        "depth_lo_mm", "depth_hi_mm", "rel_rmse",
+        "depth_lo_mm", "depth_hi_mm", "rel_rmse", "site_id",
     ],
     "batch_diagnostics.csv": [
         "site", "site_id", "duration", "n_stations", "H1", "homog_status",
@@ -190,8 +192,38 @@ def git_show_bytes(commit: str, path: str) -> bytes:
     return raw
 
 
+# Where the big cumulative tables live since the 2026-08-17 LFS retirement:
+# gzipped assets on this release tag. Small files (ledger, progress.md) are
+# still plain git. materialize() tries git first, then falls back here.
+FLEET_RELEASE_TAG = "nid-run1-data"
+
+
+def _release_asset_bytes(name: str) -> bytes:
+    """Download <name>.gz from the fleet release and return decompressed bytes.
+
+    The canonical asset carries the repaired table since 2026-08-27 (the
+    legacy NA-site_id rows were fixed by qc/nid_qc_repair_ddf.py and the
+    release asset replaced), so no variant preference is needed."""
+    import gzip
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        subprocess.run(
+            ["gh", "release", "download", FLEET_RELEASE_TAG,
+             "--repo", "crawforj/L-moments-hub",
+             "--pattern", f"{name}.gz", "--dir", td, "--clobber"],
+            capture_output=True, check=True,
+        )
+        return gzip.decompress((Path(td) / f"{name}.gz").read_bytes())
+
+
 def materialize(ref: str = FLEET_REF_DEFAULT, files: list[str] | None = None) -> tuple[str, Path]:
     """Extract fleet files at `ref` into qc/_cache/<short12>/ (idempotent).
+
+    Small files come from git at the pinned commit. The big cumulative tables
+    were moved out of git to release assets when LFS was retired mid-run
+    (2026-08-17), so a git miss falls back to the release asset — which is NOT
+    commit-pinned; the release holds the latest fold-in state. The provenance
+    line each report carries states which path supplied each file.
 
     Returns (full_commit_hash, cache_dir).
     """
@@ -202,9 +234,14 @@ def materialize(ref: str = FLEET_REF_DEFAULT, files: list[str] | None = None) ->
         dest = cache / f
         if dest.exists() and dest.stat().st_size > 0:
             continue
-        data = git_show_bytes(commit, f"{PROGRESS_DIR}/{f}")
+        try:
+            data = git_show_bytes(commit, f"{PROGRESS_DIR}/{f}")
+            src = "git"
+        except subprocess.CalledProcessError:
+            data = _release_asset_bytes(f)
+            src = f"release:{FLEET_RELEASE_TAG} (not commit-pinned)"
         dest.write_bytes(data)
-        print(f"  materialized {f} ({len(data):,} bytes)", file=sys.stderr)
+        print(f"  materialized {f} ({len(data):,} bytes) [{src}]", file=sys.stderr)
     return commit, cache
 
 
